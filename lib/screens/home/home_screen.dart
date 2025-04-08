@@ -16,9 +16,12 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navController = ref.watch(bottomNavProvider);
+    // Get screen width to determine if we're on a tablet
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return Scaffold(
-      drawer:   TopBar(),
+      drawer: TopBar(),
       backgroundColor: const Color(0xFFF0F0F0),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xFF4A7DFF),
@@ -58,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
         children: [
           // Top status bar with coins and timer
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: isTablet ? 8.h : 12.h),
             color: const Color(0xFF4A7DFF),
             child: SafeArea(
               bottom: false,
@@ -148,56 +151,68 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-
-
- 
-
 class HomeContentScreen extends StatelessWidget {
   const HomeContentScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions to determine if we're on a tablet
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isTablet = screenWidth > 600;
+    
+    // Calculate appropriate sizes based on device
+    final avatarSize = isTablet ? 80.r : 100.r;
+    final avatarInnerSize = isTablet ? 64.r : 80.r;
+    final flagSize = isTablet ? 20.r : 24.r;
+    final usernameSize = isTablet ? 12.sp : 20.sp;
+    
+    // For tablets, we'll create a wider layout with more grid columns
+    final gridCrossAxisCount = isTablet ? 4 : 2;
+    final gridPadding = isTablet ? 12.w : 16.w;
+    final gridItemSpacing = isTablet ? 10.w : 16.w;
+    
     return Column(
       children: [
         // Profile section
-        SizedBox(height: 24.h),
+        SizedBox(height: isTablet ? 16.h : 24.h),
         Center(
           child: Column(
             children: [
               Container(
-                width: 100.r,
-                height: 100.r,
+                width: avatarSize,
+                height: avatarSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: const Color(0xFFE8E4FF),
-                  border: Border.all(color: const Color(0xFFD5CFFF), width: 4.r),
+                  border: Border.all(color: const Color(0xFFD5CFFF), width: isTablet ? 3.r : 4.r),
                 ),
                 child: Center(
                   child: Image.asset(
                     'assets/images/avatar.png', // Replace with your avatar image
-                    width: 80.r,
-                    height: 80.r,
+                    width: avatarInnerSize,
+                    height: avatarInnerSize,
                     errorBuilder: (context, error, stackTrace) {
-                      return Icon(Icons.person, size: 60.r, color: Colors.grey);
+                      return Icon(Icons.person, size: avatarInnerSize * 0.75, color: Colors.grey);
                     },
                   ),
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: isTablet ? 6.h : 8.h),
               // Country flag icon
               Container(
-                padding: EdgeInsets.all(4.r),
+                padding: EdgeInsets.all(isTablet ? 3.r : 4.r),
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                 ),
                 child: Image.asset(
                   'assets/images/azerbaijan_flag.png', // Replace with your flag image
-                  width: 24.r,
-                  height: 24.r,
+                  width: flagSize,
+                  height: flagSize,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      width: 24.r,
-                      height: 24.r,
+                      width: flagSize,
+                      height: flagSize,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
@@ -208,12 +223,12 @@ class HomeContentScreen extends StatelessWidget {
                   },
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
                 "Melikmemmed",
                 style: TextStyle(
-                  fontSize: 20.sp,
+                  fontSize: usernameSize,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -221,33 +236,36 @@ class HomeContentScreen extends StatelessWidget {
           ),
         ),
         
-        SizedBox(height: 32.h),
+        SizedBox(height: isTablet ? 24.h : 32.h),
         
-        // Menu grid
+        // Menu grid - responsive layout for tablet
         Expanded(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            padding: EdgeInsets.symmetric(horizontal: gridPadding),
             child: GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16.h,
-              crossAxisSpacing: 16.w,
+              crossAxisCount: gridCrossAxisCount,
+              mainAxisSpacing: gridItemSpacing,
+              crossAxisSpacing: gridItemSpacing,
+              childAspectRatio: isTablet ? 1.3 : 1.0, // Wider tiles on tablet
               children: [
                 // Quiz button
                 _buildMenuTile(
                   icon: Icons.play_arrow,
                   title: "Quizz Spielen",
                   color: const Color(0xFFD5ACFF),
+                  isTablet: isTablet,
                 ),
                 // Duel button
                 _buildMenuTile(
                   icon: Icons.shield,
                   title: "Duell",
                   color: const Color(0xFFD5ACFF),
+                  isTablet: isTablet,
                   customIcon: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.ac_unit_rounded, color: Colors.blue, size: 24.r),
-                      Icon(Icons.ac_unit_rounded, color: Colors.red, size: 24.r),
+                      Icon(Icons.ac_unit_rounded, color: Colors.blue, size: isTablet ? 20.r : 24.r),
+                      Icon(Icons.ac_unit_rounded, color: Colors.red, size: isTablet ? 20.r : 24.r),
                     ],
                   ),
                 ),
@@ -256,13 +274,30 @@ class HomeContentScreen extends StatelessWidget {
                   icon: Icons.calendar_today,
                   title: "Daily Login\nRewards",
                   color: const Color(0xFFD5ACFF),
+                  isTablet: isTablet,
                 ),
                 // Event button
                 _buildMenuTile(
                   icon: Icons.emoji_events,
                   title: "Event",
                   color: const Color(0xFFD5ACFF),
+                  isTablet: isTablet,
                 ),
+                // For tablet layout, add more menu items to fill the grid
+                // if (isTablet) 
+                //   _buildMenuTile(
+                //     icon: Icons.star,
+                //     title: "Achievements",
+                //     color: const Color(0xFFD5ACFF),
+                //     isTablet: isTablet,
+                //   ),
+                // if (isTablet)
+                //   _buildMenuTile(
+                //     icon: Icons.history,
+                //     title: "History",
+                //     color: const Color(0xFFD5ACFF),
+                //     isTablet: isTablet,
+                //   ),
               ],
             ),
           ),
@@ -275,24 +310,29 @@ class HomeContentScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required Color color,
+    required bool isTablet,
     Widget? customIcon,
   }) {
+    // Adjust sizes for tablet
+    final iconSize = isTablet ? 30.r : 36.r;
+    final fontSize = isTablet ? 16.sp : 18.sp;
+    
     return Container(
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(isTablet ? 12.r : 16.r),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          customIcon ?? Icon(icon, size: 36.r, color: Colors.white),
-          SizedBox(height: 8.h),
+          customIcon ?? Icon(icon, size: iconSize, color: Colors.white),
+          SizedBox(height: isTablet ? 6.h : 8.h),
           Text(
             title,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 18.sp,
+              fontSize: fontSize,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -301,5 +341,3 @@ class HomeContentScreen extends StatelessWidget {
     );
   }
 }
-
-
