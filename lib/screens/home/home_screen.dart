@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/screens/chapters/chapters.dart';
 import 'package:quiz_app/screens/market/market.dart';
 import 'package:quiz_app/screens/messages/messages.dart';
 import 'package:quiz_app/screens/rank/rank.dart';
@@ -9,7 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
- 
+ import 'package:country_flags/country_flags.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -142,7 +143,7 @@ class HomeScreen extends ConsumerWidget {
       case 2:
         return const HomeContentScreen(); // Default home screen
       case 3:
-        return const MarketScreen();
+        return   QuizScreen();
       case 4:
         return const SettingsScreen();
       default:
@@ -200,29 +201,18 @@ class HomeContentScreen extends StatelessWidget {
               ),
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Country flag icon
-              Container(
-                padding: EdgeInsets.all(isTablet ? 3.r : 4.r),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
-                child: Image.asset(
-                  'assets/images/azerbaijan_flag.png', // Replace with your flag image
-                  width: flagSize,
-                  height: flagSize,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: flagSize,
-                      height: flagSize,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Colors.blue, Colors.red, Colors.green],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+   Container(
+  padding: EdgeInsets.all(isTablet ? 3.r : 4.r),
+  decoration: const BoxDecoration(
+    shape: BoxShape.circle,
+  ),
+  child: CountryFlag.fromCountryCode(
+    'AZ',
+    height: flagSize,
+    width: flagSize,
+    shape: const Circle(),
+  ),
+),
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
@@ -249,12 +239,20 @@ class HomeContentScreen extends StatelessWidget {
               childAspectRatio: isTablet ? 1.3 : 1.0, // Wider tiles on tablet
               children: [
                 // Quiz button
-                _buildMenuTile(
-                  icon: Icons.play_arrow,
-                  title: "Quizz Spielen",
-                  color: const Color(0xFFD5ACFF),
-                  isTablet: isTablet,
-                ),
+                GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChapterScreen()),
+    );
+  },
+  child: _buildMenuTile(
+    icon: Icons.play_arrow,
+    title: "Quizz Spielen",
+    color: const Color(0xFFD5ACFF),
+    isTablet: isTablet,
+  ),
+),
                 // Duel button
                 _buildMenuTile(
                   icon: Icons.shield,
