@@ -9,295 +9,547 @@ import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// class MarketScreen extends StatelessWidget {
-//   const MarketScreen({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Icon(Icons.shopping_cart, size: 80.r, color: const Color(0xFF4A7DFF)),
-//           SizedBox(height: 16.h),
-//           Text(
-//             "Market",
-//             style: TextStyle(
-//               fontSize: 24.sp,
-//               fontWeight: FontWeight.bold,
-//             ),
-//           ),
-//           SizedBox(height: 16.h),
-//           Text(
-//             "Browse available items",
-//             style: TextStyle(
-//               fontSize: 16.sp,
-//               color: Colors.grey,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-
- 
-
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:async';
-
-// Model for Quiz Question
-// Model for Quiz Question
-import 'package:flutter/material.dart';
- 
-import 'dart:async';
 
  
-class QuizScreen extends ConsumerWidget {
+ 
+
+class MarketScreen extends StatefulWidget {
+  const MarketScreen({Key? key}) : super(key: key);
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final quizState = ref.watch(quizControllerProvider);
-    final currentQuestionIndex = quizState.currentQuestionIndex;
-    
-    print("Current eliminated options: ${quizState.eliminatedOptions}");
-    // Tüm sorular bittiyse sonuç ekranı göster
-    if (currentQuestionIndex >= quizState.questions.length) {
-      return _buildResultScreen(context, quizState);
-    }
-    
-    final question = quizState.questions[currentQuestionIndex];
-    
+  State<MarketScreen> createState() => _MarketScreenState();
+}
+
+class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  
+  final List<Tab> _tabs = [
+    const Tab(icon: Icon(Icons.favorite, color: Colors.red)),
+    const Tab(icon: Icon(Icons.confirmation_number, color: Colors.orange)),
+    const Tab(icon: Icon(Icons.check_circle, color: Colors.green)),
+    const Tab(icon: Icon(Icons.timer_off, color: Colors.redAccent)),
+    const Tab(icon: Icon(Icons.face, color: Color.fromARGB(255, 179, 246, 255))),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Answer history
-            Container(
-              padding: EdgeInsets.all(10),
-              color: Colors.grey[200],
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_ios),
-                    onPressed: () {
-                      // Handle back button
-                    },
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: quizState.answerResults.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          bool? result = entry.value;
-                          
-                          // Henüz cevaplanmamış sorular için boşluk göster
-                          if (index >= currentQuestionIndex) return SizedBox.shrink();
-                          
-                          return Container(
-                            margin: EdgeInsets.symmetric(horizontal: 2),
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: result == null ? Colors.grey[300] : (result ? Colors.green : Colors.red),
-                            ),
-                            child: Icon(
-                              result == null ? null : (result ? Icons.check : Icons.close),
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Question area
-            Container(
-              margin: EdgeInsets.all(16),
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      question.question,
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                  Text('${currentQuestionIndex + 1}/${quizState.questions.length}'),
-                ],
-              ),
-            ),
-            
-            // Timer
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              child: LinearProgressIndicator(
-                value: quizState.timerValue,
-                backgroundColor: Colors.grey[300],
-                color: Colors.green,
-                minHeight: 12,
-              ),
-            ),
-            
-            SizedBox(height: 20),
-            
-            // Options
-            ...List.generate(4, (index) {
-              final isEliminated = quizState.eliminatedOptions != null && 
-                     quizState.eliminatedOptions!.contains(index);
-              final isSelected = quizState.selectedAnswerIndex == index;
-              final isCorrect = index == question.correctAnswerIndex;
-              final showAsCorrect = isCorrect && (quizState.isAnswerRevealed || quizState.showCorrectAnswer);
-              
-              Color buttonColor = Colors.blue;
-              if (isEliminated) {
-                buttonColor = Colors.grey;
-              } else if (quizState.isAnswerRevealed) {
-                if (isSelected) {
-                  buttonColor = isCorrect ? Colors.green : Colors.red;
-                } else if (isCorrect) {
-                  buttonColor = Colors.green;
-                }
-              } else if (showAsCorrect) {
-                buttonColor = Colors.green;
-              }
-              
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Opacity(
-                  opacity: isEliminated ? 0.5 : 1.0,
-                  child: ElevatedButton(
-                    onPressed: isEliminated || quizState.isAnswerRevealed ? null : () {
-                      ref.read(quizControllerProvider.notifier).selectAnswer(index);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
-                      disabledBackgroundColor: buttonColor,
-                      minimumSize: Size(double.infinity, 50),
-                    ),
-                    child: Text(
-                      question.options[index],
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  ),
-                ),
-              );
-            }),
-            
-            Spacer(),
-            
-            // Jokers
-            Container(
-              height: 60,
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey))
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: quizState.hasUsedHint || quizState.isAnswerRevealed ? null : () {
-                        ref.read(quizControllerProvider.notifier).useHint();
-                      },
-                      child: Icon(Icons.close, color: quizState.hasUsedHint ? Colors.grey : Colors.red),
-                    ),
-                  ),
-                  Container(width: 1, height: double.infinity, color: Colors.grey),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: quizState.hasUsedFiftyFifty || quizState.isAnswerRevealed ? null : () {
-                        ref.read(quizControllerProvider.notifier).useFiftyFifty();
-                      },
-                      child: Text(
-                        '50/50',
-                        style: TextStyle(
-                          color: quizState.hasUsedFiftyFifty ? Colors.grey : Colors.green,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(width: 1, height: double.infinity, color: Colors.grey),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: quizState.showCorrectAnswer || quizState.isAnswerRevealed ? null : () {
-                        ref.read(quizControllerProvider.notifier).showCorrectAnswerHint();
-                      },
-                      child: Icon(Icons.check, color: quizState.showCorrectAnswer ? Colors.grey : Colors.green),
-                    ),
-                  ),
-                  Container(width: 1, height: double.infinity, color: Colors.grey),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: quizState.hasUsedTimePause || quizState.isAnswerRevealed ? null : () {
-                        ref.read(quizControllerProvider.notifier).useTimePause();
-                      },
-                      child: Icon(
-                        Icons.notifications_off,
-                        color: quizState.hasUsedTimePause ? Colors.grey : Colors.red,
-                      ),
-                    ),
-                  ),
-                  Container(width: 1, height: double.infinity, color: Colors.grey),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: null,
-                      child: Icon(Icons.info_outline, color: Colors.grey[600]),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        backgroundColor: Colors.blue.shade500,
+        elevation: 0,
+        title: const Text(
+          "Market",
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
+        centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: _tabs,
+          indicator: const UnderlineTabIndicator(
+            borderSide: BorderSide(width: 3.0, color: Colors.amber),
+            insets: EdgeInsets.symmetric(horizontal: 16.0),
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelPadding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Heart tab shows avatars
+         _buildHeartsScreen(),
+          _buildPlaceholderContent("Check Marks"),
+          _buildPlaceholderContent("Fire Power-ups"),
+          _buildPlaceholderContent("Time Power-ups"),
+           _buildAvatarsGrid(),
+        ],
       ),
     );
   }
+
+  Widget _buildPlaceholderContent(String tabName) {
+    return Center(
+      child: Text(
+        "$tabName Content",
+        style: const TextStyle(fontSize: 20),
+      ),
+    );
+  }
+
+    Widget _buildHeartsScreen() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ListView(
+        children: [
+          _buildWatchAdItem(),
+          const SizedBox(height: 16),
+          _buildCoinItem("1 Heart", "600"),
+          const SizedBox(height: 16),
+          _buildMoneyItem("+10 Hearts", "0.49 €"),
+          const SizedBox(height: 16),
+          _buildInfiniteCoinItem("Infinite Hearts for 30 minutes", "15000"),
+          const SizedBox(height: 16),
+          _buildMoneyItem("Infinite Hearts for 1 hour", "0.99 €"),
+          const SizedBox(height: 16),
+          _buildMoneyItem("Infinite Hearts for 3 hours", "1.99 €"),
+        ],
+      ),
+    );
+  }
+
   
-  // Quiz sonu ekranı
-  Widget _buildResultScreen(BuildContext context, QuizState state) {
-    int correctAnswers = state.answerResults.where((result) => result == true).length;
-    int totalQuestions = state.questions.length;
-    
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Quiz Tamamlandı!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+  Widget _buildWatchAdItem() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8AA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 7,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.favorite,
+                    color: Colors.red,
+                    size: 30,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Get 1 Heart",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black.withOpacity(0.8),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 20),
-              Text(
-                'Skorunuz: $correctAnswers / $totalQuestions',
-                style: TextStyle(fontSize: 20),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Container(
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
               ),
-              SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () {
-                  // Yeniden başlat
-                },
-                child: Text('Yeniden Başla'),
+              child: const Center(
+                child: Icon(
+                  Icons.play_circle_outline,
+                  color: Colors.white,
+                  size: 40,
+                ),
               ),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoinItem(String title, String coins) {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8AA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 7,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.favorite,
+                    color: Colors.red,
+                    size: 30,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Container(
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    coins,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildCoinStack(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+Widget _buildMoneyItem(String title, String price) {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8AA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 7,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: Row(
+                children: [
+                  title.contains("Infinite")
+                      ? _buildInfiniteHeartIcon()
+                      : const Icon(
+                          Icons.favorite,
+                          color: Colors.red,
+                          size: 30,
+                        ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Container(
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  price,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfiniteCoinItem(String title, String coins) {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F8AA),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 7,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20),
+              child: Row(
+                children: [
+                  _buildInfiniteHeartIcon(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Container(
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    coins,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildCoinStack(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfiniteHeartIcon() {
+    return SizedBox(
+      width: 30,
+      height: 30,
+      child: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            child: Icon(
+              Icons.favorite,
+              color: Colors.red,
+              size: 24,
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 20,
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Text(
+                  "∞",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildCoinStack() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Icon(
+          Icons.monetization_on,
+          color: Colors.amber.shade800,
+          size: 26,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 6, top: 5),
+          child: Icon(
+            Icons.monetization_on,
+            color: Colors.amber.shade700,
+            size: 26,
           ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.only(right: 6, bottom: 5),
+          child: Icon(
+            Icons.monetization_on,
+            color: Colors.amber.shade600,
+            size: 26,
+          ),
+        ),
+      ],
     );
   }
 }
+Widget _buildAvatarsGrid() {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+       
+      final maxItemWidth = 300.0;
 
- 
+      return GridView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 4,
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: maxItemWidth,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 0.75,
+        ),
+        itemBuilder: (context, index) {
+          final avatars = [
+            {"name": "Business Man", "price": 4.99},
+            {"name": "Afro Style", "price": 6.99},
+            {"name": "Professor", "price": 7.99},
+            {"name": "Redhead", "price": 9.99},
+          ];
+          final avatar = avatars[index];
+       return _buildAvatarItem(
+  avatar["name"]! as String,
+  avatar["price"]! as double,
+);
+        },
+      );
+    },
+  );
+}
+
+  Widget _buildAvatarItem(String name, double price) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Container(
+                width: double.infinity,
+                alignment: Alignment.center,
+                child: _getAvatarImage(name),
+              ),
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade400,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              "\$${price.toStringAsFixed(2)}",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _getAvatarImage(String name) {
+    // In a real app, you would use actual avatar images here
+    // For this example, we're using placeholder icons
+    IconData icon;
+    Color color;
+    
+    switch (name) {
+      case "Business Man":
+        icon = Icons.business_center;
+        color = Colors.blue;
+        break;
+      case "Afro Style":
+        icon = Icons.face;
+        color = Colors.green;
+        break;
+      case "Professor":
+        icon = Icons.school;
+        color = Colors.brown;
+        break;
+      case "Redhead":
+        icon = Icons.face_retouching_natural;
+        color = Colors.red;
+        break;
+      default:
+        icon = Icons.person;
+        color = Colors.grey;
+    }
+    
+    return Icon(
+      icon,
+      size: 80,
+      color: color,
+    );
+  }

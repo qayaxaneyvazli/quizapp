@@ -137,13 +137,13 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildBody(int navIndex) {
     switch (navIndex) {
       case 0:
-        return const MessagesScreen();
+        return   MessagesScreen();
       case 1:
         return const RankScreen();
       case 2:
         return const HomeContentScreen(); // Default home screen
       case 3:
-        return   QuizScreen();
+        return   MarketScreen();
       case 4:
         return const SettingsScreen();
       default:
