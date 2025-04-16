@@ -61,8 +61,8 @@ class LeaderboardUser {
   });
 }
 
-class RankScreen extends ConsumerWidget {
-  const RankScreen({Key? key}) : super(key: key);
+class StatisticScreen extends ConsumerWidget {
+  const StatisticScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

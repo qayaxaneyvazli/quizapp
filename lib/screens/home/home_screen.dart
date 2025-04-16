@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/screens/chapters/chapters.dart';
+import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/market/market.dart';
 import 'package:quiz_app/screens/messages/messages.dart';
 import 'package:quiz_app/screens/rank/rank.dart';
 import 'package:quiz_app/screens/settings/settings.dart';
+import 'package:quiz_app/screens/statistic/statistic.dart';
 import 'package:quiz_app/widgets/topbar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
@@ -61,68 +64,92 @@ class HomeScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Top status bar with coins and timer
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: isTablet ? 8.h : 12.h),
-            color: const Color(0xFF4A7DFF),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  Builder(
-                    builder: (context) => InkWell(
-                      onTap: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                      child: const Icon(Icons.menu, color: Colors.white),
-                    ),
-                  ),
-                  const Spacer(),
-                  // Coins counter
-                  Container(
-                    padding: EdgeInsets.all(4.r),
-                    decoration: const BoxDecoration(
-                      color: Colors.amber,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.monetization_on, color: Colors.white, size: 20.r),
-                  ),
-                  SizedBox(width: 4.w),
-                  Text(
-                    "1000",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  // Timer
-                  const Icon(Icons.favorite, color: Colors.red),
-                  SizedBox(width: 4.w),
-                  Text(
-                    "7:30:25",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  // Money
-                  const Icon(Icons.attach_money, color: Colors.amber),
-                  SizedBox(width: 4.w),
-                  Text(
-                    "2500",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
-                    ),
-                  ),
-                ],
+       Container(
+  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: isTablet ? 8.h : 12.h),
+  color: const Color(0xFF4A7DFF),
+  child: SafeArea(
+    bottom: false,
+    child: Row(
+      children: [
+        Builder(
+          builder: (context) => InkWell(
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            child: const Icon(Icons.menu, color: Colors.white),
+          ),
+        ),
+        const Spacer(flex: 1),
+        // Coins counter
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(4.r),
+              decoration: const BoxDecoration(
+                color: Colors.amber,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.monetization_on, color: Colors.white, size: 20.r),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              "1000",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
               ),
             ),
-          ),
+          ],
+        ),
+        SizedBox(width: 16.w),
+        // Timer
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              "assets/icons/heart_top_menu.svg",
+              width: 30.w,
+              height: 30.w,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              "7:30:25",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(width: 16.w),
+        // Money
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              "assets/icons/coin_top_menu.svg",
+              width: 30.w,
+              height: 30.w,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              "2500",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+              ),
+            ),
+          ],
+        ),
+        const Spacer(flex: 1),
+      ],
+    ),
+  ),
+),
           
           // Body content based on navigation selection
           Expanded(
@@ -139,7 +166,7 @@ class HomeScreen extends ConsumerWidget {
       case 0:
         return   MessagesScreen();
       case 1:
-        return const RankScreen();
+        return   RankScreen();
       case 2:
         return const HomeContentScreen(); // Default home screen
       case 3:

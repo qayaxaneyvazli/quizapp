@@ -15,14 +15,8 @@ class MessagesScreen extends StatefulWidget {
 }
 
 class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
   final TextEditingController _messageController = TextEditingController();
-  
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
+  late TabController _tabController;
 
   @override
   void dispose() {
@@ -32,60 +26,9 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: Column(
-        children: [
-          // Custom Tab Bar
-          Container(
-            color: const Color(0xFF4D79FF), // Mavi arka plan
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: Colors.yellow,
-              indicatorWeight: 4,
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              tabs: const [
-                Tab(text: 'Chat'),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('System'),
-                      SizedBox(width: 5),
-                      CircleAvatar(
-                        backgroundColor: Colors.red,
-                        radius: 10,
-                        child: Text(
-                          '1',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Tab Bar View
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Chat Tab with input field
-                _buildChatTabWithInput(),
-                
-                // System Tab without input field
-                _buildSystemTab()
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   // New method that combines the chat tab with the input field
@@ -182,7 +125,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
       ),
     );
   }
-  
+
   Widget _buildChatTab() {
     return ListView(
       padding: const EdgeInsets.all(8),
@@ -238,7 +181,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
       ],
     );
   }
-  
+
   Widget _buildMessage({
     required String name,
     required String message,
@@ -255,7 +198,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
         : _buildSentMessageBubble(name, message, time, avatarText, avatarColor),
     );
   }
-  
+
   Widget _buildReceivedMessageBubble(
     String name, 
     String message, 
@@ -317,7 +260,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
       ),
     );
   }
-  
+
   Widget _buildSentMessageBubble(
     String name, 
     String message, 
@@ -379,7 +322,7 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
       ),
     );
   }
-  
+
   Widget _buildMessageInputField() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -410,6 +353,63 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
             child: const Icon(
               Icons.arrow_forward,
               color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      body: Column(
+        children: [
+          // Custom Tab Bar
+          Container(
+            color: const Color(0xFF4D79FF), // Mavi arka plan
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.yellow,
+              indicatorWeight: 4,
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              tabs: const [
+                Tab(text: 'Chat'),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('System'),
+                      SizedBox(width: 5),
+                      CircleAvatar(
+                        backgroundColor: Colors.red,
+                        radius: 10,
+                        child: Text(
+                          '1',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Tab Bar View
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Chat Tab with input field
+                _buildChatTabWithInput(),
+                
+                // System Tab without input field
+                _buildSystemTab()
+              ],
             ),
           ),
         ],
