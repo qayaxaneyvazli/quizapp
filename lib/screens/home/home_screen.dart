@@ -90,7 +90,11 @@ class HomeScreen extends ConsumerWidget {
                 color: Colors.amber,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.monetization_on, color: Colors.white, size: 20.r),
+              child: SvgPicture.asset(
+              "assets/icons/coin_top_menu_first.svg",
+              width: 27.w,
+              height: 27.w,
+            ),
             ),
             SizedBox(height: 4.h),
             Text(
@@ -110,8 +114,8 @@ class HomeScreen extends ConsumerWidget {
           children: [
             SvgPicture.asset(
               "assets/icons/heart_top_menu.svg",
-              width: 30.w,
-              height: 30.w,
+              width: 35.w,
+              height: 35.w,
             ),
             SizedBox(height: 4.h),
             Text(
