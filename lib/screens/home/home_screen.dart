@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:quiz_app/screens/chapters/chapters.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/market/market.dart';
@@ -12,23 +14,33 @@ import 'package:quiz_app/widgets/topbar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
- import 'package:country_flags/country_flags.dart';
+import '../../providers/theme_mode_provider.dart';
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navController = ref.watch(bottomNavProvider);
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    
     // Get screen width to determine if we're on a tablet
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
+    // Define colors based on theme
+    final backgroundColor = isDarkMode 
+        ? theme.scaffoldBackgroundColor 
+        : const Color(0xFFF0F0F0);
+    
+    final appBarColor = const Color(0xFF4A7DFF); // Keep blue for both modes
+
     return Scaffold(
       drawer: TopBar(),
-      backgroundColor: const Color(0xFFF0F0F0),
+      backgroundColor: backgroundColor,
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFF4A7DFF),
+        backgroundColor: appBarColor,
         selectedItemColor: AppColors.gold,
         unselectedItemColor: Colors.white.withOpacity(0.7),
         currentIndex: navController, // Use the provider value
@@ -64,96 +76,96 @@ class HomeScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Top status bar with coins and timer
-       Container(
-  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: isTablet ? 8.h : 12.h),
-  color: const Color(0xFF4A7DFF),
-  child: SafeArea(
-    bottom: false,
-    child: Row(
-      children: [
-        Builder(
-          builder: (context) => InkWell(
-            onTap: () {
-              Scaffold.of(context).openDrawer();
-            },
-            child: const Icon(Icons.menu, color: Colors.white),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: isTablet ? 8.h : 12.h),
+            color: appBarColor,
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  Builder(
+                    builder: (context) => InkWell(
+                      onTap: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                      child: const Icon(Icons.menu, color: Colors.white),
+                    ),
+                  ),
+                  const Spacer(flex: 1),
+                  // Coins counter
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(4.r),
+                        decoration: const BoxDecoration(
+                          color: Colors.amber,
+                          shape: BoxShape.circle,
+                        ),
+                        child: SvgPicture.asset(
+                          "assets/icons/coin_top_menu_first.svg",
+                          width: 27.w,
+                          height: 27.w,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        "1000",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(width: 16.w),
+                  // Timer
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/heart_top_menu.svg",
+                        width: 35.w,
+                        height: 35.w,
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        "7:30:25",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(width: 16.w),
+                  // Money
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        "assets/icons/coin_top_menu.svg",
+                        width: 30.w,
+                        height: 30.w,
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        "2500",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(flex: 1),
+                ],
+              ),
+            ),
           ),
-        ),
-        const Spacer(flex: 1),
-        // Coins counter
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.all(4.r),
-              decoration: const BoxDecoration(
-                color: Colors.amber,
-                shape: BoxShape.circle,
-              ),
-              child: SvgPicture.asset(
-              "assets/icons/coin_top_menu_first.svg",
-              width: 27.w,
-              height: 27.w,
-            ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              "1000",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(width: 16.w),
-        // Timer
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              "assets/icons/heart_top_menu.svg",
-              width: 35.w,
-              height: 35.w,
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              "7:30:25",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(width: 16.w),
-        // Money
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset(
-              "assets/icons/coin_top_menu.svg",
-              width: 30.w,
-              height: 30.w,
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              "2500",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16.sp,
-              ),
-            ),
-          ],
-        ),
-        const Spacer(flex: 1),
-      ],
-    ),
-  ),
-),
           
           // Body content based on navigation selection
           Expanded(
@@ -168,13 +180,13 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildBody(int navIndex) {
     switch (navIndex) {
       case 0:
-        return   MessagesScreen();
+        return MessagesScreen();
       case 1:
-        return   RankScreen();
+        return RankScreen();
       case 2:
         return const HomeContentScreen(); // Default home screen
       case 3:
-        return   MarketScreen();
+        return MarketScreen();
       case 4:
         return const SettingsScreen();
       default:
@@ -183,14 +195,16 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class HomeContentScreen extends StatelessWidget {
+class HomeContentScreen extends ConsumerWidget {
   const HomeContentScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    
     // Get screen dimensions to determine if we're on a tablet
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final isTablet = screenWidth > 600;
     
     // Calculate appropriate sizes based on device
@@ -203,6 +217,12 @@ class HomeContentScreen extends StatelessWidget {
     final gridCrossAxisCount = isTablet ? 4 : 2;
     final gridPadding = isTablet ? 12.w : 16.w;
     final gridItemSpacing = isTablet ? 10.w : 16.w;
+
+    // Define colors based on theme mode
+    final avatarBgColor = isDarkMode ? Colors.grey[800] : const Color(0xFFE8E4FF);
+    final avatarBorderColor = isDarkMode ? Colors.grey[700] : const Color(0xFFD5CFFF);
+    final usernameColor = isDarkMode ? Colors.white : Colors.black;
+    final tileBgColor = const Color(0xFFD5ACFF); // Keep consistent purple for menu tiles
     
     return Column(
       children: [
@@ -216,8 +236,8 @@ class HomeContentScreen extends StatelessWidget {
                 height: avatarSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFE8E4FF),
-                  border: Border.all(color: const Color(0xFFD5CFFF), width: isTablet ? 3.r : 4.r),
+                  color: avatarBgColor,
+                  border: Border.all(color: avatarBorderColor!, width: isTablet ? 3.r : 4.r),
                 ),
                 child: Center(
                   child: Image.asset(
@@ -225,25 +245,29 @@ class HomeContentScreen extends StatelessWidget {
                     width: avatarInnerSize,
                     height: avatarInnerSize,
                     errorBuilder: (context, error, stackTrace) {
-                      return Icon(Icons.person, size: avatarInnerSize * 0.75, color: Colors.grey);
+                      return Icon(
+                        Icons.person, 
+                        size: avatarInnerSize * 0.75, 
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                      );
                     },
                   ),
                 ),
               ),
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Country flag icon
-   Container(
-  padding: EdgeInsets.all(isTablet ? 3.r : 4.r),
-  decoration: const BoxDecoration(
-    shape: BoxShape.circle,
-  ),
-  child: CountryFlag.fromCountryCode(
-    'AZ',
-    height: flagSize,
-    width: flagSize,
-    shape: const Circle(),
-  ),
-),
+              Container(
+                padding: EdgeInsets.all(isTablet ? 3.r : 4.r),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: CountryFlag.fromCountryCode(
+                  'AZ',
+                  height: flagSize,
+                  width: flagSize,
+                  shape: const Circle(),
+                ),
+              ),
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
@@ -251,6 +275,7 @@ class HomeContentScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: usernameSize,
                   fontWeight: FontWeight.bold,
+                  color: usernameColor,
                 ),
               ),
             ],
@@ -271,24 +296,24 @@ class HomeContentScreen extends StatelessWidget {
               children: [
                 // Quiz button
                 GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ChapterScreen()),
-    );
-  },
-  child: _buildMenuTile(
-    icon: Icons.play_arrow,
-    title: "Quizz Spielen",
-    color: const Color(0xFFD5ACFF),
-    isTablet: isTablet,
-  ),
-),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ChapterScreen()),
+                    );
+                  },
+                  child: _buildMenuTile(
+                    icon: Icons.play_arrow,
+                    title: "Quizz Spielen",
+                    color: tileBgColor,
+                    isTablet: isTablet,
+                  ),
+                ),
                 // Duel button
                 _buildMenuTile(
                   icon: Icons.shield,
                   title: "Duell",
-                  color: const Color(0xFFD5ACFF),
+                  color: tileBgColor,
                   isTablet: isTablet,
                   customIcon: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -302,14 +327,14 @@ class HomeContentScreen extends StatelessWidget {
                 _buildMenuTile(
                   icon: Icons.calendar_today,
                   title: "Daily Login\nRewards",
-                  color: const Color(0xFFD5ACFF),
+                  color: tileBgColor,
                   isTablet: isTablet,
                 ),
                 // Event button
                 _buildMenuTile(
                   icon: Icons.emoji_events,
                   title: "Event",
-                  color: const Color(0xFFD5ACFF),
+                  color: tileBgColor,
                   isTablet: isTablet,
                 ),
                 // For tablet layout, add more menu items to fill the grid
@@ -317,14 +342,14 @@ class HomeContentScreen extends StatelessWidget {
                 //   _buildMenuTile(
                 //     icon: Icons.star,
                 //     title: "Achievements",
-                //     color: const Color(0xFFD5ACFF),
+                //     color: tileBgColor,
                 //     isTablet: isTablet,
                 //   ),
                 // if (isTablet)
                 //   _buildMenuTile(
                 //     icon: Icons.history,
                 //     title: "History",
-                //     color: const Color(0xFFD5ACFF),
+                //     color: tileBgColor,
                 //     isTablet: isTablet,
                 //   ),
               ],
