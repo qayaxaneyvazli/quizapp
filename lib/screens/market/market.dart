@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quiz_app/models/question/question.dart';
@@ -8,20 +7,16 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/theme_mode_provider.dart';
 
-import 'package:flutter/material.dart';
-
- 
- 
-
-class MarketScreen extends StatefulWidget {
+class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({Key? key}) : super(key: key);
 
   @override
-  State<MarketScreen> createState() => _MarketScreenState();
+  ConsumerState<MarketScreen> createState() => _MarketScreenState();
 }
 
-class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderStateMixin {
+class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
   final List<Tab> _tabs = [
@@ -46,12 +41,22 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // Watch the theme mode provider to react to changes
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      // Keep original background color in light mode
+      backgroundColor: isDarkMode 
+          ? colorScheme.background 
+          : Colors.grey.shade100,
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade500,
+        backgroundColor: isDarkMode 
+            ? colorScheme.primary 
+            : Colors.blue.shade500,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "Market",
           style: TextStyle(
             fontSize: 28,
@@ -63,9 +68,12 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabs,
-          indicator: const UnderlineTabIndicator(
-            borderSide: BorderSide(width: 3.0, color: Colors.amber),
-            insets: EdgeInsets.symmetric(horizontal: 16.0),
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(
+              width: 3.0, 
+              color: isDarkMode ? colorScheme.secondary : Colors.amber
+            ),
+            insets: const EdgeInsets.symmetric(horizontal: 16.0),
           ),
           indicatorSize: TabBarIndicatorSize.tab,
           labelPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -74,27 +82,31 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Heart tab shows avatars
-         _buildHeartsScreen(),
+          _buildHeartsScreen(),
           _buildPlaceholderContent("Check Marks"),
           _buildPlaceholderContent("Fire Power-ups"),
           _buildPlaceholderContent("Time Power-ups"),
-           _buildAvatarsGrid(),
+          _buildAvatarsGrid(),
         ],
       ),
     );
   }
 
   Widget _buildPlaceholderContent(String tabName) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    
     return Center(
       child: Text(
         "$tabName Content",
-        style: const TextStyle(fontSize: 20),
+        style: TextStyle(
+          fontSize: 20,
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
       ),
     );
   }
 
-    Widget _buildHeartsScreen() {
+  Widget _buildHeartsScreen() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
@@ -115,12 +127,16 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
     );
   }
 
-  
   Widget _buildWatchAdItem() {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8AA),
+        color: isDarkMode 
+            ? colorScheme.surface 
+            : const Color(0xFFF8F8AA),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -142,7 +158,9 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black.withOpacity(0.8),
+                      color: isDarkMode 
+                          ? colorScheme.onSurface
+                          : Colors.black.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -153,19 +171,17 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
             flex: 3,
             child: Container(
               height: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: isDarkMode ? colorScheme.primary : Colors.blue,
+                borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                 ),
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.play_circle_outline,
-                  color: Colors.white,
-                  size: 40,
-                ),
+              child: Icon(
+                Icons.play_circle_outline,
+                color: Colors.white,
+                size: 40,
               ),
             ),
           ),
@@ -175,10 +191,15 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
   }
 
   Widget _buildCoinItem(String title, String coins) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8AA),
+        color: isDarkMode 
+            ? colorScheme.surface 
+            : const Color(0xFFF8F8AA),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -200,7 +221,9 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black.withOpacity(0.8),
+                      color: isDarkMode 
+                          ? colorScheme.onSurface
+                          : Colors.black.withOpacity(0.8),
                     ),
                   ),
                 ],
@@ -211,9 +234,9 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
             flex: 3,
             child: Container(
               height: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: isDarkMode ? colorScheme.primary : Colors.green,
+                borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                 ),
@@ -240,12 +263,16 @@ class _MarketScreenState extends State<MarketScreen> with SingleTickerProviderSt
     );
   }
 
-
-Widget _buildMoneyItem(String title, String price) {
+  Widget _buildMoneyItem(String title, String price) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8AA),
+        color: isDarkMode 
+            ? colorScheme.surface 
+            : const Color(0xFFF8F8AA),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -264,12 +291,17 @@ Widget _buildMoneyItem(String title, String price) {
                           size: 30,
                         ),
                   const SizedBox(width: 12),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black.withOpacity(0.8),
+                  // Text widget'ını Expanded içine alarak taşmayı önlüyoruz
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode 
+                            ? colorScheme.onSurface
+                            : Colors.black.withOpacity(0.8),
+                      ),
                     ),
                   ),
                 ],
@@ -280,9 +312,9 @@ Widget _buildMoneyItem(String title, String price) {
             flex: 3,
             child: Container(
               height: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: isDarkMode ? colorScheme.primary : Colors.green,
+                borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                 ),
@@ -305,10 +337,15 @@ Widget _buildMoneyItem(String title, String price) {
   }
 
   Widget _buildInfiniteCoinItem(String title, String coins) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8AA),
+        color: isDarkMode 
+            ? colorScheme.surface 
+            : const Color(0xFFF8F8AA),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -327,7 +364,9 @@ Widget _buildMoneyItem(String title, String price) {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black.withOpacity(0.8),
+                        color: isDarkMode 
+                            ? colorScheme.onSurface
+                            : Colors.black.withOpacity(0.8),
                       ),
                     ),
                   ),
@@ -339,9 +378,9 @@ Widget _buildMoneyItem(String title, String price) {
             flex: 3,
             child: Container(
               height: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: isDarkMode ? colorScheme.primary : Colors.green,
+                borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(16),
                   bottomRight: Radius.circular(16),
                 ),
@@ -369,6 +408,8 @@ Widget _buildMoneyItem(String title, String price) {
   }
 
   Widget _buildInfiniteHeartIcon() {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    
     return SizedBox(
       width: 30,
       height: 30,
@@ -390,7 +431,7 @@ Widget _buildMoneyItem(String title, String price) {
               width: 20,
               height: 12,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDarkMode ? Colors.grey.shade800 : Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Center(
@@ -409,6 +450,7 @@ Widget _buildMoneyItem(String title, String price) {
       ),
     );
   }
+  
   Widget _buildCoinStack() {
     return Stack(
       alignment: Alignment.center,
@@ -437,48 +479,52 @@ Widget _buildMoneyItem(String title, String price) {
       ],
     );
   }
-}
-Widget _buildAvatarsGrid() {
-  return LayoutBuilder(
-    builder: (context, constraints) {
-       
-      final maxItemWidth = 300.0;
 
-      return GridView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 4,
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: maxItemWidth,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 0.75,
-        ),
-        itemBuilder: (context, index) {
-          final avatars = [
-            {"name": "Business Man", "price": 4.99},
-            {"name": "Afro Style", "price": 6.99},
-            {"name": "Professor", "price": 7.99},
-            {"name": "Redhead", "price": 9.99},
-          ];
-          final avatar = avatars[index];
-       return _buildAvatarItem(
-  avatar["name"]! as String,
-  avatar["price"]! as double,
-);
-        },
-      );
-    },
-  );
-}
+  Widget _buildAvatarsGrid() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxItemWidth = 300.0;
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: 4,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: maxItemWidth,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.75,
+          ),
+          itemBuilder: (context, index) {
+            final avatars = [
+              {"name": "Business Man", "price": 4.99},
+              {"name": "Afro Style", "price": 6.99},
+              {"name": "Professor", "price": 7.99},
+              {"name": "Redhead", "price": 9.99},
+            ];
+            final avatar = avatars[index];
+            return _buildAvatarItem(
+              avatar["name"]! as String,
+              avatar["price"]! as double,
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildAvatarItem(String name, double price) {
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? colorScheme.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: isDarkMode 
+                ? Colors.black.withOpacity(0.3) 
+                : Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -501,7 +547,7 @@ Widget _buildAvatarsGrid() {
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.blue.shade400,
+              color: isDarkMode ? colorScheme.primary : Colors.blue.shade400,
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
@@ -553,3 +599,4 @@ Widget _buildAvatarsGrid() {
       color: color,
     );
   }
+}

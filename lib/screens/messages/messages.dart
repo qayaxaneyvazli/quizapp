@@ -5,16 +5,16 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart';
+import '../../providers/theme_mode_provider.dart';
 
-class MessagesScreen extends StatefulWidget {
+class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({Key? key}) : super(key: key);
 
   @override
-  State<MessagesScreen> createState() => _MessagesScreenState();
+  ConsumerState<MessagesScreen> createState() => _MessagesScreenState();
 }
 
-class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProviderStateMixin {
+class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   late TabController _tabController;
 
@@ -44,6 +44,9 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
   }
 
   Widget _buildSystemTab() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -51,28 +54,28 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
           title: "Heart",
           icon: Icons.favorite,
           iconColor: Colors.red,
-          backgroundColor: Colors.yellow[200]!,
+          backgroundColor: colorScheme.surface,
         ),
         const SizedBox(height: 12),
         _buildNotificationItem(
           title: "Super package",
           icon: Icons.card_giftcard,
           iconColor: Colors.red[400]!,
-          backgroundColor: Colors.grey[100]!,
+          backgroundColor: colorScheme.surface,
         ),
         const SizedBox(height: 12),
         _buildNotificationItem(
           title: "System update",
           icon: Icons.error,
           iconColor: Colors.red[400]!,
-          backgroundColor: Colors.grey[100]!,
+          backgroundColor: colorScheme.surface,
         ),
         const SizedBox(height: 12),
         _buildNotificationItem(
           title: "Notifications",
           icon: Icons.notifications,
           iconColor: Colors.pink[400]!,
-          backgroundColor: Colors.grey[100]!,
+          backgroundColor: colorScheme.surface,
         ),
       ],
     );
@@ -84,13 +87,15 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
     required Color iconColor,
     required Color backgroundColor,
   }) {
+    final theme = Theme.of(context);
+    
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color.fromARGB(255, 192, 188, 188).withOpacity(0.2),
+            color: theme.shadowColor.withOpacity(0.2),
             spreadRadius: 5,
             blurRadius: 5,
             offset: const Offset(0, 1),
@@ -103,9 +108,10 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           Container(
@@ -206,11 +212,13 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
     String avatarText, 
     Color? avatarColor
   ) {
+    final theme = Theme.of(context);
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: Colors.grey[300]!, width: 2.2),
+        border: Border.all(color: theme.dividerColor, width: 2.2),
       ),
       padding: const EdgeInsets.all(14),
       child: Row(
@@ -234,15 +242,16 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       time,
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 12,
                       ),
                     ),
@@ -251,7 +260,10 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                 const SizedBox(height: 8),
                 Text(
                   message,
-                  style: const TextStyle(fontSize: 15),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -268,11 +280,17 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
     String avatarText, 
     Color? avatarColor
   ) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xBBD9FF99), // Transparan açık yeşil
+        color: isDarkMode ? Color(0xFF304D00) : const Color(0xBBD9FF99),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green[200]!, width: 0.5),
+        border: Border.all(
+          color: isDarkMode ? Colors.green[800]! : Colors.green[200]!, 
+          width: 0.5
+        ),
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -287,15 +305,16 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       time,
                       style: TextStyle(
-                        color: Colors.grey[700],
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
                         fontSize: 12,
                       ),
                     ),
@@ -304,7 +323,10 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
                 const SizedBox(height: 8),
                 Text(
                   message,
-                  style: const TextStyle(fontSize: 15),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -324,10 +346,13 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
   }
 
   Widget _buildMessageInputField() {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: isDarkMode ? theme.colorScheme.surface : Colors.grey[200],
         borderRadius: BorderRadius.circular(30),
       ),
       margin: const EdgeInsets.all(16),
@@ -336,23 +361,25 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
           Expanded(
             child: TextField(
               controller: _messageController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Type a message',
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
               ),
+              style: TextStyle(color: theme.colorScheme.onSurface),
             ),
           ),
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.blue[600],
+              color: theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.arrow_forward,
-              color: Colors.white,
+              color: theme.colorScheme.onPrimary,
             ),
           ),
         ],
@@ -362,20 +389,23 @@ class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // Custom Tab Bar
           Container(
-            color: const Color(0xFF4D79FF), // Mavi arka plan
+            color: theme.colorScheme.primary,
             child: TabBar(
               controller: _tabController,
               indicatorColor: Colors.yellow,
               indicatorWeight: 4,
               indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
+              labelColor: theme.colorScheme.onPrimary,
+              unselectedLabelColor: theme.colorScheme.onPrimary.withOpacity(0.7),
               tabs: const [
                 Tab(text: 'Chat'),
                 Tab(

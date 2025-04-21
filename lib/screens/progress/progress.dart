@@ -1,56 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/models/progress/progress.dart';
+import 'package:quiz_app/providers/progress/progress_provider.dart';
+import 'package:quiz_app/providers/theme_mode_provider.dart';
 
 // Provider for quiz progress data
-final quizProgressProvider = StateProvider<List<QuizQuestion>>((ref) {
-  return [
-    QuizQuestion(
-      question: "What is the capital of Azerbaijan?",
-      userAnswer: "Baku",
-      correctAnswer: "Baku",
-      imageUrl: "assets/images/baku.jpg",
-      isCorrect: true,
-    ),
-    QuizQuestion(
-      question: "What is the largest planet in our solar system?",
-      userAnswer: "Jupiter",
-      correctAnswer: "Jupiter",
-      imageUrl: null,
-      isCorrect: true,
-    ),
-    QuizQuestion(
-      question: "What is 2 + 2?",
-      userAnswer: "4",
-      correctAnswer: "4",
-      imageUrl: null,
-      isCorrect: true,
-    ),
-    QuizQuestion(
-      question: "Which famous Japanese electronic company was originally founded as a rice cooker manufacturer?",
-      userAnswer: "Panasonic",
-      correctAnswer: "Sony",
-      imageUrl: null,
-      isCorrect: false,
-    ),
-  ];
-});
 
-class QuizQuestion {
-  final String question;
-  final String userAnswer;
-  final String correctAnswer;
-  final String? imageUrl;
-  final bool isCorrect;
 
-  QuizQuestion({
-    required this.question,
-    required this.userAnswer,
-    required this.correctAnswer,
-    this.imageUrl,
-    required this.isCorrect,
-  });
-}
 
 class ProgressScreen extends ConsumerWidget {
   const ProgressScreen({Key? key}) : super(key: key);
@@ -58,22 +15,27 @@ class ProgressScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quizQuestions = ref.watch(quizProgressProvider);
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFCCF2F4), // Light mint background
+      // For light mode, use the original light mint color, for dark mode use theme background
+      backgroundColor: isDarkMode ? theme.scaffoldBackgroundColor : const Color(0xFFCCF2F4),
       body: SafeArea(
         child: Column(
           children: [
             // Progress header
             Container(
-              color: const Color(0xFF5B8DEF),
+              // Use the original blue for light mode, theme primary for dark mode
+              color: isDarkMode ? colorScheme.primary : const Color(0xFF5B8DEF),
               padding: EdgeInsets.symmetric(vertical: 16.h),
               child: Row(
                 children: [
                   IconButton(
                     icon: Icon(
                       Icons.arrow_back,
-                      color: Colors.white,
+                      color: Colors.white, // White works on both blue backgrounds
                       size: 24.r,
                     ),
                     onPressed: () {
@@ -85,7 +47,7 @@ class ProgressScreen extends ConsumerWidget {
                       child: Text(
                         "Progress",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.white, // White works on both blue backgrounds
                           fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
                         ),
@@ -103,6 +65,7 @@ class ProgressScreen extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(vertical: 16.h),
                 itemCount: quizQuestions.length,
                 separatorBuilder: (context, index) => Divider(
+                  // Use a dark color that works in both modes
                   color: const Color.fromARGB(255, 49, 48, 48),
                   thickness: 2.h,
                   indent: 16.w,
@@ -110,7 +73,7 @@ class ProgressScreen extends ConsumerWidget {
                 ),
                 itemBuilder: (context, index) {
                   final question = quizQuestions[index];
-                  return _buildQuestionItem(question);
+                  return _buildQuestionItem(question, isDarkMode);
                 },
               ),
             ),
@@ -120,7 +83,7 @@ class ProgressScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuestionItem(QuizQuestion question) {
+  Widget _buildQuestionItem(QuizQuestion question, bool isDarkMode) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       child: Column(
@@ -141,12 +104,13 @@ class ProgressScreen extends ConsumerWidget {
                     return Container(
                       width: double.infinity,
                       height: 200.h,
-                      color: Colors.grey[300],
+                      // Use appropriate color for error placeholder
+                      color: isDarkMode ? Colors.grey[800] : Colors.grey[300],
                       child: Center(
                         child: Icon(
                           Icons.image_not_supported,
                           size: 40.r,
-                          color: Colors.grey[600],
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
                     );
@@ -161,7 +125,8 @@ class ProgressScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              // Black text for light mode, white text for dark mode
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           
@@ -212,7 +177,7 @@ class ProgressScreen extends ConsumerWidget {
       child: Text(
         answer,
         style: TextStyle(
-          color: Colors.white,
+          color: Colors.white, // White text works well on both green and red
           fontSize: 16.sp,
           fontWeight: FontWeight.w500,
         ),

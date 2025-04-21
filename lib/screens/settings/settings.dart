@@ -1,21 +1,23 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/providers/theme_mode_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
+ 
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
   @override
-  _SettingsScreenState createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool isMusicOn = true;
-  bool isDarkModeOn = false;
   bool isNotificationsOn = true;
-bool get musicStatus => isMusicOn;
+
   final List<String> menuItems = [
     'Language',
     'Terms of Service',
@@ -27,7 +29,6 @@ bool get musicStatus => isMusicOn;
     'Report a Problem',
   ];
 
-   
   late List<bool> expanded;
 
   @override
@@ -38,36 +39,36 @@ bool get musicStatus => isMusicOn;
 
   @override
   Widget build(BuildContext context) {
+    final isDarkModeOn = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // 🎵 Ayar Satırları: Music, Dark Mode ve Notifications ikonlarıyla
           _buildSwitchTile(
             title: 'Music',
             value: isMusicOn,
-              iconColor: Colors.blueAccent,
-             icon: Icons.music_note,
+            icon: Icons.music_note,
+            iconColor: colorScheme.primary,
             onChanged: (val) => setState(() => isMusicOn = val),
           ),
           _buildSwitchTile(
             title: 'Dark Mode',
             value: isDarkModeOn,
-            icon: Icons.dark_mode,
-            iconColor: Colors.black45,
-            onChanged: (val) => setState(() => isDarkModeOn = val),
+            icon: isDarkModeOn ? Icons.dark_mode : Icons.light_mode,
+            iconColor: isDarkModeOn ? Colors.white70 : Colors.amber,
+            onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
           ),
-        _buildSwitchTile(
+          _buildSwitchTile(
             title: 'Notifications',
             value: isNotificationsOn,
             icon: Icons.notifications,
-            iconColor: Colors.redAccent,
+            iconColor: colorScheme.secondary,
             onChanged: (val) => setState(() => isNotificationsOn = val),
           ),
-
           const SizedBox(height: 20),
-
-          // 🗂️ Menü Liste Elemanları: Tıklanabilir, genişleyen alanlı
           Column(
             children: List.generate(menuItems.length, (index) {
               return Column(
@@ -82,7 +83,7 @@ bool get musicStatus => isMusicOn;
                       margin: const EdgeInsets.symmetric(vertical: 5.0),
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: Colors.greenAccent.shade100,
+                        color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Row(
@@ -90,26 +91,24 @@ bool get musicStatus => isMusicOn;
                         children: [
                           Text(
                             menuItems[index],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
-                              color: Colors.black87,
+                              color: colorScheme.onSurface,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          // Ok simgesi tıklanma durumuna göre döner
                           Transform.rotate(
                             angle: expanded[index] ? pi : 0,
-                            child: const Icon(
+                            child: Icon(
                               Icons.arrow_forward_ios,
                               size: 16,
-                              color: Colors.black54,
+                              color: colorScheme.onSurface.withOpacity(0.7),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  // Genişleyen detay alanı
                   AnimatedSize(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
@@ -122,12 +121,15 @@ bool get musicStatus => isMusicOn;
                         padding: const EdgeInsets.all(16.0),
                         margin: const EdgeInsets.only(top: 5.0, bottom: 10.0),
                         decoration: BoxDecoration(
-                          color: Colors.greenAccent.shade100,
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(8.0),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Detaylar buraya gelecek...',
-                          style: TextStyle(fontSize: 14, color: Colors.black87),
+                          style: TextStyle(
+                            fontSize: 14, 
+                            color: colorScheme.onSurface,
+                          ),
                         ),
                       ),
                     ),
@@ -141,32 +143,35 @@ bool get musicStatus => isMusicOn;
     );
   }
 
-Widget _buildSwitchTile({
-  required String title,
-  required bool value,
-  required IconData icon,
-  required Color iconColor,
-  required ValueChanged<bool> onChanged,
-}) {
-  return Card(
-    child: ListTile(
-      leading: Icon(icon, color: iconColor),
-      title: Text(title),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-        trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-          return states.contains(MaterialState.selected)
-              ? Colors.blue
-              : Colors.grey.withOpacity(0.5);
-        }),
-        thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-          return states.contains(MaterialState.selected)
-              ? Colors.white
-              : Colors.grey;
-        }),
+  Widget _buildSwitchTile({
+    required String title,
+    required bool value,
+    required IconData icon,
+    required Color iconColor,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Card(
+      child: ListTile(
+        leading: Icon(icon, color: iconColor),
+        title: Text(title),
+        trailing: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: theme.colorScheme.primary,
+          trackColor: MaterialStateProperty.resolveWith<Color>((states) {
+            return states.contains(MaterialState.selected)
+                ? theme.colorScheme.primary 
+                : theme.colorScheme.onSurface.withOpacity(0.3);
+          }),
+          thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
+            return states.contains(MaterialState.selected)
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface.withOpacity(0.9);
+          }),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

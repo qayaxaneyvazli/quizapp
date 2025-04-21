@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:country_flags/country_flags.dart';
+import '../../providers/theme_mode_provider.dart';
 
 // Provider for leaderboard data
 final leaderboardProvider = StateProvider<List<LeaderboardUser>>((ref) {
@@ -68,6 +68,17 @@ class RankScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final leaderboard = ref.watch(leaderboardProvider);
     final userStats = ref.watch(userStatsProvider);
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    
+    // Colors for dark and light mode
+    final trophyBackgroundColor = isDarkMode 
+        ? Color(0xFF8B7500) // Darker gold for dark mode
+        : Color(0xFFFFD700); // Original gold for light mode
+        
+    final userSectionColor = isDarkMode
+        ? Color(0xFF2E4027) // Dark green for dark mode
+        : Color(0xFFAAFF99); // Light green for light mode
     
     // Format the hearts duration
     String formattedHeartsDuration = _formatDuration(userStats.heartsDuration);
@@ -77,27 +88,24 @@ class RankScreen extends ConsumerWidget {
     final isTablet = screenWidth > 600;
     
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Top stats section
-       
-          
           // Trophy section
           Expanded(
             flex: 2,
             child: Container(
-              color: const Color(0xFFFFD700), // Gold color
+              color: trophyBackgroundColor,
               width: double.infinity,
               child: Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTrophy(color: Colors.brown, scale: 0.9),
-                    SizedBox(width: 10.w),
-                    _buildTrophy(color: Colors.grey, scale: 1.0),
-                    SizedBox(width: 10.w),
-                    _buildTrophy(color: Colors.redAccent, scale: 0.9),
+                    _buildTrophy(color: Colors.brown, scale: 0.9, isDarkMode: isDarkMode),
+                    SizedBox(width: 10),
+                    _buildTrophy(color: isDarkMode ? Colors.grey[700]! : Colors.grey, scale: 1.0, isDarkMode: isDarkMode),
+                    SizedBox(width: 10),
+                    _buildTrophy(color: isDarkMode ? Colors.red[900]! : Colors.redAccent, scale: 0.9, isDarkMode: isDarkMode),
                   ],
                 ),
               ),
@@ -106,40 +114,43 @@ class RankScreen extends ConsumerWidget {
           
           // Current user section
           Container(
-            color: const Color(0xFFAAFF99), // Light green
-            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+            color: userSectionColor,
+            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             child: Row(
               children: [
                 Text(
                   userStats.rank.toString(),
                   style: TextStyle(
-                    fontSize: isTablet ? 18.sp : 22.sp,
+                    fontSize: isTablet ? 18 : 22,
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(width: 12.w),
-                _buildUserAvatar(userStats.countryCode),
-                SizedBox(width: 12.w),
+                SizedBox(width: 12),
+                _buildUserAvatar(userStats.countryCode, isDarkMode),
+                SizedBox(width: 12),
                 Text(
                   userStats.username,
                   style: TextStyle(
-                    fontSize: isTablet ? 16.sp : 20.sp,
+                    fontSize: isTablet ? 16 : 20,
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
                 Text(
                   userStats.score.toString(),
                   style: TextStyle(
-                    fontSize: isTablet ? 18.sp : 22.sp,
+                    fontSize: isTablet ? 18 : 22,
                     fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(width: 4.w),
+                SizedBox(width: 4),
                 Icon(
                   Icons.star,
-                  color: Colors.purple,
-                  size: isTablet ? 20.r : 24.r,
+                  color: isDarkMode ? Colors.purpleAccent : Colors.purple,
+                  size: isTablet ? 20 : 24,
                 ),
               ],
             ),
@@ -149,20 +160,24 @@ class RankScreen extends ConsumerWidget {
           Expanded(
             flex: 3,
             child: Container(
-              color: const Color(0xFFFFD700), // Gold color
+              color: trophyBackgroundColor,
               child: ListView.builder(
                 itemCount: leaderboard.length,
                 itemBuilder: (context, index) {
                   final user = leaderboard[index];
                   return Container(
-                    margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
-                    padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                    margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFD700),
-                      borderRadius: BorderRadius.circular(8.r),
+                      color: isDarkMode 
+                          ? Color(0xFF6B5900) // Slightly lighter gold for dark mode items
+                          : const Color(0xFFFFD700),
+                      borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: isDarkMode 
+                              ? Colors.black.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -173,33 +188,36 @@ class RankScreen extends ConsumerWidget {
                         Text(
                           user.id.toString(),
                           style: TextStyle(
-                            fontSize: isTablet ? 16.sp : 20.sp,
+                            fontSize: isTablet ? 16 : 20,
                             fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        _buildUserAvatar(user.countryCode),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: 12),
+                        _buildUserAvatar(user.countryCode, isDarkMode),
+                        SizedBox(width: 12),
                         Text(
                           user.username,
                           style: TextStyle(
-                            fontSize: isTablet ? 14.sp : 18.sp,
+                            fontSize: isTablet ? 14 : 18,
                             fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           user.score.toString(),
                           style: TextStyle(
-                            fontSize: isTablet ? 16.sp : 20.sp,
+                            fontSize: isTablet ? 16 : 20,
                             fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(width: 4.w),
+                        SizedBox(width: 4),
                         Icon(
                           Icons.star,
-                          color: Colors.purple,
-                          size: isTablet ? 18.r : 22.r,
+                          color: isDarkMode ? Colors.purpleAccent : Colors.purple,
+                          size: isTablet ? 18 : 22,
                         ),
                       ],
                     ),
@@ -222,8 +240,8 @@ class RankScreen extends ConsumerWidget {
     return Column(
       children: [
         Container(
-          width: 50.r,
-          height: 50.r,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             color: bgColor,
             shape: BoxShape.circle,
@@ -232,16 +250,16 @@ class RankScreen extends ConsumerWidget {
             child: Icon(
               icon,
               color: iconColor,
-              size: 30.r,
+              size: 30,
             ),
           ),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Text(
           value,
           style: TextStyle(
             color: Colors.white,
-            fontSize: 18.sp,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -249,46 +267,50 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrophy({required Color color, required double scale}) {
+  Widget _buildTrophy({required Color color, required double scale, required bool isDarkMode}) {
+    // Adjust colors for better visibility in dark mode
+    final baseColor = isDarkMode ? color.withOpacity(0.8) : color;
+    final detailColor = isDarkMode ? Colors.brown[700]! : Colors.brown.withOpacity(0.8);
+    
     return Transform.scale(
       scale: scale,
       child: Container(
-        width: 100.r,
-        height: 140.r,
+        width: 100,
+        height: 140,
         child: Column(
           children: [
             Container(
-              width: 80.r,
-              height: 100.r,
+              width: 80,
+              height: 100,
               decoration: BoxDecoration(
-                color: color,
+                color: baseColor,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(40.r),
-                  topRight: Radius.circular(40.r),
+                  topLeft: Radius.circular(40),
+                  topRight: Radius.circular(40),
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    width: 15.r,
-                    height: 40.r,
+                    width: 15,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: color,
+                      color: baseColor,
                       borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(20.r),
-                        bottomRight: Radius.circular(20.r),
+                        topRight: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
                       ),
                     ),
                   ),
                   Container(
-                    width: 15.r,
-                    height: 40.r,
+                    width: 15,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: color,
+                      color: baseColor,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20.r),
-                        bottomLeft: Radius.circular(20.r),
+                        topLeft: Radius.circular(20),
+                        bottomLeft: Radius.circular(20),
                       ),
                     ),
                   ),
@@ -296,16 +318,16 @@ class RankScreen extends ConsumerWidget {
               ),
             ),
             Container(
-              width: 40.r,
-              height: 20.r,
-              color: color.withOpacity(0.8),
+              width: 40,
+              height: 20,
+              color: baseColor.withOpacity(0.8),
             ),
             Container(
-              width: 60.r,
-              height: 20.r,
+              width: 60,
+              height: 20,
               decoration: BoxDecoration(
-                color: Colors.brown.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(4.r),
+                color: detailColor,
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ],
@@ -314,33 +336,33 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildUserAvatar(String countryCode) {
+  Widget _buildUserAvatar(String countryCode, bool isDarkMode) {
     return Stack(
       children: [
         CircleAvatar(
-          radius: 25.r,
-          backgroundColor: Colors.grey[300],
+          radius: 25,
+          backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[300],
           child: Icon(
             Icons.person,
-            size: 30.r,
-            color: Colors.grey[700],
+            size: 30,
+            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
           ),
         ),
         Positioned(
           bottom: 0,
           right: 0,
           child: Container(
-            width: 20.r,
-            height: 20.r,
+            width: 20,
+            height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: isDarkMode ? Colors.black : Colors.white, width: 2),
             ),
             child: ClipOval(
               child: CountryFlag.fromCountryCode(
                 countryCode,
-                height: 20.r,
-                width: 20.r,
+                height: 20,
+                width: 20,
               ),
             ),
           ),

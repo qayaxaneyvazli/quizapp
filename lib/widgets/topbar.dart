@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'package:quiz_app/screens/account/profile.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/progress/progress.dart';
 
-class TopBar extends StatelessWidget {
+class TopBar extends ConsumerWidget {
   const TopBar({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Get current theme mode
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+    
     return Drawer(
-      backgroundColor: Color.fromARGB(255, 250, 250, 250),
+      // Use theme's background color instead of hardcoded value
+      backgroundColor: theme.scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           children: [
@@ -17,7 +24,8 @@ class TopBar extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 24),
-              color: const Color(0xFF4A7DFF),
+              // Use primary color from theme
+              color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF4A7DFF),
               child: Column(
                 children: [
                   // Avatar container
@@ -26,7 +34,7 @@ class TopBar extends StatelessWidget {
                     height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFE8E4FF),
+                      color: isDarkMode ? theme.colorScheme.surface : const Color(0xFFE8E4FF),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(40),
@@ -34,7 +42,8 @@ class TopBar extends StatelessWidget {
                         'assets/images/avatar.png',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return Icon(Icons.person, size: 48, color: Colors.grey);
+                          return Icon(Icons.person, size: 48, 
+                              color: isDarkMode ? Colors.white : Colors.grey);
                         },
                       ),
                     ),
@@ -58,20 +67,24 @@ class TopBar extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                _buildMenuItem(
-  icon: Icons.trending_up,
-  label: "Progress",
-  onTap: () {
-    Navigator.pop(context);
-    // Navigate to progress screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ProgressScreen()),
-    );
-  },
-),
+                  _buildMenuItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    icon: Icons.trending_up,
+                    label: "Progress",
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Navigate to progress screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ProgressScreen()),
+                      );
+                    },
+                  ),
                   
                   _buildMenuItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
                     icon: Icons.bar_chart,
                     label: "Statistic",
                     leading: Image.asset(
@@ -79,7 +92,8 @@ class TopBar extends StatelessWidget {
                       width: 24,
                       height: 24,
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.bar_chart, size: 24, color: const Color.fromARGB(255, 8, 8, 8));
+                        return Icon(Icons.bar_chart, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
                       },
                     ),
                     onTap: () {
@@ -88,39 +102,44 @@ class TopBar extends StatelessWidget {
                     },
                   ),
                   
-             _buildMenuItem(
-  icon: Icons.person,
-  label: "Account",
-  onTap: () {
-    Navigator.pop(context);
-    // Navigate to account screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AccountPage()),
-    );
-  },
-),
+                  _buildMenuItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    icon: Icons.person,
+                    label: "Account",
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Navigate to account screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AccountPage()),
+                      );
+                    },
+                  ),
                   
-             _buildMenuItem(
-  icon: Icons.work,
-  label: "Inventory",
-  leading: Image.asset(
-    'assets/images/inventory_icon.png',
-    width: 24,
-    height: 24,
-    errorBuilder: (context, error, stackTrace) {
-      return Icon(Icons.work, size: 24, color: const Color.fromARGB(255, 15, 15, 15));
-    },
-  ),
-  onTap: () {
-    Navigator.pop(context);
-    // Navigate to inventory screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => InventoryScreen()),
-    );
-  },
-),
+                  _buildMenuItem(
+                    context: context,
+                    isDarkMode: isDarkMode,
+                    icon: Icons.work,
+                    label: "Inventory",
+                    leading: Image.asset(
+                      'assets/images/inventory_icon.png',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.work, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 15, 15, 15));
+                      },
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Navigate to inventory screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => InventoryScreen()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -128,7 +147,8 @@ class TopBar extends StatelessWidget {
             // Bottom settings button
             Container(
               width: double.infinity,
-              color: const Color(0xFF2C4A9A),
+              // Use slightly darker variant of primary color for the settings button
+              color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.5) : const Color(0xFF2C4A9A),
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -156,21 +176,26 @@ class TopBar extends StatelessWidget {
   }
 
   Widget _buildMenuItem({
+    required BuildContext context,
+    required bool isDarkMode,
     IconData? icon,
     required String label,
     Widget? leading,
     required VoidCallback onTap,
   }) {
+    final textColor = isDarkMode ? Colors.white70 : const Color.fromARGB(255, 12, 12, 12);
+    final iconColor = isDarkMode ? Colors.white70 : const Color.fromARGB(255, 14, 13, 13);
+    
     return ListTile(
       leading: leading ?? Icon(
         icon,
-        color: const Color.fromARGB(255, 14, 13, 13),
+        color: iconColor,
         size: 24,
       ),
       title: Text(
         label,
         style: TextStyle(
-          color: const Color.fromARGB(255, 12, 12, 12),
+          color: textColor,
           fontSize: 16,
         ),
       ),

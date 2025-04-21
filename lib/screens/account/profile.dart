@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:quiz_app/providers/user/user_provider.dart';
-
-
+import 'package:quiz_app/providers/theme_mode_provider.dart';
 
 class AccountPage extends ConsumerWidget {
   const AccountPage({Key? key}) : super(key: key);
@@ -12,15 +11,17 @@ class AccountPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(userProfileProvider);
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
     
     // Get screen dimensions to determine if we're on a tablet
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF5B8DEF),
+        backgroundColor: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF5B8DEF),
         elevation: 0,
         title: Text(
           'Account',
@@ -41,7 +42,7 @@ class AccountPage extends ConsumerWidget {
           // Stats section at top
           Container(
             padding: EdgeInsets.symmetric(vertical: 16.h),
-            color: const Color(0xFF5B8DEF),
+            color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF5B8DEF),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -79,14 +80,18 @@ class AccountPage extends ConsumerWidget {
                     SizedBox(height: 20.h),
                     // Avatar
                     _buildProfileItem(
+                      context: context,
+                      isDarkMode: isDarkMode,
                       child: CircleAvatar(
                         radius: isTablet ? 40.r : 50.r,
-                        backgroundColor: const Color(0xFFEFE5FF),
+                        backgroundColor: isDarkMode ? theme.colorScheme.surface : const Color(0xFFEFE5FF),
                         backgroundImage: userProfile.avatarUrl.isNotEmpty
                             ? NetworkImage(userProfile.avatarUrl)
                             : null,
                         child: userProfile.avatarUrl.isEmpty
-                            ? Icon(Icons.person, size: isTablet ? 40.r : 50.r, color: Colors.grey)
+                            ? Icon(Icons.person, 
+                                size: isTablet ? 40.r : 50.r, 
+                                color: isDarkMode ? Colors.white54 : Colors.grey)
                             : null,
                       ),
                       onEdit: () {
@@ -98,11 +103,17 @@ class AccountPage extends ConsumerWidget {
                     
                     // Country flag
                     _buildProfileItem(
+                      context: context,
+                      isDarkMode: isDarkMode,
                       child: Container(
                         width: isTablet ? 80.r : 100.r,
                         height: isTablet ? 80.r : 100.r,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDarkMode ? Colors.white30 : Colors.transparent,
+                            width: 1.h,
+                          ),
                         ),
                         child: CountryFlag.fromCountryCode(
                           userProfile.countryCode,
@@ -120,16 +131,22 @@ class AccountPage extends ConsumerWidget {
                     
                     // Username field
                     _buildProfileItem(
+                      context: context,
+                      isDarkMode: isDarkMode,
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         child: TextField(
+                          controller: TextEditingController(text: userProfile.username),
                           decoration: InputDecoration(
                             hintText: 'Enter your username',
-                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            hintStyle: TextStyle(
+                              color: isDarkMode ? Colors.white38 : Colors.grey[400],
+                            ),
                             border: InputBorder.none,
                           ),
                           style: TextStyle(
                             fontSize: isTablet ? 14.sp : 16.sp,
+                            color: isDarkMode ? Colors.white : Colors.black,
                           ),
                           onChanged: (value) {
                             ref.read(userProfileProvider.notifier).updateUsername(value);
@@ -152,16 +169,28 @@ class AccountPage extends ConsumerWidget {
                             'ID: ${userProfile.userId}',
                             style: TextStyle(
                               fontSize: isTablet ? 14.sp : 16.sp,
-                              color: Colors.grey[600],
+                              color: isDarkMode ? Colors.white60 : Colors.grey[600],
                             ),
                           ),
                           const Spacer(),
                           IconButton(
-                            icon: Icon(Icons.copy, size: isTablet ? 20.r : 24.r),
+                            icon: Icon(
+                              Icons.copy, 
+                              size: isTablet ? 20.r : 24.r,
+                              color: isDarkMode ? Colors.white70 : Colors.black87,
+                            ),
                             onPressed: () {
                               // Copy ID to clipboard
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('ID copied to clipboard')),
+                                SnackBar(
+                                  content: Text(
+                                    'ID copied to clipboard',
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.white : Colors.black87,
+                                    ),
+                                  ),
+                                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                                ),
                               );
                             },
                           ),
@@ -214,38 +243,42 @@ class AccountPage extends ConsumerWidget {
     );
   }
 
- Widget _buildProfileItem({
-  required Widget child, 
-  required VoidCallback onEdit,
-  required bool isTablet,
-}) {
-  return Container(
-    decoration: BoxDecoration(
-      border: Border(
-        bottom: BorderSide(
-          color: Colors.grey[300]!,
-          width: 1.h,
+  Widget _buildProfileItem({
+    required BuildContext context,
+    required bool isDarkMode,
+    required Widget child, 
+    required VoidCallback onEdit,
+    required bool isTablet,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isDarkMode ? Colors.white24 : Colors.grey[300]!,
+            width: 1.h,
+          ),
         ),
       ),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: child,
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: child,
+            ),
           ),
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.edit,
-            color: Colors.black,
-            size: isTablet ? 20.r : 24.r,
+          IconButton(
+            icon: Icon(
+              Icons.edit,
+              color: isDarkMode ? Colors.white70 : Colors.black,
+              size: isTablet ? 20.r : 24.r,
+            ),
+            onPressed: onEdit,
           ),
-          onPressed: onEdit,
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }
