@@ -4,6 +4,7 @@ import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'package:quiz_app/screens/account/profile.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/progress/progress.dart';
+import 'package:quiz_app/screens/statistic/statistic.dart';
 
 class TopBar extends ConsumerWidget {
   const TopBar({Key? key}) : super(key: key);
@@ -98,6 +99,11 @@ class TopBar extends ConsumerWidget {
                     ),
                     onTap: () {
                       Navigator.pop(context);
+
+                         Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => StatisticScreen()),
+                      );
                       // Navigate to statistics screen
                     },
                   ),

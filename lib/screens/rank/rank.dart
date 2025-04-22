@@ -10,6 +10,7 @@ final leaderboardProvider = StateProvider<List<LeaderboardUser>>((ref) {
     LeaderboardUser(id: 2, username: "Spieler999", score: 28450, countryCode: "tr"),
     LeaderboardUser(id: 3, username: "Abigail", score: 27000, countryCode: "tr"),
     LeaderboardUser(id: 4, username: "SuperHirn", score: 25000, countryCode: "tr"),
+    LeaderboardUser(id: 5, username: "Woman55", score: 24380, countryCode: "tr"),
     // Add more users as needed
   ];
 });
@@ -26,6 +27,9 @@ final userStatsProvider = StateProvider<UserStats>((ref) {
     countryCode: "az",
   );
 });
+
+// Provider for selected tab index
+final selectedTabProvider = StateProvider<int>((ref) => 0);
 
 class UserStats {
   final int stars;
@@ -69,160 +73,177 @@ class RankScreen extends ConsumerWidget {
     final leaderboard = ref.watch(leaderboardProvider);
     final userStats = ref.watch(userStatsProvider);
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
-    final theme = Theme.of(context);
-    
-    // Colors for dark and light mode
-    final trophyBackgroundColor = isDarkMode 
-        ? Color(0xFF8B7500) // Darker gold for dark mode
-        : Color(0xFFFFD700); // Original gold for light mode
-        
-    final userSectionColor = isDarkMode
-        ? Color(0xFF2E4027) // Dark green for dark mode
-        : Color(0xFFAAFF99); // Light green for light mode
-    
-    // Format the hearts duration
-    String formattedHeartsDuration = _formatDuration(userStats.heartsDuration);
-    
-    // Get screen dimensions to determine if we're on a tablet
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
+    final selectedTabIndex = ref.watch(selectedTabProvider);
     
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Trophy section
+          // Trophy section with blue background
+          buildTrophySection(isDarkMode),
+          
+          // Tab bar for World, Duel, Event
+          buildTabBar(context, ref, selectedTabIndex),
+          
+          // Current user section with green background
+          buildUserSection(context, userStats, isDarkMode),
+          
+          // Leaderboard section with yellow items
           Expanded(
-            flex: 2,
+            child: buildLeaderboard(context, leaderboard, isDarkMode),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTrophySection(bool isDarkMode) {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF0F2D52),
+            Color(0xFF1F5BC0),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Background blur effect
+          Positioned.fill(
             child: Container(
-              color: trophyBackgroundColor,
-              width: double.infinity,
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildTrophy(color: Colors.brown, scale: 0.9, isDarkMode: isDarkMode),
-                    SizedBox(width: 10),
-                    _buildTrophy(color: isDarkMode ? Colors.grey[700]! : Colors.grey, scale: 1.0, isDarkMode: isDarkMode),
-                    SizedBox(width: 10),
-                    _buildTrophy(color: isDarkMode ? Colors.red[900]! : Colors.redAccent, scale: 0.9, isDarkMode: isDarkMode),
-                  ],
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+              ),
+              child: CustomPaint(
+                painter: BubblePainter(),
+              ),
+            ),
+          ),
+          
+          // Trophies
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildTrophy(color: Color(0xFFCD7F32), scale: 0.9), // Bronze
+                SizedBox(width: 15),
+                _buildTrophy(color: Color(0xFFD6D6D6), scale: 1.0), // Silver
+                SizedBox(width: 15),
+                _buildTrophy(color: Color(0xFFFFD700), scale: 0.9), // Gold
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTabBar(BuildContext context, WidgetRef ref, int selectedTabIndex) {
+    final tabs = ["World", "Duel", "Event"];
+    
+    return Container(
+      color: Color(0xFF6978ED),
+      height: 50,
+      child: Stack(
+        children: [
+          // Tab buttons
+          Row(
+            children: List.generate(
+              tabs.length,
+              (index) => Expanded(
+                child: InkWell(
+                  onTap: () => ref.read(selectedTabProvider.notifier).state = index,
+                  child: Center(
+                    child: Text(
+                      tabs[index],
+                      style: TextStyle(
+                        color: selectedTabIndex == index ? Color(0xFFFFEB3B) : Colors.white,
+                        fontSize: 18,
+                        fontWeight: selectedTabIndex == index ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
           
-          // Current user section
-          Container(
-            color: userSectionColor,
-            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            child: Row(
-              children: [
-                Text(
-                  userStats.rank.toString(),
-                  style: TextStyle(
-                    fontSize: isTablet ? 18 : 22,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(width: 12),
-                _buildUserAvatar(userStats.countryCode, isDarkMode),
-                SizedBox(width: 12),
-                Text(
-                  userStats.username,
-                  style: TextStyle(
-                    fontSize: isTablet ? 16 : 20,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  userStats.score.toString(),
-                  style: TextStyle(
-                    fontSize: isTablet ? 18 : 22,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(width: 4),
-                Icon(
-                  Icons.star,
-                  color: isDarkMode ? Colors.purpleAccent : Colors.purple,
-                  size: isTablet ? 20 : 24,
-                ),
-              ],
+          // Indicator
+          Positioned(
+            bottom: 0,
+            left: MediaQuery.of(context).size.width / 3 * selectedTabIndex,
+            child: Container(
+              width: MediaQuery.of(context).size.width / 3,
+              height: 4,
+              color: Color(0xFFFFEB3B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildUserSection(BuildContext context, UserStats userStats, bool isDarkMode) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Color(0xFF8AEA92), // Light green
+      child: Row(
+        children: [
+          // Left side - Rank & Score
+          Text(
+            "${userStats.rank}",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(width: 12),
+          
+          // User avatar
+          _buildUserAvatar(userStats.countryCode),
+          SizedBox(width: 12),
+          
+          // Username
+          Text(
+            userStats.username,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
           
-          // Leaderboard section
-          Expanded(
-            flex: 3,
-            child: Container(
-              color: trophyBackgroundColor,
-              child: ListView.builder(
-                itemCount: leaderboard.length,
-                itemBuilder: (context, index) {
-                  final user = leaderboard[index];
-                  return Container(
-                    margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isDarkMode 
-                          ? Color(0xFF6B5900) // Slightly lighter gold for dark mode items
-                          : const Color(0xFFFFD700),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDarkMode 
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          user.id.toString(),
-                          style: TextStyle(
-                            fontSize: isTablet ? 16 : 20,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        _buildUserAvatar(user.countryCode, isDarkMode),
-                        SizedBox(width: 12),
-                        Text(
-                          user.username,
-                          style: TextStyle(
-                            fontSize: isTablet ? 14 : 18,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          user.score.toString(),
-                          style: TextStyle(
-                            fontSize: isTablet ? 16 : 20,
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Icon(
-                          Icons.star,
-                          color: isDarkMode ? Colors.purpleAccent : Colors.purple,
-                          size: isTablet ? 18 : 22,
-                        ),
-                      ],
-                    ),
-                  );
-                },
+          Spacer(),
+          
+          // Score
+          Text(
+            "${userStats.score}",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(width: 6),
+          
+          // Star icon
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Color(0xFF2196F3),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                Icons.star,
+                color: Colors.white,
+                size: 16,
               ),
             ),
           ),
@@ -231,103 +252,163 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required Color iconColor,
-    required Color bgColor,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
+  Widget buildLeaderboard(BuildContext context, List<LeaderboardUser> leaderboard, bool isDarkMode) {
+    return ListView.builder(
+      itemCount: leaderboard.length,
+      padding: EdgeInsets.all(8),
+      itemBuilder: (context, index) {
+        final user = leaderboard[index];
+        return Container(
+          margin: EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
+            color: Color(0xFFFCE93D), // Yellow
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 2,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          child: Center(
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 30,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                // Rank
+                Text(
+                  "${user.id}",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(width: 12),
+                
+                // Avatar
+                _buildUserAvatar(user.countryCode),
+                SizedBox(width: 12),
+                
+                // Username
+                Text(
+                  user.username,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                
+                Spacer(),
+                
+                // Score
+                Text(
+                  "${user.score}",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(width: 6),
+                
+                // Star icon - matches the gold icon in the image
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFFAB00),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Color(0xFFE65100), width: 1),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.star,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildTrophy({required Color color, required double scale, required bool isDarkMode}) {
-    // Adjust colors for better visibility in dark mode
-    final baseColor = isDarkMode ? color.withOpacity(0.8) : color;
-    final detailColor = isDarkMode ? Colors.brown[700]! : Colors.brown.withOpacity(0.8);
-    
+  Widget _buildTrophy({required Color color, required double scale}) {
     return Transform.scale(
       scale: scale,
       child: Container(
-        width: 100,
-        height: 140,
+        width: 80,
+        height: 120,
         child: Column(
           children: [
+            // Cup
             Container(
-              width: 80,
-              height: 100,
+              width: 70,
+              height: 50,
               decoration: BoxDecoration(
-                color: baseColor,
+                color: color,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(40),
-                  topRight: Radius.circular(40),
+                  topLeft: Radius.circular(35),
+                  topRight: Radius.circular(35),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 15,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: baseColor,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(20),
-                        bottomRight: Radius.circular(20),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 15,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: baseColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        bottomLeft: Radius.circular(20),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
+            
+            // Handles
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 10,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 35,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 10,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Base
             Container(
               width: 40,
-              height: 20,
-              color: baseColor.withOpacity(0.8),
-            ),
-            Container(
-              width: 60,
-              height: 20,
+              height: 10,
               decoration: BoxDecoration(
-                color: detailColor,
-                borderRadius: BorderRadius.circular(4),
+                color: color.withOpacity(0.8),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(5),
+                  bottomRight: Radius.circular(5),
+                ),
               ),
             ),
           ],
@@ -336,33 +417,36 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildUserAvatar(String countryCode, bool isDarkMode) {
+  Widget _buildUserAvatar(String countryCode) {
     return Stack(
       children: [
+        // Avatar background
         CircleAvatar(
-          radius: 25,
-          backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+          radius: 20,
+          backgroundColor: Colors.grey[300],
           child: Icon(
             Icons.person,
-            size: 30,
-            color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+            size: 24,
+            color: Colors.grey[700],
           ),
         ),
+        
+        // Country flag
         Positioned(
           bottom: 0,
           right: 0,
           child: Container(
-            width: 20,
-            height: 20,
+            width: 16,
+            height: 16,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: isDarkMode ? Colors.black : Colors.white, width: 2),
+              border: Border.all(color: Colors.white, width: 1),
             ),
             child: ClipOval(
               child: CountryFlag.fromCountryCode(
                 countryCode,
-                height: 20,
-                width: 20,
+                height: 16,
+                width: 16,
               ),
             ),
           ),
@@ -370,12 +454,24 @@ class RankScreen extends ConsumerWidget {
       ],
     );
   }
-  
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String hours = twoDigits(duration.inHours);
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$hours:$minutes:$seconds";
+}
+
+// Custom painter for bubble effect in background
+class BubblePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+    
+    // Draw some circles for bubble effect
+    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.3), 10, paint);
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.6), 15, paint);
+    canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.7), 8, paint);
+    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.2), 12, paint);
+    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.8), 10, paint);
   }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

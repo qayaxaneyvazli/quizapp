@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_screen.dart';
-
+ 
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); // Important for SharedPreferences
   runApp(
@@ -19,6 +20,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     
+     ref.watch(musicEnabledProvider);
     return ScreenUtilInit(
       designSize: const Size(390, 844),
       builder: (context, child) {

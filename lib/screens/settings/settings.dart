@@ -2,7 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+ 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
  
@@ -15,7 +17,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool isMusicOn = true;
   bool isNotificationsOn = true;
 
   final List<String> menuItems = [
@@ -40,6 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkModeOn = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final isMusicOn = ref.watch(musicEnabledProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -52,7 +54,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: isMusicOn,
             icon: Icons.music_note,
             iconColor: colorScheme.primary,
-            onChanged: (val) => setState(() => isMusicOn = val),
+            onChanged: (val) => ref.read(musicEnabledProvider.notifier).toggle(),
           ),
           _buildSwitchTile(
             title: 'Dark Mode',
