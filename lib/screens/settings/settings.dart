@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
+import 'package:quiz_app/providers/notifications/notifications_provider.dart';
+ 
 import 'package:quiz_app/providers/theme_mode_provider.dart';
  
 import '../../core/constants/app_colors.dart';
@@ -17,8 +19,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool isNotificationsOn = true;
-
   final List<String> menuItems = [
     'Language',
     'Terms of Service',
@@ -42,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final isDarkModeOn = ref.watch(themeModeProvider) == ThemeMode.dark;
     final isMusicOn = ref.watch(musicEnabledProvider);
+    final isNotificationsOn = ref.watch(notificationsEnabledProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -67,8 +68,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: 'Notifications',
             value: isNotificationsOn,
             icon: Icons.notifications,
-            iconColor: colorScheme.secondary,
-            onChanged: (val) => setState(() => isNotificationsOn = val),
+            iconColor: isNotificationsOn ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.7),
+            onChanged: (val) => ref.read(notificationsEnabledProvider.notifier).toggle(),
           ),
           const SizedBox(height: 20),
           Column(

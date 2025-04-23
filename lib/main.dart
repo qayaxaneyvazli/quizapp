@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/core/services/notifications_service.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'core/theme/app_theme.dart';
@@ -21,6 +22,9 @@ class MyApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     
      ref.watch(musicEnabledProvider);
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(notificationsServiceProvider).initializeNotifications();
+    });
     return ScreenUtilInit(
       designSize: const Size(390, 844),
       builder: (context, child) {

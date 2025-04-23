@@ -79,8 +79,8 @@ class RankScreen extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Trophy section with blue background
-          buildTrophySection(isDarkMode),
+          // Background image section instead of trophy section
+          buildRangTrophySection(),
           
           // Tab bar for World, Duel, Event
           buildTabBar(context, ref, selectedTabIndex),
@@ -97,47 +97,37 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget buildTrophySection(bool isDarkMode) {
+Widget buildRangTrophySection() {
     return Container(
       height: 200,
+      width: double.infinity,
       decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/Rang-Trophys.jpeg'),
+          fit: BoxFit.cover, // Changed from cover to fitWidth to show more of the image
+          alignment: Alignment.center, // Centers the image
+          scale: 1.5, // Adds scaling to zoom out (values greater than 1 zoom out)
+        ),
+        // Add a subtle gradient overlay to ensure text readability if needed
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF0F2D52),
-            Color(0xFF1F5BC0),
+            Colors.black.withOpacity(0.2),
+            Colors.black.withOpacity(0.1),
           ],
         ),
       ),
-      child: Stack(
-        children: [
-          // Background blur effect
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-              ),
-              child: CustomPaint(
-                painter: BubblePainter(),
-              ),
-            ),
+      // You can also use FractionallySizedBox to control how much of the image is shown
+      child: FractionallySizedBox(
+        widthFactor: 1.0,
+        heightFactor: 1.0,
+        child: Container(
+          decoration: BoxDecoration(
+            // This is an alternative way to adjust the image if needed
+            color: Colors.transparent,
           ),
-          
-          // Trophies
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTrophy(color: Color(0xFFCD7F32), scale: 0.9), // Bronze
-                SizedBox(width: 15),
-                _buildTrophy(color: Color(0xFFD6D6D6), scale: 1.0), // Silver
-                SizedBox(width: 15),
-                _buildTrophy(color: Color(0xFFFFD700), scale: 0.9), // Gold
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -338,85 +328,6 @@ class RankScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrophy({required Color color, required double scale}) {
-    return Transform.scale(
-      scale: scale,
-      child: Container(
-        width: 80,
-        height: 120,
-        child: Column(
-          children: [
-            // Cup
-            Container(
-              width: 70,
-              height: 50,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(35),
-                  topRight: Radius.circular(35),
-                ),
-              ),
-            ),
-            
-            // Handles
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 10,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 35,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 10,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            
-            // Base
-            Container(
-              width: 40,
-              height: 10,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.8),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(5),
-                  bottomRight: Radius.circular(5),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildUserAvatar(String countryCode) {
     return Stack(
       children: [
@@ -454,24 +365,4 @@ class RankScreen extends ConsumerWidget {
       ],
     );
   }
-}
-
-// Custom painter for bubble effect in background
-class BubblePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
-    
-    // Draw some circles for bubble effect
-    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.3), 10, paint);
-    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.6), 15, paint);
-    canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.7), 8, paint);
-    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.2), 12, paint);
-    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.8), 10, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
