@@ -26,6 +26,7 @@ class NotificationsNotifier extends StateNotifier<bool> {
   }
 
   // Save preference to SharedPreferences
+  
   Future<void> _savePreference(bool value) async {
     try {
       final prefs = await SharedPreferences.getInstance();

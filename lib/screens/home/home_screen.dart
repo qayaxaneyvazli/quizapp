@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:quiz_app/screens/chapters/chapters.dart';
+import 'package:quiz_app/screens/duel/duel.dart';
+import 'package:quiz_app/screens/duel/duelloading.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/market/market.dart';
 import 'package:quiz_app/screens/messages/messages.dart';
@@ -34,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
         ? theme.scaffoldBackgroundColor 
         : const Color(0xFFF0F0F0);
     
-    final appBarColor = const Color(0xFF4A7DFF); // Keep blue for both modes
+        final appBarColor = AppColors.primary;  // Keep blue for both modes
 
     return Scaffold(
       drawer: TopBar(),
@@ -50,25 +52,50 @@ class HomeScreen extends ConsumerWidget {
         },
         type: BottomNavigationBarType.fixed,
         
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
+        items:   [
+      BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              "assets/images/bottombar_messages.svg",
+              width: 24.w,
+              height: 24.h,
+             
+            ),
             label: 'Messages',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
+         BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              "assets/images/bottombar_rank.svg",
+              width: 24.w,
+              height: 24.h,
+           
+            ),
             label: 'Rank',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+             BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              "assets/images/bottombar_home.svg",
+              width: 24.w,
+              height: 24.h,
+           
+            ),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
+         BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              "assets/images/bottombar_market.svg",
+              width: 21.w,
+              height: 21.h,
+             
+            ),
             label: 'Market',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+        BottomNavigationBarItem(
+            icon: SvgPicture.asset(
+              "assets/images/bottombar_settings.svg",
+              width: 24.w,
+              height: 24.h,
+            
+            ),
             label: 'Settings',
           ),
         ],
@@ -208,21 +235,21 @@ class HomeContentScreen extends ConsumerWidget {
     final isTablet = screenWidth > 600;
     
     // Calculate appropriate sizes based on device
-    final avatarSize = isTablet ? 80.r : 100.r;
-    final avatarInnerSize = isTablet ? 64.r : 80.r;
-    final flagSize = isTablet ? 20.r : 24.r;
+    final avatarSize = isTablet ? 80.r : 120.r;
+    final avatarInnerSize = isTablet ? 64.r : 90.r;
+    final flagSize = isTablet ? 20.r : 32.r;
     final usernameSize = isTablet ? 12.sp : 20.sp;
     
     // For tablets, we'll create a wider layout with more grid columns
     final gridCrossAxisCount = isTablet ? 4 : 2;
-    final gridPadding = isTablet ? 12.w : 16.w;
-    final gridItemSpacing = isTablet ? 10.w : 16.w;
+    final gridPadding = isTablet ? 12.w : 30.w;
+    final gridItemSpacing = isTablet ? 10.w : 26.w;
 
     // Define colors based on theme mode
-    final avatarBgColor = isDarkMode ? Colors.grey[800] : const Color(0xFFE8E4FF);
-    final avatarBorderColor = isDarkMode ? Colors.grey[700] : const Color(0xFFD5CFFF);
-    final usernameColor = isDarkMode ? Colors.white : Colors.black;
-    final tileBgColor = const Color(0xFFD5ACFF); // Keep consistent purple for menu tiles
+    final avatarBgColor = isDarkMode ? const Color.fromARGB(255, 121, 48, 48) : const Color(0xFFE8E4FF);
+    final avatarBorderColor = isDarkMode ? Colors.grey[700] : const Color(0xFF6A1B9A);
+    final usernameColor = isDarkMode ? Color.fromARGB(255, 250, 197, 24) : Colors.black;
+    final tileBgColor = Color.fromARGB(255, 252, 199, 102); // Keep consistent purple for menu tiles
     
     return Column(
       children: [
@@ -231,43 +258,52 @@ class HomeContentScreen extends ConsumerWidget {
         Center(
           child: Column(
             children: [
-              Container(
-                width: avatarSize,
-                height: avatarSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: avatarBgColor,
-                  border: Border.all(color: avatarBorderColor!, width: isTablet ? 3.r : 4.r),
-                ),
-                child: Center(
-                  child: Image.asset(
-                    'assets/images/avatar.png', // Replace with your avatar image
-                    width: avatarInnerSize,
-                    height: avatarInnerSize,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        Icons.person, 
-                        size: avatarInnerSize * 0.75, 
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                      );
-                    },
+              Stack(
+                alignment: Alignment.center,
+                children: [Container(
+                  width: avatarSize,
+                  height: avatarSize,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: avatarBgColor,
+                    border: Border.all(color: avatarBorderColor!, width: isTablet ? 3.r : 2.r),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/avatar.png', // Replace with your avatar image
+                      width: avatarInnerSize,
+                      height: avatarInnerSize,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.person, 
+                          size: avatarInnerSize * 0.75, 
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: isTablet ? 6.h : 8.h),
+
+                           Positioned(
+                             right:3,
+                             top:95,
+                             child: Container(
+                                             padding: EdgeInsets.all(isTablet ? 3.r : 5.r),
+                                             decoration: const BoxDecoration(
+                                               shape: BoxShape.circle,
+                                             ),
+                                             child: CountryFlag.fromCountryCode(
+                                               'AZ',
+                                               height: flagSize,
+                                               width: flagSize,
+                                               shape: const Circle(),
+                                             ),
+                                           ),
+                           ),
+            ]),
+         
               // Country flag icon
-              Container(
-                padding: EdgeInsets.all(isTablet ? 3.r : 4.r),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
-                child: CountryFlag.fromCountryCode(
-                  'AZ',
-                  height: flagSize,
-                  width: flagSize,
-                  shape: const Circle(),
-                ),
-              ),
+   
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
@@ -310,17 +346,25 @@ class HomeContentScreen extends ConsumerWidget {
                   ),
                 ),
                 // Duel button
-                _buildMenuTile(
-                  icon: Icons.shield,
-                  title: "Duell",
-                  color: tileBgColor,
-                  isTablet: isTablet,
-                  customIcon: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.ac_unit_rounded, color: Colors.blue, size: isTablet ? 20.r : 24.r),
-                      Icon(Icons.ac_unit_rounded, color: Colors.red, size: isTablet ? 20.r : 24.r),
-                    ],
+                GestureDetector(
+                      onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => DuelLoadingScreen()),
+                    );
+                  },
+                  child: _buildMenuTile(
+                    icon: Icons.shield,
+                    title: "Duell",
+                    color: tileBgColor,
+                    isTablet: isTablet,
+                    customIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.ac_unit_rounded, color: Colors.blue, size: isTablet ? 20.r : 24.r),
+                        Icon(Icons.ac_unit_rounded, color: Colors.red, size: isTablet ? 20.r : 24.r),
+                      ],
+                    ),
                   ),
                 ),
                 // Daily login button

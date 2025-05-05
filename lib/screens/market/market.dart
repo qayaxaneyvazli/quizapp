@@ -52,9 +52,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerPr
           ? colorScheme.background 
           : Colors.grey.shade100,
       appBar: AppBar(
-        backgroundColor: isDarkMode 
-            ? colorScheme.primary 
-            : Colors.blue.shade500,
+        backgroundColor: colorScheme.primary,
         elevation: 0,
         title: Text(
           "Market",

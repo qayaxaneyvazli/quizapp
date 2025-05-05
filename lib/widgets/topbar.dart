@@ -26,7 +26,7 @@ class TopBar extends ConsumerWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 24),
               // Use primary color from theme
-              color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF4A7DFF),
+              color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF6A1B9A),
               child: Column(
                 children: [
                   // Avatar container

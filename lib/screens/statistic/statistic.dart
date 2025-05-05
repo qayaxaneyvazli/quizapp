@@ -48,7 +48,7 @@ class StatisticScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     
     // App bar color and background color will adapt based on theme
-    final appBarColor = Color(0xFF5E77FF);
+    final appBarColor = Color(0xFF6A1B9A);
     final backgroundColor = isDarkMode ? Colors.black : Colors.grey[100];
     
     return Scaffold(

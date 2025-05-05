@@ -21,7 +21,7 @@ class InventoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         // Use theme-aware colors for app bar
-        backgroundColor: isDarkMode ? theme.colorScheme.surface : Color(0xFF4e6af5),
+        backgroundColor: isDarkMode ? theme.colorScheme.surface : Color(0xFF6A1B9A),
         title: Text(
           'Inventory',
           style: TextStyle(

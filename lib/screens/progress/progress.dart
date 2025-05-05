@@ -28,7 +28,7 @@ class ProgressScreen extends ConsumerWidget {
             // Progress header
             Container(
               // Use the original blue for light mode, theme primary for dark mode
-              color: isDarkMode ? colorScheme.primary : const Color(0xFF5B8DEF),
+              color: isDarkMode ? colorScheme.primary : const Color(0xFF6A1B9A),
               padding: EdgeInsets.symmetric(vertical: 16.h),
               child: Row(
                 children: [

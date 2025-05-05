@@ -136,7 +136,7 @@ Widget buildRangTrophySection() {
     final tabs = ["World", "Duel", "Event"];
     
     return Container(
-      color: Color(0xFF6978ED),
+      color: Color(0xFF6A1B9A),
       height: 50,
       child: Stack(
         children: [

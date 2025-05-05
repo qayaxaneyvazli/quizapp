@@ -1,14 +1,29 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+
+class AppColors {
+  // Update the primary color to your desired purple
+  static const Color primary = Color.fromARGB(255, 106, 27, 154);
+  
+  // You may want to adjust these colors to complement your new primary color
+  static const Color secondary = Color.fromARGB(255, 156, 77, 204);
+  static const Color background = Color(0xFFF0F0F0);
+  static const Color black = Colors.black;
+  static const Color gold = Color(0xFFFFD700);
+}
+
+// 2. Update the AppTheme class in app_theme.dart
+
+ 
 
 class AppTheme {
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,  
     scaffoldBackgroundColor: AppColors.background,
-    primaryColor: AppColors.primary,
+    primaryColor: AppColors.primary, // Use the updated primary color
     colorScheme: ColorScheme.fromSwatch(
-      primarySwatch: Colors.indigo,
+      primarySwatch: Colors.purple, // Changed to purple
     ).copyWith(
+      primary: AppColors.primary, // Explicitly set primary in colorScheme
       secondary: AppColors.secondary,
     ),
     appBarTheme: const AppBarTheme(
@@ -31,11 +46,12 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     scaffoldBackgroundColor: Colors.black,
-    primaryColor: AppColors.primary,
+    primaryColor: AppColors.primary, // Use the updated primary color
     colorScheme: ColorScheme.fromSwatch(
-      primarySwatch: Colors.indigo,
+      primarySwatch: Colors.purple, // Changed to purple
       brightness: Brightness.dark,
     ).copyWith(
+      primary: AppColors.primary, // Explicitly set primary in colorScheme
       secondary: AppColors.secondary,
       background: Colors.black,
       surface: Colors.grey[900],
