@@ -23,10 +23,7 @@ import 'dart:async';
 
 // Model for Quiz Question
 // Model for Quiz Question
-import 'package:flutter/material.dart';
  
-import 'dart:async';
-
  
 class QuizScreen extends ConsumerWidget {
   @override

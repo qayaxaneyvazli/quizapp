@@ -37,9 +37,10 @@ class _DuelLoadingScreenState extends ConsumerState<DuelLoadingScreen> {
       body: Center(
         child: Container(
           width: 300,
+          height:450,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Color(0xFF6A1B9A),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -49,7 +50,7 @@ class _DuelLoadingScreenState extends ConsumerState<DuelLoadingScreen> {
                 foundOpponent ? "Opponent found!" : "Looking for a duel...",
                 style: TextStyle(
                   fontSize: 24,
-                  color: Colors.blue[400],
+                  color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
@@ -75,7 +76,7 @@ class _DuelLoadingScreenState extends ConsumerState<DuelLoadingScreen> {
                     : "Please wait while we find a suitable opponent.",
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.blue[400],
+                  color: Colors.white,
                 ),
                 textAlign: TextAlign.center,
               ),

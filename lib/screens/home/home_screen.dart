@@ -10,6 +10,7 @@ import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/market/market.dart';
 import 'package:quiz_app/screens/messages/messages.dart';
 import 'package:quiz_app/screens/rank/rank.dart';
+import 'package:quiz_app/screens/rewards/rewards.dart';
 import 'package:quiz_app/screens/settings/settings.dart';
 import 'package:quiz_app/screens/statistic/statistic.dart';
 import 'package:quiz_app/widgets/topbar.dart';
@@ -368,11 +369,19 @@ class HomeContentScreen extends ConsumerWidget {
                   ),
                 ),
                 // Daily login button
-                _buildMenuTile(
-                  icon: Icons.calendar_today,
-                  title: "Daily Login\nRewards",
-                  color: tileBgColor,
-                  isTablet: isTablet,
+                GestureDetector(
+                      onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginRewardsScreen()),
+                    );
+                  },
+                  child: _buildMenuTile(
+                    icon: Icons.calendar_today,
+                    title: "Daily Login\nRewards",
+                    color: tileBgColor,
+                    isTablet: isTablet,
+                  ),
                 ),
                 // Event button
                 _buildMenuTile(

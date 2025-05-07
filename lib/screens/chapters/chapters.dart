@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/screens/question/question.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
 
 class ChapterScreen extends StatelessWidget {
   const ChapterScreen({Key? key}) : super(key: key);
@@ -69,16 +67,25 @@ class ChapterScreen extends StatelessWidget {
                   
                   const SizedBox(height: 20),
                   
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildChapterCard(
-                      "Chapter 1", 
-                      stars: 3,
-                      coinProgress: "11000 / 20000",
-                      gemProgress: "22000 / 40000",
-                      percentComplete: "55 %",
-                    ),
-                  ),
+             Align(
+  alignment: Alignment.centerLeft,
+  child: InkWell(                         // ① tap algılama
+    borderRadius: BorderRadius.circular(12), // kartın kenarlarıyla uyumlu olsun
+    onTap: () => Navigator.push(         // ② yönlendirme
+      context,
+      MaterialPageRoute(
+        builder: (_) =>   QuizScreen(),
+      ),
+    ),
+    child: _buildChapterCard(
+      "Chapter 1",
+      stars: 3,
+      coinProgress: "11000 / 20000",
+      gemProgress: "22000 / 40000",
+      percentComplete: "55 %",
+    ),
+  ),
+),
                   
                   const SizedBox(height: 80), // Space for bottom nav bar
                 ],
