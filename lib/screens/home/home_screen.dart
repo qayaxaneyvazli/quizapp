@@ -3,9 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
+import 'package:quiz_app/providers/ticket/tickets_provider.dart';
 import 'package:quiz_app/screens/chapters/chapters.dart';
 import 'package:quiz_app/screens/duel/duel.dart';
 import 'package:quiz_app/screens/duel/duelloading.dart';
+import 'package:quiz_app/screens/event/event.dart';
+import 'package:quiz_app/screens/event/no_ticket_dialog.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/market/market.dart';
 import 'package:quiz_app/screens/messages/messages.dart';
@@ -163,7 +166,7 @@ class HomeScreen extends ConsumerWidget {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16.sp,
+                          fontSize: 16.sp,   
                         ),
                       ),
                     ],
@@ -250,7 +253,14 @@ class HomeContentScreen extends ConsumerWidget {
     final avatarBgColor = isDarkMode ? const Color.fromARGB(255, 121, 48, 48) : const Color(0xFFE8E4FF);
     final avatarBorderColor = isDarkMode ? Colors.grey[700] : const Color(0xFF6A1B9A);
     final usernameColor = isDarkMode ? Color.fromARGB(255, 250, 197, 24) : Colors.black;
-    final tileBgColor = Color.fromARGB(255, 252, 199, 102); // Keep consistent purple for menu tiles
+    final tileBgGradient = LinearGradient(
+  colors: [
+    Color(0xFFF4ED0D), // sarı
+    Color(0xFFF8AE02), // turuncumsu
+  ],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+); // Keep consistent purple for menu tiles
     
     return Column(
       children: [
@@ -342,7 +352,7 @@ class HomeContentScreen extends ConsumerWidget {
                   child: _buildMenuTile(
                     icon: Icons.play_arrow,
                     title: "Quizz Spielen",
-                    color: tileBgColor,
+                    gradient: tileBgGradient,
                     isTablet: isTablet,
                   ),
                 ),
@@ -357,7 +367,7 @@ class HomeContentScreen extends ConsumerWidget {
                   child: _buildMenuTile(
                     icon: Icons.shield,
                     title: "Duell",
-                    color: tileBgColor,
+                    gradient: tileBgGradient,
                     isTablet: isTablet,
                     customIcon: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -379,16 +389,33 @@ class HomeContentScreen extends ConsumerWidget {
                   child: _buildMenuTile(
                     icon: Icons.calendar_today,
                     title: "Daily Login\nRewards",
-                    color: tileBgColor,
+                    gradient: tileBgGradient,
                     isTablet: isTablet,
                   ),
                 ),
                 // Event button
-                _buildMenuTile(
-                  icon: Icons.emoji_events,
-                  title: "Event",
-                  color: tileBgColor,
-                  isTablet: isTablet,
+                GestureDetector(
+                    onTap: () {
+                         final tickets = ref.read(ticketsProvider);
+
+    if (tickets <= 0) {
+      showNoTicketDialog(context);        // ❶ Modal
+      return;
+    }
+
+    // ❷ Bilet düş ve Event’e geç
+    ref.read(ticketsProvider.notifier).state--;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EventScreen()),
+                    );
+                  },                    
+                 child: _buildMenuTile(
+                    icon: Icons.emoji_events,
+                    title: "Event",
+                    gradient: tileBgGradient,
+                    isTablet: isTablet,
+                  ),
                 ),
                 // For tablet layout, add more menu items to fill the grid
                 // if (isTablet) 
@@ -413,38 +440,39 @@ class HomeContentScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildMenuTile({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required bool isTablet,
-    Widget? customIcon,
-  }) {
-    // Adjust sizes for tablet
-    final iconSize = isTablet ? 30.r : 36.r;
-    final fontSize = isTablet ? 16.sp : 18.sp;
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(isTablet ? 12.r : 16.r),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          customIcon ?? Icon(icon, size: iconSize, color: Colors.white),
-          SizedBox(height: isTablet ? 6.h : 8.h),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: fontSize,
-              fontWeight: FontWeight.w500,
-            ),
+Widget _buildMenuTile({
+  required IconData icon,
+  required String title,
+  Gradient? gradient, // color yerine gradient
+  required bool isTablet,
+  Widget? customIcon,
+}) {
+  final iconSize = isTablet ? 30.r : 36.r;
+  final fontSize = isTablet ? 16.sp : 18.sp;
+
+  return Container(
+    decoration: BoxDecoration(
+      gradient: gradient, // gradient varsa uygula
+      color: gradient == null ? Colors.grey : null, // gradient yoksa fallback
+      borderRadius: BorderRadius.circular(isTablet ? 12.r : 16.r),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        customIcon ?? Icon(icon, size: iconSize, color: Colors.white),
+        SizedBox(height: isTablet ? 6.h : 8.h),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w500,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 }

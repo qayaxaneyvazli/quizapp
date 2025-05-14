@@ -36,6 +36,7 @@ final questionsProvider = Provider<List<QuizQuestion>>((ref) {
   ];
 });
 
+
 final quizControllerProvider = StateNotifierProvider<QuizController, QuizState>((ref) {
   final questions = ref.watch(questionsProvider);
   return QuizController(questions);

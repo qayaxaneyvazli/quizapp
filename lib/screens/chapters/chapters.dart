@@ -125,7 +125,14 @@ class ChapterScreen extends StatelessWidget {
       width: 280,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFD7A9E3), // Light purple
+        gradient: const LinearGradient(
+      colors: [
+        Color.fromARGB(255, 77, 77, 73),
+        Color.fromARGB(255, 13, 13, 12),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ), // Light purple
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(

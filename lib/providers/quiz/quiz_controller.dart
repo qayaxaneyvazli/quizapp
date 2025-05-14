@@ -77,6 +77,25 @@ class QuizController extends StateNotifier<QuizState> {
     _startTimer();
   }
 
+  void restartQuiz() {
+  state = QuizState(
+    questions: state.questions,
+    currentQuestionIndex: 0,
+    selectedAnswerIndex: null,
+    timerValue: 1.0,
+    answerResults: [],
+    eliminatedOptions: null,
+    isAnswerRevealed: false,
+    hasUsedHint: false,
+    hasUsedFiftyFifty: false,
+    showCorrectAnswer: false,
+    hasUsedTimePause: false,
+  );
+  
+  // Timer'ı yeniden başlat
+  _startTimer();
+}
+
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: 100), (timer) {

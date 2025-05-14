@@ -1,15 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/notifications/notifications_provider.dart';
- 
 import 'package:quiz_app/providers/theme_mode_provider.dart';
- 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_padding.dart';
- 
+import 'package:quiz_app/screens/settings/faq.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -78,9 +73,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   InkWell(
                     onTap: () {
-                      setState(() {
-                        expanded[index] = !expanded[index];
-                      });
+                      // Navigate to FAQ Screen when FAQ is tapped
+                      if (menuItems[index] == 'FAQ') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const FaqScreen()),
+                        );
+                      } else {
+                        setState(() {
+                          expanded[index] = !expanded[index];
+                        });
+                      }
                     },
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 5.0),
@@ -100,43 +103,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          Transform.rotate(
-                            angle: expanded[index] ? pi : 0,
-                            child: Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: colorScheme.onSurface.withOpacity(0.7),
-                            ),
+                          // Change icon for FAQ to forward arrow
+                          Icon(
+                            menuItems[index] == 'FAQ' 
+                                ? Icons.arrow_forward_ios 
+                                : expanded[index] 
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
+                            size: menuItems[index] == 'FAQ' ? 16 : 20,
+                            color: colorScheme.onSurface.withOpacity(0.7),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    child: ConstrainedBox(
-                      constraints: expanded[index]
-                          ? const BoxConstraints()
-                          : const BoxConstraints(maxHeight: 0),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16.0),
-                        margin: const EdgeInsets.only(top: 5.0, bottom: 10.0),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: Text(
-                          'Detaylar buraya gelecek...',
-                          style: TextStyle(
-                            fontSize: 14, 
-                            color: colorScheme.onSurface,
+                  // Show other menu items' content
+                  if (menuItems[index] != 'FAQ')
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: ConstrainedBox(
+                        constraints: expanded[index]
+                            ? const BoxConstraints()
+                            : const BoxConstraints(maxHeight: 0),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16.0),
+                          margin: const EdgeInsets.only(top: 5.0, bottom: 10.0),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Text(
+                            'Detaylar buraya gelecek...',
+                            style: TextStyle(
+                              fontSize: 14, 
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  )
+                    )
                 ],
               );
             }),
