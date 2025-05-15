@@ -88,9 +88,4 @@ class _DuelLoadingScreenState extends ConsumerState<DuelLoadingScreen> {
   }
 }
 
-// GIF dosyasını projeye eklemek için, pubspec.yaml dosyasına aşağıdaki satırları eklemelisiniz:
-/*
-flutter:
-  assets:
-    - assets/loading_animation.gif
-*/
+ 

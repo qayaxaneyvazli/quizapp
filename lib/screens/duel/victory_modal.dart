@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'dart:math';
 
 class VictoryModal extends StatefulWidget {
   final int coins;
@@ -31,6 +32,44 @@ class _VictoryModalState extends State<VictoryModal> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  // Özel yıldız şekli oluşturucu fonksiyon
+  Path drawStar(Size size) {
+    // Yıldız için bir path oluştur
+    double halfWidth = size.width / 2;
+    double halfHeight = size.height / 2;
+    
+    double outerRadius = halfWidth;
+    double innerRadius = halfWidth / 2;
+    int numPoints = 5;
+    
+    double angle = (2 * pi) / numPoints;
+    
+    Path path = Path();
+    
+    for (int i = 0; i < numPoints; i++) {
+      // Dış nokta
+      double outerX = halfWidth + outerRadius * cos(i * angle - pi / 2);
+      double outerY = halfHeight + outerRadius * sin(i * angle - pi / 2);
+      
+      if (i == 0) {
+        path.moveTo(outerX, outerY);
+      } else {
+        path.lineTo(outerX, outerY);
+      }
+      
+      // İç nokta
+      double innerX = halfWidth + innerRadius * cos((i + 0.5) * angle - pi / 2);
+      double innerY = halfHeight + innerRadius * sin((i + 0.5) * angle - pi / 2);
+      
+      path.lineTo(innerX, innerY);
+    }
+    
+    // Yolu kapat
+    path.close();
+    
+    return path;
   }
 
   @override
@@ -136,12 +175,12 @@ class _VictoryModalState extends State<VictoryModal> {
                     // Close button
                     Expanded(
                       child: ElevatedButton(
-                          onPressed: () {
-    if (mounted) {
-      Navigator.of(context).pop(); // Eğer Navigator kullanıyorsanız
-      widget.onClose(); // Veya direkt callback
-    }
-  },
+                        onPressed: () {
+                          if (mounted) {
+                            Navigator.of(context).pop(); // Eğer Navigator kullanıyorsanız
+                            widget.onClose(); // Veya direkt callback
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey.shade300,
                           foregroundColor: Colors.black87,
@@ -163,7 +202,7 @@ class _VictoryModalState extends State<VictoryModal> {
           ),
         ),
         
-        // Confetti effects (should be last/topmost layer)
+        // Confetti effects with star shape (should be last/topmost layer)
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
@@ -175,6 +214,7 @@ class _VictoryModalState extends State<VictoryModal> {
             numberOfParticles: 50,
             gravity: 0.2,
             shouldLoop: true,
+            createParticlePath: drawStar, // Yıldız şekli kullanma
             colors: const [
               Colors.red,
               Colors.blue,
@@ -195,9 +235,10 @@ class _VictoryModalState extends State<VictoryModal> {
             maxBlastForce: 10,
             minBlastForce: 5,
             emissionFrequency: 0.05,
-            numberOfParticles: 20,
+            numberOfParticles: 30,
             gravity: 0.2,
             shouldLoop: true,
+            createParticlePath: drawStar, // Yıldız şekli kullanma
             colors: const [
               Colors.red,
               Colors.blue,
@@ -218,9 +259,10 @@ class _VictoryModalState extends State<VictoryModal> {
             maxBlastForce: 10,
             minBlastForce: 5,
             emissionFrequency: 0.05,
-            numberOfParticles: 20,
+            numberOfParticles: 30,
             gravity: 0.2,
             shouldLoop: true,
+            createParticlePath: drawStar, // Yıldız şekli kullanma
             colors: const [
               Colors.red,
               Colors.blue,

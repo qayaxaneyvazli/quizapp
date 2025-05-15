@@ -2,7 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
+import 'package:quiz_app/providers/notifications/duel_notifications_provider.dart';
 import 'package:quiz_app/providers/notifications/notifications_provider.dart';
+import 'package:quiz_app/providers/notifications/duel_notifications_provider.dart'; // Import the duel notifications provider
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'package:quiz_app/screens/settings/faq.dart';
 
@@ -38,6 +40,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isDarkModeOn = ref.watch(themeModeProvider) == ThemeMode.dark;
     final isMusicOn = ref.watch(musicEnabledProvider);
     final isNotificationsOn = ref.watch(notificationsEnabledProvider);
+    // Use the correct duel notifications provider
+    final isDuelNotificationsOn = ref.watch(duelnotificationsEnabledProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -66,6 +70,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             iconColor: isNotificationsOn ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.7),
             onChanged: (val) => ref.read(notificationsEnabledProvider.notifier).toggle(),
           ),
+          _buildSwitchTile(
+            title: 'Notifications for Duel',
+            value: isDuelNotificationsOn,
+            icon: Icons.notifications,
+            iconColor: isDuelNotificationsOn ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.7),
+            onChanged: (val) => ref.read(duelnotificationsEnabledProvider.notifier).toggle(),
+          ),
           const SizedBox(height: 20),
           Column(
             children: List.generate(menuItems.length, (index) {
@@ -79,17 +90,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           context,
                           MaterialPageRoute(builder: (context) => const FaqScreen()),
                         );
-                      } else {
-                        setState(() {
-                          expanded[index] = !expanded[index];
-                        });
                       }
+                      // Remove animation expansion for other menu items
                     },
                     child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 5.0),
+                      margin: const EdgeInsets.symmetric(vertical: 8.0), // Increased spacing between items
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: colorScheme.surface,
+                        color: Colors.green, // Changed background color to green
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Row(
@@ -99,26 +107,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             menuItems[index],
                             style: TextStyle(
                               fontSize: 16,
-                              color: colorScheme.onSurface,
+                              color: Colors.white, // Changed text color to white for better contrast
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          // Change icon for FAQ to forward arrow
-                          Icon(
-                            menuItems[index] == 'FAQ' 
-                                ? Icons.arrow_forward_ios 
-                                : expanded[index] 
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                            size: menuItems[index] == 'FAQ' ? 16 : 20,
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                          ),
+                          // Only show forward arrow for FAQ, no arrows for other items
+                         Container(), // Empty container instead of down arrow
                         ],
                       ),
                     ),
                   ),
-                  // Show other menu items' content
-                  if (menuItems[index] != 'FAQ')
+                  // Remove the animation content for menu items (except FAQ)
+                  if (false) // This condition is always false to not show the expanded content
                     AnimatedSize(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
