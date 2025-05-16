@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/screens/home/home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
+  // Gradient’i üstte sabit olarak tanımla
+  static const tileBgGradient = LinearGradient(
+    colors: [
+      Color(0xFFF4ED0D), // sarı
+      Color(0xFFF8AE02), // turuncumsu
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   @override
   Widget build(BuildContext context) {
-    const purpleColor = Color.fromARGB(255, 113, 32, 167);
-    const yellowColor = Color(0xFFFFEB3B);
-    const orangeColor = Color(0xFFFFC107);
+    const purpleColor = AppColors.primary;
 
     return Scaffold(
       backgroundColor: purpleColor,
@@ -26,7 +35,7 @@ class LoginScreen extends StatelessWidget {
                     child: Icon(
                       Icons.lightbulb_outline,
                       size: 120,
-                      color: yellowColor,
+                      color: Color(0xFFF4ED0D),
                     ),
                   ),
                   // quizTastic yazısı
@@ -86,9 +95,7 @@ class LoginScreen extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
-                          gradient: LinearGradient(
-                            colors: [yellowColor, orangeColor],
-                          ),
+                          gradient: tileBgGradient, // <-- Burada değişiklik!
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -121,12 +128,11 @@ class LoginScreen extends StatelessWidget {
                   // Continue as Guest
                   GestureDetector(
                     onTap: () {
-                       
-                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>  const HomeScreen(),
-                        ));
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomeScreen(),
+                          ));
                     },
                     child: Text(
                       'Continue as Guest',

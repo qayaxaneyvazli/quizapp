@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/screens/login/login.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -139,8 +140,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderRadius: BorderRadius.circular(10),
                       gradient: const LinearGradient(
                         colors: [
-                          Color(0xFFFFD600), // Sarı
-                          Color(0xFFFFA000), // Turuncu
+                          Color(0xFFF4ED0D), // sarı
+      Color(0xFFF8AE02), // Turuncu
                         ],
                       ),
                     ),
@@ -149,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Burada kayıt işlemleri yapılacak
                       },
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.purple[900],
+                        foregroundColor: AppColors.primary ,
                         backgroundColor: Colors.transparent, 
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
