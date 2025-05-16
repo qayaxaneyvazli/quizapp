@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quiz_app/core/services/notifications_service.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/screens/login/login.dart';
+import 'package:quiz_app/screens/login/register.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_screen.dart';
  
@@ -39,7 +41,7 @@ class MyApp extends ConsumerWidget {
           home: child,   
         );
       },
-      child: const HomeScreen(),  
+      child:  const RegisterScreen(),  
     );
   }
 }
