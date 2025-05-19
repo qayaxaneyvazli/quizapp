@@ -294,9 +294,10 @@ class QuizScreen extends ConsumerWidget {
 Spacer(),
             // Joker ve alt bar
             Container(
-              margin: const EdgeInsets.only(top: 14, bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              height: 55,
+  margin: EdgeInsets.zero, // margin yok
+  padding: EdgeInsets.zero,
+              height: 50,
+              width: double.infinity,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -352,8 +353,8 @@ Widget _jokerButton({
     child: GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
-        width: 48, // Buton boyutu
-        height: 48,
+        width: 78, // Buton boyutu
+        height: 50,
         decoration: BoxDecoration(
           color: AppColors.primary,
         
