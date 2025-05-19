@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'package:quiz_app/screens/account/profile.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
@@ -71,8 +72,25 @@ class TopBar extends ConsumerWidget {
                   _buildMenuItem(
                     context: context,
                     isDarkMode: isDarkMode,
-                    icon: Icons.trending_up,
+                    icon: SvgPicture.asset(
+                      'assets/icons/progress.svg',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.trending_up, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
+                      },
+                    ),
                     label: "Progress",
+                    leading: SvgPicture.asset(
+                      'assets/icons/progress.svg',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.trending_up, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
+                      },
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       // Navigate to progress screen
@@ -86,7 +104,15 @@ class TopBar extends ConsumerWidget {
                   _buildMenuItem(
                     context: context,
                     isDarkMode: isDarkMode,
-                    icon: Icons.bar_chart,
+                    icon: SvgPicture.asset(
+                      'assets/icons/statistic.svg',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.trending_up, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
+                      },
+                    ),
                     label: "Statistic",
                     leading: Image.asset(
                       'assets/images/stats_icon.png',
@@ -111,7 +137,15 @@ class TopBar extends ConsumerWidget {
                   _buildMenuItem(
                     context: context,
                     isDarkMode: isDarkMode,
-                    icon: Icons.person,
+                    icon: SvgPicture.asset(
+                      'assets/icons/account.svg',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.trending_up, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
+                      },
+                    ),
                     label: "Account",
                     onTap: () {
                       Navigator.pop(context);
@@ -126,7 +160,15 @@ class TopBar extends ConsumerWidget {
                   _buildMenuItem(
                     context: context,
                     isDarkMode: isDarkMode,
-                    icon: Icons.work,
+                    icon: SvgPicture.asset(
+                      'assets/icons/inventory.svg',
+                      width: 24,
+                      height: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.trending_up, size: 24, 
+                            color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
+                      },
+                    ),
                     label: "Inventory",
                     leading: Image.asset(
                       'assets/images/inventory_icon.png',
@@ -184,7 +226,7 @@ class TopBar extends ConsumerWidget {
   Widget _buildMenuItem({
     required BuildContext context,
     required bool isDarkMode,
-    IconData? icon,
+    required SvgPicture  icon,
     required String label,
     Widget? leading,
     required VoidCallback onTap,
@@ -193,11 +235,7 @@ class TopBar extends ConsumerWidget {
     final iconColor = isDarkMode ? Colors.white70 : const Color.fromARGB(255, 14, 13, 13);
     
     return ListTile(
-      leading: leading ?? Icon(
-        icon,
-        color: iconColor,
-        size: 24,
-      ),
+      leading: icon,
       title: Text(
         label,
         style: TextStyle(

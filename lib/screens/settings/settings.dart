@@ -1,12 +1,15 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/notifications/duel_notifications_provider.dart';
 import 'package:quiz_app/providers/notifications/notifications_provider.dart';
-import 'package:quiz_app/providers/notifications/duel_notifications_provider.dart'; // Import the duel notifications provider
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/screens/language/language.dart';
 import 'package:quiz_app/screens/settings/faq.dart';
+// LanguageModal widget'ını import et!
+  // yolunu kendine göre düzelt
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -40,7 +43,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isDarkModeOn = ref.watch(themeModeProvider) == ThemeMode.dark;
     final isMusicOn = ref.watch(musicEnabledProvider);
     final isNotificationsOn = ref.watch(notificationsEnabledProvider);
-    // Use the correct duel notifications provider
     final isDuelNotificationsOn = ref.watch(duelnotificationsEnabledProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -52,28 +54,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildSwitchTile(
             title: 'Music',
             value: isMusicOn,
-            icon: Icons.music_note,
+            icon: SvgPicture.asset('assets/icons/Music.svg'),
             iconColor: colorScheme.primary,
             onChanged: (val) => ref.read(musicEnabledProvider.notifier).toggle(),
           ),
           _buildSwitchTile(
             title: 'Dark Mode',
             value: isDarkModeOn,
-            icon: isDarkModeOn ? Icons.dark_mode : Icons.light_mode,
+            icon: SvgPicture.asset('assets/icons/Dark_Light_Mode.svg'),
             iconColor: isDarkModeOn ? Colors.white70 : Colors.amber,
             onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
           ),
           _buildSwitchTile(
             title: 'Notifications',
             value: isNotificationsOn,
-            icon: Icons.notifications,
+            icon: SvgPicture.asset('assets/icons/Notification.svg'),
             iconColor: isNotificationsOn ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.7),
             onChanged: (val) => ref.read(notificationsEnabledProvider.notifier).toggle(),
           ),
           _buildSwitchTile(
             title: 'Notifications for Duel',
             value: isDuelNotificationsOn,
-            icon: Icons.notifications,
+            icon: SvgPicture.asset('assets/icons/Notification_Duel.svg'),
             iconColor: isDuelNotificationsOn ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.7),
             onChanged: (val) => ref.read(duelnotificationsEnabledProvider.notifier).toggle(),
           ),
@@ -84,20 +86,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   InkWell(
                     onTap: () {
-                      // Navigate to FAQ Screen when FAQ is tapped
-                      if (menuItems[index] == 'FAQ') {
+                      if (menuItems[index] == 'Language') {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: true,
+                          builder: (_) => LanguageModal(
+                            onClose: () => Navigator.of(context).pop(),
+                            onLanguageSelected: (code) {
+                              // Dili burada değiştir, provider/locale işlemini burada yazabilirsin.
+                              print("Seçilen dil: $code");
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        );
+                      } else if (menuItems[index] == 'FAQ') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const FaqScreen()),
                         );
                       }
-                      // Remove animation expansion for other menu items
+                      // Diğer itemler için burada başka işlem yok.
                     },
                     child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0), // Increased spacing between items
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: Colors.green, // Changed background color to green
+                        color: Colors.green,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Row(
@@ -107,43 +121,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             menuItems[index],
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.white, // Changed text color to white for better contrast
+                              color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          // Only show forward arrow for FAQ, no arrows for other items
-                         Container(), // Empty container instead of down arrow
+                          Container(), // Ok/ikon yok
                         ],
                       ),
                     ),
                   ),
-                  // Remove the animation content for menu items (except FAQ)
-                  if (false) // This condition is always false to not show the expanded content
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      child: ConstrainedBox(
-                        constraints: expanded[index]
-                            ? const BoxConstraints()
-                            : const BoxConstraints(maxHeight: 0),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16.0),
-                          margin: const EdgeInsets.only(top: 5.0, bottom: 10.0),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          child: Text(
-                            'Detaylar buraya gelecek...',
-                            style: TextStyle(
-                              fontSize: 14, 
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
                 ],
               );
             }),
@@ -156,15 +142,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildSwitchTile({
     required String title,
     required bool value,
-    required IconData icon,
+    required SvgPicture icon,
     required Color iconColor,
     required ValueChanged<bool> onChanged,
   }) {
     final theme = Theme.of(context);
-    
+
     return Card(
       child: ListTile(
-        leading: Icon(icon, color: iconColor),
+        leading: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.centerLeft,
+          child: icon,
+        ),
         title: Text(title),
         trailing: Switch(
           value: value,
@@ -172,7 +163,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           activeColor: theme.colorScheme.primary,
           trackColor: MaterialStateProperty.resolveWith<Color>((states) {
             return states.contains(MaterialState.selected)
-                ? theme.colorScheme.primary 
+                ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface.withOpacity(0.3);
           }),
           thumbColor: MaterialStateProperty.resolveWith<Color>((states) {

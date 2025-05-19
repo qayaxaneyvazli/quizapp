@@ -349,8 +349,9 @@ class HomeContentScreen extends ConsumerWidget {
                       MaterialPageRoute(builder: (context) => ChapterScreen()),
                     );
                   },
+                  //width: 24.w, height: 24.h
                   child: _buildMenuTile(
-                    icon: Icons.play_arrow,
+                    icon: SvgPicture.asset('assets/icons/play_quiz.svg', width: 34.w, height: 34.h),
                     title: "Quizz Spielen",
                     gradient: tileBgGradient,
                     isTablet: isTablet,
@@ -365,7 +366,7 @@ class HomeContentScreen extends ConsumerWidget {
                     );
                   },
                   child: _buildMenuTile(
-                    icon: Icons.shield,
+                    icon: SvgPicture.asset('assets/icons/duel.svg', width: 42.w, height: 42.h),
                     title: "Duell",
                     gradient: tileBgGradient,
                     isTablet: isTablet,
@@ -387,7 +388,7 @@ class HomeContentScreen extends ConsumerWidget {
                     );
                   },
                   child: _buildMenuTile(
-                    icon: Icons.calendar_today,
+                    icon: SvgPicture.asset('assets/icons/present.svg', width: 34.w, height: 34.h),
                     title: "Daily Login\nRewards",
                     gradient: tileBgGradient,
                     isTablet: isTablet,
@@ -402,8 +403,7 @@ class HomeContentScreen extends ConsumerWidget {
       showNoTicketDialog(context);        // ❶ Modal
       return;
     }
-
-    // ❷ Bilet düş ve Event’e geç
+ 
     ref.read(ticketsProvider.notifier).state--;
                     Navigator.push(
                       context,
@@ -411,7 +411,7 @@ class HomeContentScreen extends ConsumerWidget {
                     );
                   },                    
                  child: _buildMenuTile(
-                    icon: Icons.emoji_events,
+                    icon: SvgPicture.asset('assets/icons/trophy.svg', width: 34.w, height: 34.h),
                     title: "Event",
                     gradient: tileBgGradient,
                     isTablet: isTablet,
@@ -441,7 +441,7 @@ class HomeContentScreen extends ConsumerWidget {
   }
   
 Widget _buildMenuTile({
-  required IconData icon,
+  required SvgPicture icon,
   required String title,
   Gradient? gradient, // color yerine gradient
   required bool isTablet,
@@ -459,7 +459,7 @@ Widget _buildMenuTile({
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        customIcon ?? Icon(icon, size: iconSize, color: Colors.white),
+        icon,
         SizedBox(height: isTablet ? 6.h : 8.h),
         Text(
           title,
