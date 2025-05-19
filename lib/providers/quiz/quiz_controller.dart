@@ -15,6 +15,7 @@ class QuizState {
   final bool hasUsedTimePause;
   final List<int>? eliminatedOptions; // Make sure this can be null
   final bool showCorrectAnswer;
+  final bool hasInfo; // <------ yeni alan
 
   QuizState({
     required this.questions,
@@ -29,6 +30,7 @@ class QuizState {
     this.hasUsedTimePause = false,
     this.eliminatedOptions, // No default value, can be null
     this.showCorrectAnswer = false,
+    this.hasInfo = false, 
   });
 
   // Make sure copyWith handles null correctly
@@ -60,6 +62,7 @@ class QuizState {
       hasUsedTimePause: hasUsedTimePause ?? this.hasUsedTimePause,
       eliminatedOptions: resetEliminatedOptions ? null : (eliminatedOptions ?? this.eliminatedOptions),
       showCorrectAnswer: showCorrectAnswer ?? this.showCorrectAnswer,
+       hasInfo: hasInfo ?? this.hasInfo,    
     );
   }
 }
@@ -125,8 +128,11 @@ class QuizController extends StateNotifier<QuizState> {
     );
     
     // Kısa bir bekleme süresi sonra sonraki soruya geç
-    _moveToNextQuestion();
+    //_moveToNextQuestion();
   }
+  void goToNextQuestion() {
+  _moveToNextQuestion();
+}
 
   void _answerQuestion(int selectedIndex) {
     if (state.isAnswerRevealed) return;
@@ -149,7 +155,7 @@ class QuizController extends StateNotifier<QuizState> {
     );
     
     // Move to next question after delay
-    _moveToNextQuestion();
+    //_moveToNextQuestion();
   }
 
 void _moveToNextQuestion() {
@@ -295,7 +301,7 @@ void _checkAllWrongOptionsEliminated() {
     );
     
     // Move to next question after delay
-    _moveToNextQuestion();
+    //_moveToNextQuestion();
   }
 }
 
