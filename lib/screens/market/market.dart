@@ -93,6 +93,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerPr
 
 
 Widget _buildTrueAnswerScreen() {
+   final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+  final colorScheme = Theme.of(context).colorScheme;
+
   return ListView(
     padding: EdgeInsets.zero,
     children: [
@@ -101,7 +104,8 @@ Widget _buildTrueAnswerScreen() {
         padding: const EdgeInsets.fromLTRB(10, 18, 10, 12),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           height: 64,
@@ -186,7 +190,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -250,7 +255,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -303,7 +309,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -356,7 +363,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -409,7 +417,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -495,7 +504,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -559,7 +569,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -612,7 +623,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -665,7 +677,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -718,7 +731,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -804,7 +818,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -857,7 +872,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:  isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -910,7 +926,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -963,7 +980,8 @@ Widget _buildTrueAnswerScreen() {
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1036,7 +1054,8 @@ Widget _buildTrueAnswerScreen() {
         padding: const EdgeInsets.fromLTRB(10, 18, 10, 12),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           height: 64,
@@ -1202,7 +1221,8 @@ Widget _buildFreezeTimeCoinItem(String title, String coins) {
   return Container(
     height: 64,
     decoration: BoxDecoration(
-      color: const Color(0xFFF8F8AA),
+      color:  isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
       borderRadius: BorderRadius.circular(16),
     ),
     child: Row(
@@ -1262,10 +1282,15 @@ Widget _buildFreezeTimeCoinItem(String title, String coins) {
 }
 
 Widget _buildFreezeTimeMoneyItem(String title, String price) {
+
+  final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+  final colorScheme = Theme.of(context).colorScheme;
+  
   return Container(
     height: 64,
     decoration: BoxDecoration(
-      color: const Color(0xFFF8F8AA),
+      color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
       borderRadius: BorderRadius.circular(16),
     ),
     child: Row(
@@ -1529,7 +1554,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1582,7 +1608,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:  isDarkMode
+                ? colorScheme.surface : Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1635,7 +1662,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1688,7 +1716,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color:  isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1775,7 +1804,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1828,7 +1858,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface :const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1881,7 +1912,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -1934,7 +1966,8 @@ Padding(
         child: Container(
           height: 64,
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -2075,6 +2108,10 @@ Widget _buildMoneyReplayItem(String title, String price) {
   }
 
   Widget _buildHeartsScreen() {
+
+    final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ListView(
@@ -2083,7 +2120,8 @@ Widget _buildMoneyReplayItem(String title, String price) {
         padding: const EdgeInsets.fromLTRB(1, 0, 2, 12),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8AA),
+            color: isDarkMode
+                ? colorScheme.surface : const Color(0xFFF8F8AA),
             borderRadius: BorderRadius.circular(16),
           ),
           height: 64,
