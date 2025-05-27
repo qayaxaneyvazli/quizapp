@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/models/inventory.dart/inventory_item.dart';
 import 'package:quiz_app/providers/inventory/inventory_provider.dart';
 
@@ -31,12 +32,14 @@ class InventoryScreen extends ConsumerWidget {
           ),
         ),
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back, 
-            color: isDarkMode ? theme.colorScheme.onSurface : Colors.white
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+  icon: SvgPicture.asset(
+    'assets/icons/back_icon.svg',  
+ 
+    width: 40,  
+    height: 40,
+  ),
+  onPressed: () => Navigator.of(context).pop(),
+),
       ),
       body: ListView.builder(
         itemCount: inventoryItems.length,

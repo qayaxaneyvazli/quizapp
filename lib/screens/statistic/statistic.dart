@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 
 class CategoryData {
@@ -65,9 +66,14 @@ class StatisticScreen extends ConsumerWidget {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+  icon: SvgPicture.asset(
+    'assets/icons/back_icon.svg',  
+ 
+    width: 40,  
+    height: 40,
+  ),
+  onPressed: () => Navigator.of(context).pop(),
+),
         elevation: 0,
       ),
       body: Column(

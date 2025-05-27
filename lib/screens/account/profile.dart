@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:country_flags/country_flags.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/providers/user/user_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 
@@ -21,7 +23,7 @@ class AccountPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF5B8DEF),
+        backgroundColor: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : AppColors.primary,
         elevation: 0,
         title: Text(
           'Account',
@@ -32,36 +34,56 @@ class AccountPage extends ConsumerWidget {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+     leading: IconButton(
+  icon: SvgPicture.asset(
+    'assets/icons/back_icon.svg',  
+ 
+    width: 40,  
+    height: 40,
+  ),
+  onPressed: () => Navigator.of(context).pop(),
+),
       ),
       body: Column(
         children: [
           // Stats section at top
           Container(
             padding: EdgeInsets.symmetric(vertical: 16.h),
-            color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : const Color(0xFF5B8DEF),
+            color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : AppColors.primary,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildStatItem(
-                  icon: Icons.star,
+                 iconWidget: SvgPicture.asset(
+    'assets/icons/coin_top_menu_first.svg',
+    width: isTablet ? 20.r : 25.r,
+    height: isTablet ? 20.r : 25.r,
+    // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
+  ),
                   value: userProfile.stars.toString(),
                   color: Colors.amber,
                   isTablet: isTablet,
                 ),
                 SizedBox(width: isTablet ? 32.w : 40.w),
                 _buildStatItem(
-                  icon: Icons.favorite,
+                 iconWidget: SvgPicture.asset(
+    'assets/icons/heart_top_menu.svg',
+    width: isTablet ? 20.r : 25.r,
+    height: isTablet ? 20.r : 25.r,
+    // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
+  ),
                   value: userProfile.hearts.toString(),
                   color: Colors.red,
                   isTablet: isTablet,
                 ),
                 SizedBox(width: isTablet ? 32.w : 40.w),
                 _buildStatItem(
-                  icon: Icons.monetization_on,
+                 iconWidget: SvgPicture.asset(
+    'assets/icons/coin_top_menu.svg',
+    width: isTablet ? 20.r : 25.r,
+    height: isTablet ? 20.r : 25.r,
+    // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
+  ),
                   value: userProfile.coins.toString(),
                   color: Colors.amber,
                   isTablet: isTablet,
@@ -207,41 +229,37 @@ class AccountPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon, 
-    required String value, 
-    required Color color,
-    required bool isTablet,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: isTablet ? 40.r : 50.r,
-          height: isTablet ? 40.r : 50.r,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Icon(
-              icon,
-              color: color,
-              size: isTablet ? 20.r : 25.r,
-            ),
-          ),
+Widget _buildStatItem({
+  required Widget iconWidget, // IconData yerine Widget alıyoruz!
+  required String value, 
+  required Color color,
+  required bool isTablet,
+}) {
+  return Column(
+    children: [
+      Container(
+        width: isTablet ? 40.r : 50.r,
+        height: isTablet ? 40.r : 50.r,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          shape: BoxShape.circle,
         ),
-        SizedBox(height: 5.h),
-        Text(
-          value,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: isTablet ? 16.sp : 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Center(
+          child: iconWidget,
         ),
-      ],
-    );
-  }
+      ),
+      SizedBox(height: 5.h),
+      Text(
+        value,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: isTablet ? 16.sp : 18.sp,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildProfileItem({
     required BuildContext context,

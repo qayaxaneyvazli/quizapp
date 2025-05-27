@@ -193,30 +193,30 @@ class TopBar extends ConsumerWidget {
             ),
             
             // Bottom settings button
-            Container(
-              width: double.infinity,
-              // Use slightly darker variant of primary color for the settings button
-              color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.5) : const Color(0xFF2C4A9A),
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.settings,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    "Settings",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Container(
+            //   width: double.infinity,
+            //   // Use slightly darker variant of primary color for the settings button
+            //   color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.5) : const Color(0xFF2C4A9A),
+            //   padding: EdgeInsets.symmetric(vertical: 16),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.center,
+            //     children: [
+            //       Icon(
+            //         Icons.settings,
+            //         color: Colors.white,
+            //         size: 22,
+            //       ),
+            //       SizedBox(width: 8),
+            //       Text(
+            //         "Settings",
+            //         style: TextStyle(
+            //           color: Colors.white,
+            //           fontSize: 16,
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
           ],
         ),
       ),

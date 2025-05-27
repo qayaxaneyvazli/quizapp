@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/models/progress/progress.dart';
 import 'package:quiz_app/providers/progress/progress_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
@@ -33,15 +34,14 @@ class ProgressScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: Colors.white, // White works on both blue backgrounds
-                      size: 24.r,
-                    ),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
+  icon: SvgPicture.asset(
+    'assets/icons/back_icon.svg',  
+ 
+    width: 40,  
+    height: 40,
+  ),
+  onPressed: () => Navigator.of(context).pop(),
+),
                   Expanded(
                     child: Center(
                       child: Text(
