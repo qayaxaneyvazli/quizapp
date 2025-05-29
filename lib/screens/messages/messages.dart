@@ -374,12 +374,13 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
+       
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
-              Icons.arrow_forward,
-              color: theme.colorScheme.onPrimary,
+              Icons.send,
+              
+              color: AppColors.primary,
             ),
           ),
         ],

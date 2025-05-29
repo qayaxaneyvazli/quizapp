@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
 
+import 'package:quiz_app/core/constants/app_colors.dart';
+
 class VictoryModal extends StatefulWidget {
   final int coins;
   final VoidCallback onPlayAgain;
@@ -24,7 +26,7 @@ class _VictoryModalState extends State<VictoryModal> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController = ConfettiController(duration: const Duration(seconds: 10));
     _confettiController.play();
   }
 
@@ -76,15 +78,15 @@ class _VictoryModalState extends State<VictoryModal> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Semi-transparent background (should be first/top layer)
+        // Semi-transparent background overlay
         GestureDetector(
           onTap: widget.onClose,
           child: Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withOpacity(0.3), // Daha az opak yapıldı
           ),
         ),
         
-        // Modal content (second layer)
+        // Modal content - merkeze yerleştirildi
         Center(
           child: Container(
             width: 300,
@@ -92,6 +94,13 @@ class _VictoryModalState extends State<VictoryModal> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -109,7 +118,7 @@ class _VictoryModalState extends State<VictoryModal> {
                   'You have won the duel!',
                   style: TextStyle(
                     fontSize: 20,
-                    color: Colors.blue,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -122,7 +131,7 @@ class _VictoryModalState extends State<VictoryModal> {
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -146,7 +155,7 @@ class _VictoryModalState extends State<VictoryModal> {
                   'You have earned ${widget.coins} coins!',
                   style: const TextStyle(
                     fontSize: 18,
-                    color: Colors.blue,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -158,7 +167,7 @@ class _VictoryModalState extends State<VictoryModal> {
                       child: ElevatedButton(
                         onPressed: widget.onPlayAgain,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -177,17 +186,12 @@ class _VictoryModalState extends State<VictoryModal> {
                       child: ElevatedButton(
                         onPressed: () {
                           if (mounted) {
-                            Navigator.of(context).pop(); // Eğer Navigator kullanıyorsanız
-                            widget.onClose(); // Veya direkt callback
+                            widget.onClose();
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade300,
                           foregroundColor: Colors.black87,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
                         ),
                         child: const Text(
                           'Close',
@@ -202,19 +206,20 @@ class _VictoryModalState extends State<VictoryModal> {
           ),
         ),
         
-        // Confetti effects with star shape (should be last/topmost layer)
+        // Confetti effects - Merkezden başlayıp her yöne yayılan
+        // Ana confetti - yukarıdan aşağıya
         Align(
-          alignment: Alignment.topCenter,
+          alignment: Alignment.center,
           child: ConfettiWidget(
             confettiController: _confettiController,
-            blastDirection: 3.14 / 2, // radians (downwards)
-            maxBlastForce: 10,
-            minBlastForce: 5,
+            blastDirection: pi / 2, // Aşağı yön
+            maxBlastForce: 20,
+            minBlastForce: 15,
             emissionFrequency: 0.05,
-            numberOfParticles: 50,
-            gravity: 0.2,
-            shouldLoop: true,
-            createParticlePath: drawStar, // Yıldız şekli kullanma
+            numberOfParticles: 30,
+            gravity: 0.3,
+            shouldLoop: false,
+            createParticlePath: drawStar,
             colors: const [
               Colors.red,
               Colors.blue,
@@ -227,18 +232,19 @@ class _VictoryModalState extends State<VictoryModal> {
           ),
         ),
         
+        // Sol üst confetti
         Align(
-          alignment: Alignment.centerLeft,
+          alignment: Alignment.center,
           child: ConfettiWidget(
             confettiController: _confettiController,
-            blastDirection: 0, // radians (right)
-            maxBlastForce: 10,
-            minBlastForce: 5,
-            emissionFrequency: 0.05,
-            numberOfParticles: 30,
+            blastDirection: -3 * pi / 4, // Sol üst
+            maxBlastForce: 15,
+            minBlastForce: 10,
+            emissionFrequency: 0.03,
+            numberOfParticles: 20,
             gravity: 0.2,
-            shouldLoop: true,
-            createParticlePath: drawStar, // Yıldız şekli kullanma
+            shouldLoop: false,
+            createParticlePath: drawStar,
             colors: const [
               Colors.red,
               Colors.blue,
@@ -251,18 +257,144 @@ class _VictoryModalState extends State<VictoryModal> {
           ),
         ),
         
+        // Sağ üst confetti
         Align(
-          alignment: Alignment.centerRight,
+          alignment: Alignment.center,
           child: ConfettiWidget(
             confettiController: _confettiController,
-            blastDirection: 3.14, // radians (left)
-            maxBlastForce: 10,
-            minBlastForce: 5,
+            blastDirection: -pi / 4, // Sağ üst
+            maxBlastForce: 15,
+            minBlastForce: 10,
+            emissionFrequency: 0.03,
+            numberOfParticles: 20,
+            gravity: 0.2,
+            shouldLoop: false,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+              Colors.cyan,
+            ],
+          ),
+        ),
+        
+        // Sol confetti
+        Align(
+          alignment: Alignment.center,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: pi, // Sol
+            maxBlastForce: 18,
+            minBlastForce: 12,
+            emissionFrequency: 0.04,
+            numberOfParticles: 25,
+            gravity: 0.1,
+            shouldLoop: false,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+              Colors.cyan,
+            ],
+          ),
+        ),
+        
+        // Sağ confetti
+        Align(
+          alignment: Alignment.center,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: 0, // Sağ
+            maxBlastForce: 18,
+            minBlastForce: 12,
+            emissionFrequency: 0.04,
+            numberOfParticles: 25,
+            gravity: 0.1,
+            shouldLoop: false,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+              Colors.cyan,
+            ],
+          ),
+        ),
+        
+        // Sol alt confetti
+        Align(
+          alignment: Alignment.center,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: 3 * pi / 4, // Sol alt
+            maxBlastForce: 15,
+            minBlastForce: 10,
+            emissionFrequency: 0.03,
+            numberOfParticles: 20,
+            gravity: 0.2,
+            shouldLoop: false,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+              Colors.cyan,
+            ],
+          ),
+        ),
+        
+        // Sağ alt confetti
+        Align(
+          alignment: Alignment.center,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: pi / 4, // Sağ alt
+            maxBlastForce: 15,
+            minBlastForce: 10,
+            emissionFrequency: 0.03,
+            numberOfParticles: 20,
+            gravity: 0.2,
+            shouldLoop: false,
+            createParticlePath: drawStar,
+            colors: const [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.yellow,
+              Colors.purple,
+              Colors.orange,
+              Colors.cyan,
+            ],
+          ),
+        ),
+        
+        // Yukarı confetti
+        Align(
+          alignment: Alignment.center,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: -pi / 2, // Yukarı
+            maxBlastForce: 20,
+            minBlastForce: 15,
             emissionFrequency: 0.05,
             numberOfParticles: 30,
-            gravity: 0.2,
-            shouldLoop: true,
-            createParticlePath: drawStar, // Yıldız şekli kullanma
+            gravity: 0.3,
+            shouldLoop: false,
+            createParticlePath: drawStar,
             colors: const [
               Colors.red,
               Colors.blue,

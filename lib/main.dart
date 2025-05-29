@@ -8,9 +8,13 @@ import 'package:quiz_app/screens/login/login.dart';
 import 'package:quiz_app/screens/login/register.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_screen.dart';
- 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized(); // Important for SharedPreferences
+ import 'package:flutter/services.dart';
+
+void main()async  {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
   runApp(
     const ProviderScope(child: MyApp()),
   );
