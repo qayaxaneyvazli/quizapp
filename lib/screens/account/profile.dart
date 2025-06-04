@@ -31,7 +31,7 @@ class AccountPage extends ConsumerWidget {
             color: Colors.white,
             fontSize: isTablet ? 20.sp : 24.sp,
             fontWeight: FontWeight.bold,
-          ),
+          ), 
         ),
         centerTitle: true,
      leading: IconButton(
@@ -47,50 +47,50 @@ class AccountPage extends ConsumerWidget {
       body: Column(
         children: [
           // Stats section at top
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : AppColors.primary,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildStatItem(
-                 iconWidget: SvgPicture.asset(
-    'assets/icons/coin_top_menu_first.svg',
-    width: isTablet ? 20.r : 25.r,
-    height: isTablet ? 20.r : 25.r,
-    // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
-  ),
-                  value: userProfile.stars.toString(),
-                  color: Colors.amber,
-                  isTablet: isTablet,
-                ),
-                SizedBox(width: isTablet ? 32.w : 40.w),
-                _buildStatItem(
-                 iconWidget: SvgPicture.asset(
-    'assets/icons/heart_top_menu.svg',
-    width: isTablet ? 20.r : 25.r,
-    height: isTablet ? 20.r : 25.r,
-    // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
-  ),
-                  value: userProfile.hearts.toString(),
-                  color: Colors.red,
-                  isTablet: isTablet,
-                ),
-                SizedBox(width: isTablet ? 32.w : 40.w),
-                _buildStatItem(
-                 iconWidget: SvgPicture.asset(
-    'assets/icons/coin_top_menu.svg',
-    width: isTablet ? 20.r : 25.r,
-    height: isTablet ? 20.r : 25.r,
-    // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
-  ),
-                  value: userProfile.coins.toString(),
-                  color: Colors.amber,
-                  isTablet: isTablet,
-                ),
-              ],
-            ),
-          ),
+  //         Container(
+  //           padding: EdgeInsets.symmetric(vertical: 16.h),
+  //           color: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : AppColors.primary,
+  //           child: Row(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             children: [
+  //               _buildStatItem(
+  //                iconWidget: SvgPicture.asset(
+  //   'assets/icons/coin_top_menu_first.svg',
+  //   width: isTablet ? 20.r : 25.r,
+  //   height: isTablet ? 20.r : 25.r,
+  //   // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
+  // ),
+  //                 value: userProfile.stars.toString(),
+  //                 color: Colors.amber,
+  //                 isTablet: isTablet,
+  //               ),
+  //               SizedBox(width: isTablet ? 32.w : 40.w),
+  //               _buildStatItem(
+  //                iconWidget: SvgPicture.asset(
+  //   'assets/icons/heart_top_menu.svg',
+  //   width: isTablet ? 20.r : 25.r,
+  //   height: isTablet ? 20.r : 25.r,
+  //   // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
+  // ),
+  //                 value: userProfile.hearts.toString(),
+  //                 color: Colors.red,
+  //                 isTablet: isTablet,
+  //               ),
+  //               SizedBox(width: isTablet ? 32.w : 40.w),
+  //               _buildStatItem(
+  //                iconWidget: SvgPicture.asset(
+  //   'assets/icons/coin_top_menu.svg',
+  //   width: isTablet ? 20.r : 25.r,
+  //   height: isTablet ? 20.r : 25.r,
+  //   // color: Colors.amber,  // svg'in rengi içeriden veriliyorsa burada kullanabilirsin
+  // ),
+  //                 value: userProfile.coins.toString(),
+  //                 color: Colors.amber,
+  //                 isTablet: isTablet,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
           
           // Profile Items
           Expanded(

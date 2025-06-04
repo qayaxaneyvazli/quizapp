@@ -25,6 +25,23 @@ import '../../providers/theme_mode_provider.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+
+String _getPageTitle(int navIndex) {
+    switch (navIndex) {
+      case 0:
+        return 'Messages';
+      case 1:
+        return 'Rank';
+      case 2:
+        return 'Home';
+      case 3:
+        return 'Market';
+      case 4:
+        return 'Settings';
+      default:
+        return 'Home';
+    }
+  }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navController = ref.watch(bottomNavProvider);
@@ -45,60 +62,173 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       drawer: TopBar(),
       backgroundColor: backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(75.h), // AppBar yüksekliğini artırıyoruz
+        child: AppBar(
+          backgroundColor: appBarColor,
+          elevation: 0,
+          flexibleSpace: SafeArea(
+            child: Column(
+              children: [
+                // Üst kısım - İkonlar ve drawer button
+                Container(
+                  height: 50.h, // Standart AppBar yüksekliği
+                  padding: EdgeInsets.symmetric(horizontal: 104.w),
+                  child: Row(
+                    children: [
+                      // Drawer button
+                      
+                      
+                      const Spacer(),
+                      
+                      // Coins counter
+                      Padding(
+                        padding: EdgeInsets.only(right: 8.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(2.r),
+                              decoration: const BoxDecoration(
+                                color: Colors.amber,
+                                shape: BoxShape.circle,
+                              ),
+                              child: SvgPicture.asset(
+                                "assets/icons/coin_top_menu_first.svg",
+                                width: 20.w,
+                                height: 20.w,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              "1000",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Timer (Heart)
+                      Padding(
+                        padding: EdgeInsets.only(right: 8.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              "assets/icons/heart_top_menu.svg",
+                              width: 24.w,
+                              height: 24.w,
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              "7:30:25",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.sp,   
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Money
+                      Padding(
+                        padding: EdgeInsets.only(right: 16.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              "assets/icons/coin_top_menu.svg",
+                              width: 22.w,
+                              height: 22.w,
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              "2500",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Alt kısım - Sayfa başlığı
+                Container(
+                  height: 25.h,
+                  child: Center(
+                    child: Text(
+                      _getPageTitle(navController),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 21.sp, // Biraz küçülttük
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: appBarColor,
         selectedItemColor: AppColors.gold,
         unselectedItemColor: Colors.white.withOpacity(0.7),
-        currentIndex: navController, // Use the provider value
-        
+        currentIndex: navController,
         onTap: (index) {
           ref.read(bottomNavProvider.notifier).state = index;
         },
         type: BottomNavigationBarType.fixed,
-        
-        items:   [
-      BottomNavigationBarItem(
+        items: [
+          BottomNavigationBarItem(
             icon: SvgPicture.asset(
               "assets/images/bottombar_messages.svg",
-              width: 24.w,
-              height: 24.h,
-             
+              width: navController == 0 ? 32.w : 24.w,
+              height: navController == 0 ? 32.h : 24.h,
             ),
             label: 'Messages',
           ),
-         BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: SvgPicture.asset(
               "assets/images/bottombar_rank.svg",
-              width: 24.w,
-              height: 24.h,
-           
+              width: navController == 1 ? 32.w : 24.w,
+              height: navController == 1 ? 32.h : 24.h,
             ),
             label: 'Rank',
           ),
-             BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: SvgPicture.asset(
               "assets/images/bottombar_home.svg",
-              width: 24.w,
-              height: 24.h,
-           
+              width: navController == 2 ? 32.w : 24.w,
+              height: navController == 2 ? 32.h : 24.h,
             ),
             label: 'Home',
           ),
-         BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: SvgPicture.asset(
               "assets/images/bottombar_market.svg",
-              width: 21.w,
-              height: 21.h,
-             
+              width: navController == 3 ? 29.w : 21.w,
+              height: navController == 3 ? 29.h : 21.h,
             ),
             label: 'Market',
           ),
-        BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: SvgPicture.asset(
-              "assets/images/bottombar_settings.svg",
-              width: 24.w,
-              height: 24.h,
-            
+              "assets/icons/settings.svg",
+              width: navController == 4 ? 32.w : 24.w,
+              height: navController == 4 ? 32.h : 24.h,
             ),
             label: 'Settings',
           ),
@@ -106,7 +236,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Top status bar with coins and timer
+          // Top status bar (artık gereksiz olabilir)
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: isTablet ? 8.h : 12.h),
             color: appBarColor,
@@ -114,84 +244,6 @@ class HomeScreen extends ConsumerWidget {
               bottom: false,
               child: Row(
                 children: [
-                  Builder(
-                    builder: (context) => InkWell(
-                      onTap: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                      child: const Icon(Icons.menu, color: Colors.white),
-                    ),
-                  ),
-                  const Spacer(flex: 1),
-                  // Coins counter
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(4.r),
-                        decoration: const BoxDecoration(
-                          color: Colors.amber,
-                          shape: BoxShape.circle,
-                        ),
-                        child: SvgPicture.asset(
-                          "assets/icons/coin_top_menu_first.svg",
-                          width: 27.w,
-                          height: 27.w,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "1000",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: 16.w),
-                  // Timer
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/icons/heart_top_menu.svg",
-                        width: 35.w,
-                        height: 35.w,
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "7:30:25",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.sp,   
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: 16.w),
-                  // Money
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SvgPicture.asset(
-                        "assets/icons/coin_top_menu.svg",
-                        width: 30.w,
-                        height: 30.w,
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "2500",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                    ],
-                  ),
                   const Spacer(flex: 1),
                 ],
               ),
@@ -237,6 +289,9 @@ class HomeContentScreen extends ConsumerWidget {
     // Get screen dimensions to determine if we're on a tablet
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
+
+    final double flagRight = isTablet ? 12.w : 3.w;
+final double flagTop = isTablet ? 150.h : 70.h;
     
     // Calculate appropriate sizes based on device
     final avatarSize = isTablet ? 80.r : 120.r;
@@ -248,7 +303,7 @@ class HomeContentScreen extends ConsumerWidget {
     final gridCrossAxisCount = isTablet ? 4 : 2;
     final gridPadding = isTablet ? 12.w : 30.w;
     final gridItemSpacing = isTablet ? 10.w : 26.w;
-
+final double flagPadding = isTablet ? 3.r : 5.r;
     // Define colors based on theme mode
     final avatarBgColor = isDarkMode ? const Color.fromARGB(255, 121, 48, 48) : const Color(0xFFE8E4FF);
     final avatarBorderColor = isDarkMode ? Colors.grey[700] : const Color(0xFF6A1B9A);
@@ -295,22 +350,22 @@ class HomeContentScreen extends ConsumerWidget {
                   ),
                 ),
 
-                           Positioned(
-                             right:3,
-                             top:95,
-                             child: Container(
-                                             padding: EdgeInsets.all(isTablet ? 3.r : 5.r),
-                                             decoration: const BoxDecoration(
-                                               shape: BoxShape.circle,
-                                             ),
-                                             child: CountryFlag.fromCountryCode(
-                                               'AZ',
-                                               height: flagSize,
-                                               width: flagSize,
-                                               shape: const Circle(),
-                                             ),
-                                           ),
-                           ),
+                      Positioned(
+  right: flagRight,
+  top: flagTop,
+  child: Container(
+    padding: EdgeInsets.all(flagPadding),
+    decoration: const BoxDecoration(
+      shape: BoxShape.circle,
+    ),
+    child: CountryFlag.fromCountryCode(
+      'AZ',
+      height: flagSize,
+      width: flagSize,
+      shape: const Circle(),
+    ),
+  ),
+),
             ]),
          
               // Country flag icon

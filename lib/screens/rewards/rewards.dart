@@ -30,7 +30,7 @@ class LoginRewardsScreen extends StatelessWidget {
         ),
         title: const Text(
           'Login Rewards',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
       body: SingleChildScrollView(

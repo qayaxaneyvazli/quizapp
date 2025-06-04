@@ -78,6 +78,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: SvgPicture.asset('assets/icons/Notification_Duel.svg'),
             iconColor: isDuelNotificationsOn ? colorScheme.secondary : colorScheme.onSurface.withOpacity(0.7),
             onChanged: (val) => ref.read(duelnotificationsEnabledProvider.notifier).toggle(),
+            subtitle: 'Get notifications for Duel only if you are online',
           ),
           const SizedBox(height: 20),
           Column(
@@ -107,6 +108,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }
                       // Diğer itemler için burada başka işlem yok.
                     },
+                    highlightColor: Colors.transparent,
+                    splashColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 13.0),
                       padding: const EdgeInsets.all(16.0),
@@ -145,6 +149,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required SvgPicture icon,
     required Color iconColor,
     required ValueChanged<bool> onChanged,
+    String? subtitle,
   }) {
     final theme = Theme.of(context);
 
@@ -157,6 +162,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: icon,
         ),
         title: Text(title),
+        subtitle: subtitle != null ? Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.grey[700])) : null,
         trailing: Switch(
           value: value,
           onChanged: onChanged,

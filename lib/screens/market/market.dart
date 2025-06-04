@@ -47,24 +47,16 @@ class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerPr
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
-    return Scaffold(
-      // Keep original background color in light mode
-      backgroundColor: isDarkMode 
-          ? colorScheme.background 
-          : Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        elevation: 0,
-        title: Text(
-          "Market",
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        bottom: TabBar(
+    return Container(
+  color: isDarkMode 
+      ? colorScheme.background 
+      : Colors.grey.shade100,
+  child: Column(
+    children: [
+      // TabBar container
+      Container(
+        color: colorScheme.primary,
+        child: TabBar(
           controller: _tabController,
           tabs: _tabs,
           indicator: UnderlineTabIndicator(
@@ -78,17 +70,22 @@ class _MarketScreenState extends ConsumerState<MarketScreen> with SingleTickerPr
           labelPadding: const EdgeInsets.symmetric(vertical: 10),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildHeartsScreen(),
-        _buildDuelTicketsScreen(),
-        _buildTrueAnswerScreen(),
-          _buildFreezeTimeScreen() ,
-          _buildAvatarsGrid(),
-        ],
+      // TabBarView
+      Expanded(
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildHeartsScreen(),
+            _buildDuelTicketsScreen(),
+            _buildTrueAnswerScreen(),
+            _buildFreezeTimeScreen(),
+            _buildAvatarsGrid(),
+          ],
+        ),
       ),
-    );
+    ],
+  ),
+);;
   }
 
 
