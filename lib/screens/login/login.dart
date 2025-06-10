@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/screens/home/home_screen.dart';
-
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_signin_button/flutter_signin_button.dart';
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -48,41 +49,62 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 36),
+                  SignInButton(
+  Buttons.Google,
+  text: "Sign in with Google",
+  onPressed: () async {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    try {
+      final account = await googleSignIn.signIn();
+      if (account != null) {
+        // Giriş başarılı, burada backend'e token gönder veya yönlendir
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      // Hata yönetimi
+      print(e);
+    }
+  },
+),
                   // Email TextField
-                  TextField(
-                    style: TextStyle(color: Colors.black87),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.email, color: Colors.black54),
-                      hintText: "Email",
-                      hintStyle: TextStyle(color: Colors.black54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 20),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
+                  // TextField(
+                  //   style: TextStyle(color: Colors.black87),
+                  //   decoration: InputDecoration(
+                  //     filled: true,
+                  //     fillColor: Colors.white,
+                  //     prefixIcon: Icon(Icons.email, color: Colors.black54),
+                  //     hintText: "Email",
+                  //     hintStyle: TextStyle(color: Colors.black54),
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(14),
+                  //       borderSide: BorderSide.none,
+                  //     ),
+                  //     contentPadding: EdgeInsets.symmetric(vertical: 20),
+                  //   ),
+                  //   keyboardType: TextInputType.emailAddress,
+                  // ),
                   const SizedBox(height: 18),
                   // Password TextField
-                  TextField(
-                    obscureText: true,
-                    style: TextStyle(color: Colors.black87),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.lock, color: Colors.black54),
-                      hintText: "Password",
-                      hintStyle: TextStyle(color: Colors.black54),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 20),
-                    ),
-                  ),
+                  // TextField(
+                  //   obscureText: true,
+                  //   style: TextStyle(color: Colors.black87),
+                  //   decoration: InputDecoration(
+                  //     filled: true,
+                  //     fillColor: Colors.white,
+                  //     prefixIcon: Icon(Icons.lock, color: Colors.black54),
+                  //     hintText: "Password",
+                  //     hintStyle: TextStyle(color: Colors.black54),
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(14),
+                  //       borderSide: BorderSide.none,
+                  //     ),
+                  //     contentPadding: EdgeInsets.symmetric(vertical: 20),
+                  //   ),
+                  // ),
+                  
                   const SizedBox(height: 28),
                   // Gradient Button
                   SizedBox(
@@ -90,7 +112,11 @@ class LoginScreen extends StatelessWidget {
                     height: 56,
                     child: GestureDetector(
                       onTap: () {
-                        // Login butonuna tıklanınca işlemler
+                          Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomeScreen(),
+                          ));
                       },
                       child: Container(
                         decoration: BoxDecoration(
@@ -99,51 +125,23 @@ class LoginScreen extends StatelessWidget {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'Log In',
+                          'Continue as Guest',
                           style: TextStyle(
                             color: purpleColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
                           ),
                         ),
+
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Forgot password
-                  TextButton(
-                    onPressed: () {
-                      // Şifreyi unuttum
-                    },
-                    child: Text(
-                      'Forgot password?',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        decoration: TextDecoration.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                
+                   
                   // Continue as Guest
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ));
-                    },
-                    child: Text(
-                      'Continue as Guest',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        decoration: TextDecoration.none,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
+               
                   const SizedBox(height: 40),
                 ],
               ),
@@ -154,3 +152,4 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
+

@@ -45,7 +45,7 @@ class MyApp extends ConsumerWidget {
           home: child,   
         );
       },
-      child:  const RegisterScreen(),  
+      child:  const LoginScreen(),  
     );
   }
 }
