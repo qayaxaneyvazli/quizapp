@@ -7,6 +7,7 @@ import 'package:quiz_app/providers/notifications/duel_notifications_provider.dar
 import 'package:quiz_app/providers/notifications/notifications_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'package:quiz_app/screens/language/language.dart';
+import 'package:quiz_app/screens/login/login.dart';
 import 'package:quiz_app/screens/settings/faq.dart';
 // LanguageModal widget'ını import et!
   // yolunu kendine göre düzelt
@@ -104,6 +105,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const FaqScreen()),
+                        );
+                      }
+
+                      else if (menuItems[index] == 'Connect Account') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
                         );
                       }
                       // Diğer itemler için burada başka işlem yok.
