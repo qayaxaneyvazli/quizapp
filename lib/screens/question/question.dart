@@ -21,7 +21,40 @@ class QuizScreen extends ConsumerWidget {
     final question = quizState.questions[currentQuestionIndex];
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255), // Mor arka plan
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(45.h),
+        child: AppBar(
+          backgroundColor: AppColors.primary,
+          elevation: 0,
+          leading: IconButton(
+            icon: SvgPicture.asset(
+              'assets/icons/back_icon.svg',
+              width: 35,
+              height: 35,
+            ),
+            onPressed: () => Navigator.pop(context),
+            iconSize: 22,
+            padding: EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
+          ),
+          titleSpacing: 0,
+          title: Row(
+            children: [
+              SizedBox(width: 15.w),
+              Text(
+                "Quiz",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          centerTitle: false,
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -68,17 +101,24 @@ class QuizScreen extends ConsumerWidget {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
                       child: CircleAvatar(
-                        backgroundColor: result == true
-                            ? Colors.green
-                            : (result == false ? Colors.red : Colors.grey),
-                        child: Icon(
-                          result == true
-                              ? Icons.check
-                              : (result == false ? Icons.close : null),
-                          color: Colors.white,
-                        ),
-                        radius: 16,
-                      ),
+  backgroundColor: result == true
+      ? Colors.green
+      : (result == false ? Colors.red : Colors.grey),
+  child: result == true
+      ? SvgPicture.asset(
+          'assets/icons/true_answer.svg',
+          width: 24,
+          height: 24,
+        )
+      : (result == false
+          ? SvgPicture.asset(
+              'assets/icons/wrong_answer.svg',
+              width: 24,
+              height: 24,
+            )
+          : null),
+  radius: 16,
+),
                     );
                   }).toList(),
                 ),
@@ -175,80 +215,140 @@ class QuizScreen extends ConsumerWidget {
 
             // Şıklar
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Column(
-                children: List.generate(4, (index) {
-                  final isEliminated = quizState.eliminatedOptions != null &&
-                      quizState.eliminatedOptions!.contains(index);
-                  final isSelected = quizState.selectedAnswerIndex == index;
-                  final isCorrect = index == question.correctAnswerIndex;
-                  final showAsCorrect =
-                      isCorrect && (quizState.isAnswerRevealed || quizState.showCorrectAnswer);
-
-                  Color buttonColor = AppColors.primary;
-                  Color textColor = Colors.white;
-                  if (isEliminated) {
-                    buttonColor = Colors.grey.shade200;
-                    textColor = Colors.grey;
-                  } else if (quizState.isAnswerRevealed) {
-                    if (isSelected) {
-                      buttonColor = isCorrect ? Colors.green : Colors.red;
-                      textColor = Colors.white;
-                    } else if (isCorrect) {
-                      buttonColor = Colors.green;
-                      textColor = Colors.white;
-                    }
-                  } else if (showAsCorrect) {
-                    buttonColor = Colors.green;
-                    textColor = Colors.white;
-                  } else if (isSelected) {
-                    buttonColor = Colors.yellow.shade100;
-                  }
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    child: GestureDetector(
-                      onTap: isEliminated || quizState.isAnswerRevealed
-                          ? null
-                          : () {
-                              ref
-                                  .read(quizControllerProvider.notifier)
-                                  .selectAnswer(index);
-                            },
-                      child: AnimatedContainer(
-                        duration: Duration(milliseconds: 180),
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: buttonColor,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                              color: isSelected
-                                  ? Colors.amber
-                                  : Colors.transparent,
-                              width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 3,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            question.options[index],
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 17,
-                                color: textColor),
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: question.isTrueFalse
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (int index = 0; index < 2; index++)
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12,vertical:32),
+                              child: GestureDetector(
+                                onTap: quizState.isAnswerRevealed
+                                    ? null
+                                    : () {
+                                        ref
+                                            .read(quizControllerProvider.notifier)
+                                            .selectAnswer(index);
+                                      },
+                                child: AnimatedContainer(
+                                  duration: Duration(milliseconds: 180),
+                                  height: 110,
+                                  decoration: BoxDecoration(
+                                    color: quizState.selectedAnswerIndex == index
+                                        ? (index == question.correctAnswerIndex && quizState.isAnswerRevealed
+                                            ? Colors.green
+                                            : quizState.isAnswerRevealed
+                                                ? Colors.red
+                                                : AppColors.primary)
+                                        : AppColors.primary,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                        color: quizState.selectedAnswerIndex == index
+                                            ? Colors.amber
+                                            : Colors.transparent,
+                                        width: 2),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 3,
+                                        offset: Offset(0, 2),
+                                      )
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      index == 0 ? "True" : "False",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 22,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                      ],
+                    )
+                  : Column(
+                      children: List.generate(
+                        4,
+                        (index) {
+                          final isEliminated = quizState.eliminatedOptions != null &&
+                              quizState.eliminatedOptions!.contains(index);
+                          final isSelected = quizState.selectedAnswerIndex == index;
+                          final isCorrect = index == question.correctAnswerIndex;
+                          final showAsCorrect =
+                              isCorrect && (quizState.isAnswerRevealed || quizState.showCorrectAnswer);
+
+                          Color buttonColor = AppColors.primary;
+                          Color textColor = Colors.white;
+                          if (isEliminated) {
+                            buttonColor = Colors.grey.shade200;
+                            textColor = Colors.grey;
+                          } else if (quizState.isAnswerRevealed) {
+                            if (isSelected) {
+                              buttonColor = isCorrect ? Colors.green : Colors.red;
+                              textColor = Colors.white;
+                            } else if (isCorrect) {
+                              buttonColor = Colors.green;
+                              textColor = Colors.white;
+                            }
+                          } else if (showAsCorrect) {
+                            buttonColor = Colors.green;
+                            textColor = Colors.white;
+                          } else if (isSelected) {
+                            buttonColor = Colors.yellow.shade100;
+                          }
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            child: GestureDetector(
+                              onTap: isEliminated || quizState.isAnswerRevealed
+                                  ? null
+                                  : () {
+                                      ref
+                                          .read(quizControllerProvider.notifier)
+                                          .selectAnswer(index);
+                                    },
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 180),
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: buttonColor,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                      color: isSelected
+                                          ? Colors.amber
+                                          : Colors.transparent,
+                                      width: 2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 3,
+                                      offset: Offset(0, 2),
+                                    )
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    question.options[index],
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
+                                        color: textColor),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                }),
-              ),
             ),
 
             

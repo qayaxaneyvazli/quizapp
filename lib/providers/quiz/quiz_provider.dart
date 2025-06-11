@@ -7,6 +7,12 @@ import 'quiz_controller.dart';
 final questionsProvider = Provider<List<QuizQuestion>>((ref) {
   // Sample questions
   return [
+       QuizQuestion(
+  question: "Is the sky blue?",
+  options: ["True", "False"], // These won't be used for true/false questions
+  correctAnswerIndex: 0, // 0 for True, 1 for False
+  isTrueFalse: true,
+),
     QuizQuestion(
       question: 'What is the capital of Azerbaijan?',
       options: ['Baku', 'Ankara', 'Tbilisi', 'Yerevan'],
@@ -31,7 +37,8 @@ final questionsProvider = Provider<List<QuizQuestion>>((ref) {
       question: 'President of America?',
       options: ['Trump', 'Biden', 'Bush', 'Obama'],
       correctAnswerIndex: 1,
-    )
+    ),
+ 
     
   ];
 });
