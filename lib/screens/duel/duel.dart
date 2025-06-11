@@ -13,6 +13,7 @@ import 'package:quiz_app/screens/duel/defeat_modal.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:quiz_app/screens/duel/victory_modal.dart';
+import 'package:quiz_app/screens/duel/draw_modal.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // Game state provider
@@ -30,6 +31,7 @@ class DuelScreen extends ConsumerStatefulWidget {
 class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _showVictoryModal = false;
   bool _showDefeatModal = false;
+  bool _showDrawModal = false;
   // Coins earned on victory
   final int _coinsEarned = 50;
 
@@ -58,10 +60,23 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
     });
   }
 
+  void _showDraw() {
+    setState(() {
+      _showDrawModal = true;
+    });
+  }
+
+  void _hideDraw() {
+    setState(() {
+      _showDrawModal = false;
+    });
+  }
+
   void _playAgain() {
     setState(() {
       _showVictoryModal = false;
       _showDefeatModal = false;
+      _showDrawModal = false;
     });
     ref.refresh(gameStateProvider);
   }
@@ -138,6 +153,11 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
         // Show defeat modal after a short delay
         Future.delayed(Duration.zero, () {
           _showDefeat();
+        });
+      } else if (player1Score == player2Score && !_showDrawModal) {
+        // Show draw modal after a short delay
+        Future.delayed(Duration.zero, () {
+          _showDraw();
         });
       }
     }
@@ -512,6 +532,13 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
             DefeatModal(
               onPlayAgain: _playAgain,
               onClose: _hideDefeat,
+            ),
+
+          // Draw Modal
+          if (_showDrawModal)
+            DrawModal(
+              onPlayAgain: _playAgain,
+              onClose: _hideDraw,
             ),
         ],
       ),
