@@ -499,7 +499,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
             ),
           ),
           
-          // Victory modal overlay - Stack içinde gösterilir
+           
           if (_showVictoryModal)
             VictoryModal(
               coins: _coinsEarned,
@@ -507,7 +507,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
               onClose: _hideVictoryModal,
             ),
           
-          // Defeat modal overlay - Stack içinde gösterilir
+           
           if (_showDefeatModal)
             DefeatModal(
               onPlayAgain: _playAgain,
