@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:quiz_app/screens/level/level_screen.dart';
 import 'package:quiz_app/screens/question/question.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
@@ -72,11 +73,14 @@ class ChapterScreen extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => QuizScreen(),
-                        ),
-                      ),
+  context,
+  MaterialPageRoute(
+    builder: (_) => LevelScreen(
+      chapterName: "Chapter 1",
+      chapterNumber: 1,
+    ),
+  ),
+),
                       child: _buildChapterCard(
                         "Chapter 1",
                         stars: 3,

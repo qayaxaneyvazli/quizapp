@@ -7,14 +7,43 @@ import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/models/question/question.dart';
 import 'package:quiz_app/providers/quiz/quiz_controller.dart';
 import 'package:quiz_app/providers/quiz/quiz_provider.dart';
-
+import 'package:quiz_app/providers/heart/heart_provider.dart';
+import 'package:quiz_app/screens/question/not_enough_heart_modal.dart';
 class QuizScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quizState = ref.watch(quizControllerProvider);
     final currentQuestionIndex = quizState.currentQuestionIndex;
+  final hearts = ref.watch(heartsProvider);
+    
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (hearts <= 0) {
+        showNotEnoughHeartsModal(
+          context,
+          onGetTickets: () {
+            Navigator.of(context).pop();
+            // Navigate to tickets/shop screen
+            // Navigator.pushNamed(context, '/shop');
+          },
+          onOk: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pop(); // Go back to previous screen
+          },
+        );
+      }
+    });
 
-    // Quiz bitti ise sonuç ekranı
+     if (hearts <= 0) {
+      return Scaffold(
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF8539A8),
+          ),
+        ),
+      );
+    }
+
     if (currentQuestionIndex >= quizState.questions.length) {
       return _buildResultScreen(context, quizState);
     }
@@ -471,38 +500,287 @@ Widget _jokerButton({
   );
 }
 
-  // Quiz sonu ekranı
-  Widget _buildResultScreen(BuildContext context, QuizState state) {
-    int correctAnswers = state.answerResults.where((result) => result == true).length;
-    int totalQuestions = state.questions.length;
+// Quiz sonu ekranı - Replace the _buildResultScreen method with this
+Widget _buildResultScreen(BuildContext context, QuizState state) {
+  int correctAnswers = state.answerResults.where((result) => result == true).length;
+  int totalQuestions = state.questions.length;
+  double percentage = (correctAnswers / totalQuestions) * 100;
+  
+  // Star rating calculation (out of 5 stars)
+  int starCount = 0;
+  if (percentage >= 90) starCount = 5;
+  else if (percentage >= 70) starCount = 4;
+  else if (percentage >= 50) starCount = 3;
+  else if (percentage >= 30) starCount = 2;
+  else if (percentage >= 10) starCount = 1;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF8539A8),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Quiz Tamamlandı!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+  return Scaffold(
+    backgroundColor: AppColors.primary,
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          children: [
+            // Status bar
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 20),
+              child: Row(
+                children: [
+                  Text(
+                    "22:53",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.cloud, color: Colors.white, size: 18),
+                  Icon(Icons.tablet_android, color: Colors.white, size: 18),
+                  Icon(Icons.phone_android, color: Colors.white, size: 18),
+                  const Spacer(),
+                  Icon(Icons.volume_off, color: Colors.white, size: 16),
+                  Icon(Icons.signal_wifi_4_bar, color: Colors.white, size: 16),
+                  Icon(Icons.signal_cellular_4_bar, color: Colors.white, size: 16),
+                  Icon(Icons.battery_std, color: Colors.white, size: 16),
+                  SizedBox(width: 3),
+                  Text(
+                    "71%",
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ],
               ),
-              SizedBox(height: 20),
-              Text(
-                'Skorunuz: $correctAnswers / $totalQuestions',
-                style: TextStyle(fontSize: 20, color: Colors.white),
+            ),
+            
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Quiz Ended Title
+                  Text(
+                    'Quiz Ended',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  
+                  SizedBox(height: 40),
+                  
+                  // Stars Rating
+                  Container(
+                    height: 100,
+                    width: 300,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Left stars (lower positions)
+                        Positioned(
+                          left: 40,
+                          top: 30,
+                          child: Icon(
+                            Icons.star,
+                            size: 50,
+                            color: 0 < starCount ? Colors.amber : Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                        Positioned(
+                          left: 80,
+                          top: 15,
+                          child: Icon(
+                            Icons.star,
+                            size: 50,
+                            color: 1 < starCount ? Colors.amber : Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                        // Center star (highest position - curved upward)
+                        Positioned(
+                          left: 125,
+                          top: 5,
+                          child: Icon(
+                            Icons.star,
+                            size: 50,
+                            color: 2 < starCount ? Colors.amber : Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                        // Right stars (lower positions)
+                        Positioned(
+                          left: 170,
+                          top: 15,
+                          child: Icon(
+                            Icons.star,
+                            size: 50,
+                            color: 3 < starCount ? Colors.amber : Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                        Positioned(
+                          left: 220,
+                          top: 40,
+                          child: Icon(
+                            Icons.star,
+                            size: 50,
+                            color: 4 < starCount ? Colors.amber : Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  SizedBox(height: 50),
+                  
+                  // Right Answers
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Right Answers: ',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      Text(
+                        '$correctAnswers/$totalQuestions',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 30),
+                  
+                  // Score with coin icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.star,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 15),
+                      Text(
+                        '${(correctAnswers * 56)}/2000', // Example score calculation
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 20),
+                  
+                  // Money with coin stack icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.monetization_on,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 15),
+                      Text(
+                        '${(correctAnswers * 112)}/4000', // Example money calculation
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  SizedBox(height: 20),
+                  
+                  // Percentage with circular icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.pie_chart,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      SizedBox(width: 15),
+                      Text(
+                        '${percentage.toInt()} %',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () {
-                  // Yeniden başlat
+            ),
+            
+            // OK Button
+            Padding(
+              padding: const EdgeInsets.only(bottom: 40),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
                 },
-                child: Text('Yeniden Başla'),
+                child: Container(
+                  width: 120,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'OK',
+                      style: TextStyle(
+                        color: Color(0xFF8539A8),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

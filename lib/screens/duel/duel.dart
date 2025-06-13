@@ -54,7 +54,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   }
 
   void _hideVictoryModal() {
-    print("Modal kapatılıyor"); // Debug
+      
     setState(() {
       _showVictoryModal = false;
     });
@@ -219,7 +219,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
       ),
       body: Stack(
         children: [
-          // Ana oyun ekranı - her zaman görünür
+        
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
