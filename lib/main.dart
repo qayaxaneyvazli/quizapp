@@ -9,12 +9,20 @@ import 'package:quiz_app/screens/login/register.dart';
 import 'core/theme/app_theme.dart';
 import 'screens/home/home_screen.dart';
  import 'package:flutter/services.dart';
-
+import 'package:firebase_core/firebase_core.dart';
 void main()async  {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  await Firebase.initializeApp(
+  options: FirebaseOptions(
+    apiKey: 'AIzaSyAKCdjAe-ZUyxdkSlGbdme2B_HvUvICYxk',
+    appId: '1:325381610850:android:b2b1cd9144b4241fab203b',
+    messagingSenderId: '325381610850',
+    projectId: 'quiz-app-df0cd',
+    storageBucket: 'quiz-app-df0cd.firebasestorage.app',
+  )
+);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
+ 
   runApp(
     const ProviderScope(child: MyApp()),
   );

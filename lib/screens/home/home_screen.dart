@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -44,6 +45,8 @@ String _getPageTitle(int navIndex) {
   }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+  
+   
     final navController = ref.watch(bottomNavProvider);
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
@@ -283,6 +286,10 @@ class HomeContentScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    User? user = FirebaseAuth.instance.currentUser;
+    String? displayName = user?.displayName;
+String? email = user?.email;
+String? photoUrl = user?.photoURL;
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
     
@@ -336,7 +343,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
                   ),
                   child: Center(
                     child: Image.asset(
-                      'assets/images/avatar.png', // Replace with your avatar image
+                      photoUrl ?? 'assets/images/avatar.png', // Replace with your avatar image
                       width: avatarInnerSize,
                       height: avatarInnerSize,
                       errorBuilder: (context, error, stackTrace) {
@@ -373,7 +380,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
-                "Melikmemmed",
+                displayName ?? '',
                 style: TextStyle(
                   fontSize: usernameSize,
                   fontWeight: FontWeight.bold,

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -12,6 +13,10 @@ class TopBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    User? user = FirebaseAuth.instance.currentUser;
+    String? displayName = user?.displayName;
+String? email = user?.email;
+String? photoUrl = user?.photoURL;
     // Get current theme mode
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
@@ -53,7 +58,7 @@ class TopBar extends ConsumerWidget {
                   SizedBox(height: 12),
                   // Username
                   Text(
-                    "Melikmemmed",
+                    displayName ?? '',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
