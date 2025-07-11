@@ -10,6 +10,16 @@ import 'package:quiz_app/providers/quiz/quiz_provider.dart';
 import 'package:quiz_app/providers/heart/heart_provider.dart';
 import 'package:quiz_app/screens/question/not_enough_heart_modal.dart';
 class QuizScreen extends ConsumerWidget {
+    final int levelId;
+  final String levelName;
+  final int chapterNumber;
+
+  const QuizScreen({
+    Key? key,
+    required this.levelId,
+    required this.levelName,
+    required this.chapterNumber,
+  }) : super(key: key);
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quizState = ref.watch(quizControllerProvider);
@@ -154,20 +164,41 @@ class QuizScreen extends ConsumerWidget {
               ),
             ),
 
-            // Soruya ait görsel
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  // Kendi asset yolunu buraya koy, örnek:
-                  'assets/images/azerbaijan_baku.jpg',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 160,
-                ),
+         
+         Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      width: double.infinity,
+      height: 160,
+      color: Colors.grey[200],
+      child: question.imagePath != null && question.imagePath!.isNotEmpty
+          ? Image.asset(
+              question.imagePath!,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[200],
+                  child: Icon(
+                    Icons.image_not_supported,
+                    size: 60,
+                    color: Colors.grey[400],
+                  ),
+                );
+              },
+            )
+          : Container(
+              color: Colors.grey[200],
+              child: Icon(
+                Icons.image,
+                size: 60,
+                color: Colors.grey[400],
               ),
             ),
+    ),
+  ),
+),
 
             // Soru kutusu
             Container(
@@ -430,34 +461,30 @@ Spacer(),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _jokerButton(
-                      svgPath: 'assets/icons/wrong_answer.svg',
-               
-                      enabled: !quizState.hasUsedHint && !quizState.isAnswerRevealed,
-                      onTap: () {
-                        ref.read(quizControllerProvider.notifier).useHint();
-                      }),
-                  _jokerButton(
-                      svgPath:'assets/icons/fifty_fifty.svg',
-                    
-                      enabled: !quizState.hasUsedFiftyFifty && !quizState.isAnswerRevealed,
-                      onTap: () {
-                        ref.read(quizControllerProvider.notifier).useFiftyFifty();
-                      }),
-                  _jokerButton(
-                      svgPath: 'assets/icons/true_answer.svg',
-                    
-                      enabled: !quizState.showCorrectAnswer && !quizState.isAnswerRevealed,
-                      onTap: () {
-                        ref.read(quizControllerProvider.notifier).showCorrectAnswerHint();
-                      }),
-                  _jokerButton(
-                      svgPath: 'assets/icons/freeze_time.svg',
-                
-                      enabled: !quizState.hasUsedTimePause && !quizState.isAnswerRevealed,
-                      onTap: () {
-                        ref.read(quizControllerProvider.notifier).useTimePause();
-                      }),
+               _jokerButton(
+    svgPath: 'assets/icons/wrong_answer.svg',
+    enabled: quizState.hintCount > 0 && !quizState.isAnswerRevealed,
+    onTap: () {
+      ref.read(quizControllerProvider.notifier).useHint();
+    }),
+_jokerButton(
+    svgPath:'assets/icons/fifty_fifty.svg',
+    enabled: quizState.fiftyFiftyCount > 0 && !quizState.isAnswerRevealed,
+    onTap: () {
+      ref.read(quizControllerProvider.notifier).useFiftyFifty();
+    }),
+_jokerButton(
+    svgPath: 'assets/icons/true_answer.svg',
+    enabled: quizState.correctAnswerHintCount > 0 && !quizState.isAnswerRevealed,
+    onTap: () {
+      ref.read(quizControllerProvider.notifier).showCorrectAnswerHint();
+    }),
+_jokerButton(
+    svgPath: 'assets/icons/freeze_time.svg',
+    enabled: quizState.timePauseCount > 0 && !quizState.isAnswerRevealed,
+    onTap: () {
+      ref.read(quizControllerProvider.notifier).useTimePause();
+    }),
                   _jokerButton(
                      svgPath: quizState.hasInfo ? 'assets/icons/info.svg' : 'assets/icons/link.svg',
                       

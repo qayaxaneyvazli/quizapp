@@ -1,22 +1,76 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:quiz_app/models/levels/level.dart';
 import 'package:quiz_app/screens/question/question.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-class LevelScreen extends StatelessWidget {
+import 'package:http/http.dart' as http;
+class LevelScreen extends StatefulWidget {
   final String chapterName;
   final int chapterNumber;
+  final String language;
   
   const LevelScreen({
     Key? key, 
     required this.chapterName,
     required this.chapterNumber,
+    this.language = 'en',
   }) : super(key: key);
+
+  @override
+  State<LevelScreen> createState() => _LevelScreenState();
+}
+
+class _LevelScreenState extends State<LevelScreen> {
+  List<LevelModel> levels = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchLevels();
+  }
+
+  Future<void> fetchLevels() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      final response = await http.get(
+        Uri.parse('http://116.203.188.209/api/levelsbyChapter/${widget.chapterNumber}?lang=${widget.language}'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          levels = data.map((json) => LevelModel.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load levels: ${response.statusCode}';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error loading levels: $e';
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,71 +87,94 @@ class LevelScreen extends StatelessWidget {
           ),
 
           // --- Main Content ---
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else if (errorMessage != null)
+            Center(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 70), // Space for back button
-                  
-                  // Chapter Title
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 30),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color.fromARGB(255, 120, 84, 160),
-                          Color.fromARGB(255, 80, 50, 120),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                  Text(
+                    errorMessage!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 16,
                     ),
-                    child: Text(
-                      chapterName,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
-
-                  // Level Grid
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: 12, // 12 level per chapter
-                    itemBuilder: (context, index) {
-                      return _buildLevelCard(
-                        context,
-                        index + 1,
-                        _getLevelData(index + 1),
-                      );
-                    },
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: fetchLevels,
+                    child: const Text('Retry'),
                   ),
-                  
-                  const SizedBox(height: 80), // Space for bottom nav bar
                 ],
               ),
+            )
+          else
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 70), // Space for back button
+                    
+                    // Chapter Title
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 30),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color.fromARGB(255, 120, 84, 160),
+                            Color.fromARGB(255, 80, 50, 120),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        widget.chapterName,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+
+                    // Level Grid
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.85,
+                      ),
+                      itemCount: levels.length,
+                      itemBuilder: (context, index) {
+                        final level = levels[index];
+                        return _buildLevelCard(context, level, index);
+                      },
+                    ),
+                    
+                    const SizedBox(height: 80), // Space for bottom nav bar
+                  ],
+                ),
+              ),
             ),
-          ),
 
           // Back button positioned at the top left
           Positioned(
@@ -107,7 +184,6 @@ class LevelScreen extends StatelessWidget {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -133,12 +209,13 @@ class LevelScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelCard(BuildContext context, int levelNumber, Map<String, dynamic> levelData) {
-    bool isLocked = levelData['locked'];
-    bool isCompleted = levelData['completed'];
-    int stars = levelData['stars'];
-    String difficulty = levelData['difficulty'];
-    int questions = levelData['questions'];
+  Widget _buildLevelCard(BuildContext context, LevelModel level, int index) {
+    // First level is always unlocked, others depend on API data
+    bool isLocked = index == 0 ? false : level.isLocked;
+    bool isCompleted = level.isCompleted;
+    int stars = level.starsEarned;
+    String difficulty = level.difficulty;
+    int questions = level.questionCount;
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -146,7 +223,11 @@ class LevelScreen extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => QuizScreen(), // Level-specific quiz screen
+            builder: (_) => QuizScreen(
+              levelId: level.id,
+              levelName: level.name,
+              chapterNumber: widget.chapterNumber,
+            ),
           ),
         );
       },
@@ -197,7 +278,7 @@ class LevelScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '$levelNumber',
+                    '${index + 1}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -219,12 +300,15 @@ class LevelScreen extends StatelessWidget {
             
             // Level Title
             Text(
-              'Level $levelNumber',
+              level.name.isNotEmpty ? level.name : 'Level ${index + 1}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             
             const SizedBox(height: 4),
@@ -253,7 +337,7 @@ class LevelScreen extends StatelessWidget {
                   // Stars
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(3, (index) {
+                    children: List.generate(level.maxStars, (index) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 2),
                         child: SvgPicture.asset(
@@ -315,35 +399,15 @@ class LevelScreen extends StatelessWidget {
     );
   }
 
-  Map<String, dynamic> _getLevelData(int levelNumber) {
-    // Simulated level data - bu gerçek uygulamada API'den gelecek
-    List<Map<String, dynamic>> levelsData = [
-      {'locked': false, 'completed': true, 'stars': 3, 'difficulty': 'Easy', 'questions': 10},
-      {'locked': false, 'completed': true, 'stars': 2, 'difficulty': 'Easy', 'questions': 10},
-      {'locked': false, 'completed': true, 'stars': 3, 'difficulty': 'Easy', 'questions': 12},
-      {'locked': false, 'completed': false, 'stars': 1, 'difficulty': 'Medium', 'questions': 15},
-      {'locked': false, 'completed': false, 'stars': 0, 'difficulty': 'Medium', 'questions': 15},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Medium', 'questions': 18},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Hard', 'questions': 20},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Hard', 'questions': 20},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Hard', 'questions': 22},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Expert', 'questions': 25},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Expert', 'questions': 25},
-      {'locked': true, 'completed': false, 'stars': 0, 'difficulty': 'Expert', 'questions': 30},
-    ];
-    
-    return levelsData[levelNumber - 1];
-  }
-
   String _getDifficultyIcon(String difficulty) {
-    switch (difficulty) {
-      case 'Easy':
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
         return 'assets/icons/Star.svg';
-      case 'Medium':
+      case 'medium':
         return 'assets/icons/Point.svg';
-      case 'Hard':
+      case 'hard':
         return 'assets/icons/Brain.svg';
-      case 'Expert':
+      case 'expert':
         return 'assets/icons/Coins.svg';
       default:
         return 'assets/icons/Star.svg';
@@ -351,14 +415,14 @@ class LevelScreen extends StatelessWidget {
   }
 
   Color _getDifficultyColor(String difficulty) {
-    switch (difficulty) {
-      case 'Easy':
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
         return Colors.green;
-      case 'Medium':
+      case 'medium':
         return Colors.orange;
-      case 'Hard':
+      case 'hard':
         return Colors.red;
-      case 'Expert':
+      case 'expert':
         return Colors.purple;
       default:
         return Colors.white;

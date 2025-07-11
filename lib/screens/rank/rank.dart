@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
@@ -70,6 +71,11 @@ class RankScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    User? user = FirebaseAuth.instance.currentUser;
+    String displayName = user?.displayName ?? 'Guest';
+    String email = user?.email ?? '';
+    String photoUrl = user?.photoURL ?? '';
+
     final leaderboard = ref.watch(leaderboardProvider);
     final userStats = ref.watch(userStatsProvider);
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
@@ -86,7 +92,7 @@ class RankScreen extends ConsumerWidget {
           buildTabBar(context, ref, selectedTabIndex),
           
           // Current user section with green background
-          buildUserSection(context, userStats, isDarkMode),
+          buildUserSection(context, userStats, isDarkMode, displayName, photoUrl),
           
           // Leaderboard section with yellow items
           Expanded(
@@ -177,7 +183,7 @@ Widget buildRangTrophySection() {
     );
   }
 
-  Widget buildUserSection(BuildContext context, UserStats userStats, bool isDarkMode) {
+  Widget buildUserSection(BuildContext context, UserStats userStats, bool isDarkMode, String displayName, String photoUrl) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Color(0xFF8AEA92), // Light green
@@ -195,12 +201,12 @@ Widget buildRangTrophySection() {
           SizedBox(width: 12),
           
           // User avatar
-          _buildUserAvatar(userStats.countryCode),
+          _buildUserAvatar(userStats.countryCode, photoUrl),
           SizedBox(width: 12),
           
-          // Username
+          // Username - Firebase Auth displayName or Guest
           Text(
-            userStats.username,
+            displayName,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -277,7 +283,7 @@ Widget buildRangTrophySection() {
                 SizedBox(width: 12),
                 
                 // Avatar
-                _buildUserAvatar(user.countryCode),
+                _buildUserAvatar(user.countryCode, ''),
                 SizedBox(width: 12),
                 
                 // Username
@@ -328,18 +334,19 @@ Widget buildRangTrophySection() {
     );
   }
 
-  Widget _buildUserAvatar(String countryCode) {
+  Widget _buildUserAvatar(String countryCode, String photoUrl) {
     return Stack(
       children: [
-        // Avatar background
+        // Avatar background - show user photo if available
         CircleAvatar(
           radius: 20,
           backgroundColor: Colors.grey[300],
-          child: Icon(
+          backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+          child: photoUrl.isEmpty ? Icon(
             Icons.person,
             size: 24,
             color: Colors.grey[700],
-          ),
+          ) : null,
         ),
         
         // Country flag

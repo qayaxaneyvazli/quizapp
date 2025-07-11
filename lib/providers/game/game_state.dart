@@ -13,6 +13,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:quiz_app/screens/duel/victory_modal.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 final List<Question> sampleQuestions = [
   Question(
     questionText: 'What is the fastest land animal in the world?',
@@ -41,8 +42,8 @@ final List<Question> sampleQuestions = [
   ),
 ];
 
-// Player providers
-final player1Provider = StateProvider<Player>((ref) {
+// Player providers - AutoDispose əlavə edildi
+final player1Provider = StateProvider.autoDispose<Player>((ref) {
   return Player(
     username: 'Player 1',
     countryCode: 'AZ',
@@ -50,12 +51,17 @@ final player1Provider = StateProvider<Player>((ref) {
   );
 });
 
-final player2Provider = StateProvider<Player>((ref) {
+final player2Provider = StateProvider.autoDispose<Player>((ref) {
   return Player(
     username: 'Player 2',
     countryCode: 'DE',
     avatarUrl: 'assets/player2.png',
   );
+});
+
+// Game state provider - AutoDispose əlavə edildi
+final gameStateProvider = StateNotifierProvider.autoDispose<GameStateNotifier, GameState>((ref) {
+  return GameStateNotifier();
 });
 
 class GameStateNotifier extends StateNotifier<GameState> {
@@ -75,34 +81,33 @@ class GameStateNotifier extends StateNotifier<GameState> {
     startTimer();
   }
   
-void startTimer() {
-  _timer?.cancel();
-  
-  // Important: Reset selections for the new question
-  state = GameState(
-    player1Results: state.player1Results,
-    player2Results: state.player2Results,
-    currentQuestionIndex: state.currentQuestionIndex,
-    questions: state.questions,
-    timeUp: false,
-    progressValue: 1.0,
-    player1SelectedOption: null,
-    player2SelectedOption: null,
-    isAnswerRevealed: false,
-    isGameOver: state.isGameOver,
-  );
-  
-  _timer = Timer.periodic(timerInterval, (timer) {
-    if (state.progressValue <= 0) {
-      timer.cancel();
-      revealAnswer();
-    } else {
-      state = state.copyWith(progressValue: state.progressValue - decrementValue);
-    }
-  });
-}
+  void startTimer() {
+    _timer?.cancel();
+    
+    // Important: Reset selections for the new question
+    state = GameState(
+      player1Results: state.player1Results,
+      player2Results: state.player2Results,
+      currentQuestionIndex: state.currentQuestionIndex,
+      questions: state.questions,
+      timeUp: false,
+      progressValue: 1.0,
+      player1SelectedOption: null,
+      player2SelectedOption: null,
+      isAnswerRevealed: false,
+      isGameOver: state.isGameOver,
+    );
+    
+    _timer = Timer.periodic(timerInterval, (timer) {
+      if (state.progressValue <= 0) {
+        timer.cancel();
+        revealAnswer();
+      } else {
+        state = state.copyWith(progressValue: state.progressValue - decrementValue);
+      }
+    });
+  }
 
-  
   void selectAnswer(int playerNumber, int optionIndex) {
     // If time is up or answer is already revealed, do nothing
     if (state.timeUp || state.isAnswerRevealed) return;
@@ -164,31 +169,30 @@ void startTimer() {
     Timer(revealAnswerDuration, moveToNextQuestion);
   }
   
-void moveToNextQuestion() {
-  final nextQuestionIndex = state.currentQuestionIndex + 1;
-  
-  // Check if game is over
-  if (nextQuestionIndex >= state.questions.length) {
-    state = state.copyWith(isGameOver: true);
-    return;
+  void moveToNextQuestion() {
+    final nextQuestionIndex = state.currentQuestionIndex + 1;
+    
+    // Check if game is over
+    if (nextQuestionIndex >= state.questions.length) {
+      state = state.copyWith(isGameOver: true);
+      return;
+    }
+    
+    // Move to next question and reset timer
+    state = state.copyWith(
+      currentQuestionIndex: nextQuestionIndex,
+      // Explicitly reset selected options to null
+      player1SelectedOption: null,
+      player2SelectedOption: null,
+      isAnswerRevealed: false,
+      timeUp: false,
+      progressValue: 1.0,
+    );
+    
+    // Start the timer for the new question
+    startTimer();
   }
-  
-  // Move to next question and reset timer
-  state = state.copyWith(
-    currentQuestionIndex: nextQuestionIndex,
-    // Explicitly reset selected options to null
-    player1SelectedOption: null,
-    player2SelectedOption: null,
-    isAnswerRevealed: false,
-    timeUp: false,
-    progressValue: 1.0,
-  );
-  
-  // Start the timer for the new question
-  startTimer();
-}
 
-  
   // For testing purposes: simulate player 2 answers (AI or remote player)
   void simulatePlayer2Answer() {
     if (state.player2SelectedOption == null && !state.timeUp && !state.isAnswerRevealed) {

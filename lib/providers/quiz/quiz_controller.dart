@@ -3,6 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_app/models/question/question.dart';
  
 class QuizState {
+
+
+
+
+   final int fiftyFiftyCount;
+  final int hintCount;
+  final int timePauseCount;
+  final int correctAnswerHintCount;
   final List<QuizQuestion> questions;
   final int currentQuestionIndex;
   final List<bool?> answerResults; // null: unanswered, true: correct, false: incorrect
@@ -18,6 +26,10 @@ class QuizState {
   final bool hasInfo; // <------ yeni alan
 
   QuizState({
+     this.fiftyFiftyCount = 2,
+    this.hintCount = 2,
+    this.timePauseCount = 1,
+    this.correctAnswerHintCount = 1,
     required this.questions,
     this.currentQuestionIndex = 0,
     this.answerResults = const [],
@@ -35,19 +47,24 @@ class QuizState {
 
   // Make sure copyWith handles null correctly
   QuizState copyWith({
-    List<QuizQuestion>? questions,
-    int? currentQuestionIndex,
-    List<bool?>? answerResults,
-    int? selectedAnswerIndex,
-    bool? isAnswerRevealed,
-    double? timerValue,
-    bool? isTimerPaused,
-    bool? hasUsedFiftyFifty,
-    bool? hasUsedHint,
-    bool? hasUsedTimePause,
-    List<int>? eliminatedOptions,
-    bool? showCorrectAnswer,
-    bool resetEliminatedOptions = false, // New parameter to explicitly reset
+ List<QuizQuestion>? questions,
+  int? currentQuestionIndex,
+  List<bool?>? answerResults,
+  int? selectedAnswerIndex,
+  bool? isAnswerRevealed,
+  double? timerValue,
+  bool? isTimerPaused,
+  bool? hasUsedFiftyFifty,
+  bool? hasUsedHint,
+  bool? hasUsedTimePause,
+  List<int>? eliminatedOptions,
+  bool? showCorrectAnswer,
+  bool? hasInfo,
+  int? fiftyFiftyCount,
+  int? hintCount,
+  int? timePauseCount,
+  int? correctAnswerHintCount,
+  bool resetEliminatedOptions = false, // New parameter to explicitly reset
   }) {
     return QuizState(
       questions: questions ?? this.questions,
@@ -63,6 +80,10 @@ class QuizState {
       eliminatedOptions: resetEliminatedOptions ? null : (eliminatedOptions ?? this.eliminatedOptions),
       showCorrectAnswer: showCorrectAnswer ?? this.showCorrectAnswer,
        hasInfo: hasInfo ?? this.hasInfo,    
+fiftyFiftyCount: fiftyFiftyCount ?? this.fiftyFiftyCount,
+      hintCount: hintCount ?? this.hintCount,
+      timePauseCount: timePauseCount ?? this.timePauseCount,
+      correctAnswerHintCount: correctAnswerHintCount ?? this.correctAnswerHintCount,
     );
   }
 }
@@ -184,10 +205,11 @@ void _moveToNextQuestion() {
       isTimerPaused: false,
       resetEliminatedOptions: true, // Explicitly request to reset eliminatedOptions
       showCorrectAnswer: false,
-      // Her soru için joker kullanımını sıfırlama
+
       hasUsedFiftyFifty: false,
       hasUsedHint: false,
       hasUsedTimePause: false,
+      
     );
     
     // Add debug print to confirm state
@@ -209,7 +231,7 @@ void _moveToNextQuestion() {
   }
 
 void useHint() {
-  if (state.hasUsedHint || state.isAnswerRevealed) return;
+  if (state.hintCount <= 0  || state.isAnswerRevealed) return;
   
   final currentQuestion = state.questions[state.currentQuestionIndex];
   final correctIndex = currentQuestion.correctAnswerIndex;
@@ -233,6 +255,7 @@ void useHint() {
   state = state.copyWith(
     hasUsedHint: true,
     eliminatedOptions: newEliminatedOptions,
+    hintCount: state.hintCount - 1,
   );
   
   // Check if all wrong options are now eliminated
@@ -244,7 +267,7 @@ void useHint() {
 }
 
 void useFiftyFifty() {
-  if (state.hasUsedFiftyFifty || state.isAnswerRevealed) return;
+  if (state.fiftyFiftyCount  <= 0 || state.isAnswerRevealed) return;
   
   final currentQuestion = state.questions[state.currentQuestionIndex];
   final correctIndex = currentQuestion.correctAnswerIndex;
@@ -266,6 +289,7 @@ void useFiftyFifty() {
   state = state.copyWith(
     hasUsedFiftyFifty: true,
     eliminatedOptions: optionsToEliminate,
+    fiftyFiftyCount: state.fiftyFiftyCount - 1,
   );
   
   // Check if all wrong options are now eliminated
@@ -307,11 +331,12 @@ void _checkAllWrongOptionsEliminated() {
 
 
   void useTimePause() {
-    if (state.hasUsedTimePause || state.isAnswerRevealed) return;
+    if (state.timePauseCount <= 0  || state.isAnswerRevealed) return;
     
     state = state.copyWith(
       hasUsedTimePause: true,
       isTimerPaused: true,
+       timePauseCount: state.timePauseCount - 1,
     );
     
     // Resume after 5 seconds
@@ -324,8 +349,8 @@ void _checkAllWrongOptionsEliminated() {
   
   // Doğru cevabı gösterme jokeri
 void showCorrectAnswerHint() {
-  print("Doğru cevap jokeri kullanıldı");
-  
+ 
+  if (state.correctAnswerHintCount <= 0 || state.isAnswerRevealed) return;
   // Stop the timer
   _timer?.cancel();
   
@@ -337,6 +362,7 @@ void showCorrectAnswerHint() {
     showCorrectAnswer: true,
     isAnswerRevealed: true, // This will effectively reveal the answer
     answerResults: newResults,
+      correctAnswerHintCount: state.correctAnswerHintCount - 1,
   );
   
   // Move to next question after delay (reuse existing method)

@@ -14,7 +14,7 @@ class TopBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     User? user = FirebaseAuth.instance.currentUser;
-    String? displayName = user?.displayName;
+    String displayName = user?.displayName ?? 'Guest';
 String? email = user?.email;
 String? photoUrl = user?.photoURL;
     // Get current theme mode

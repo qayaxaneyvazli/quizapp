@@ -5,6 +5,7 @@ import 'dart:async';
 // Model for Quiz Question
 class QuizQuestion {
   final String question;
+  final String? imagePath;
   final List<String> options;
   final int correctAnswerIndex;
   final bool isTrueFalse; // true for true/false questions, false for multiple choice
@@ -14,5 +15,6 @@ class QuizQuestion {
     required this.options,
     required this.correctAnswerIndex,
     this.isTrueFalse = false,
+    this.imagePath,
   });
 }

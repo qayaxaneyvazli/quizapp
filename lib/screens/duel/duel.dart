@@ -1,7 +1,14 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:async';
+import 'dart:math';
+
+import 'package:country_flags/country_flags.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:country_flags/country_flags.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/models/game/game_state.dart';
 import 'package:quiz_app/models/player/player.dart';
@@ -10,19 +17,33 @@ import 'package:quiz_app/models/question/question.dart';
 import 'package:quiz_app/providers/game/game_state.dart';
 import 'package:quiz_app/screens/duel/answer_button.dart';
 import 'package:quiz_app/screens/duel/defeat_modal.dart';
-import 'dart:async';
-import 'dart:math';
-import 'package:quiz_app/screens/duel/victory_modal.dart';
 import 'package:quiz_app/screens/duel/draw_modal.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:quiz_app/screens/duel/victory_modal.dart';
 
 // Game state provider
-final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((ref) {
+final gameStateProvider = StateNotifierProvider.autoDispose<GameStateNotifier, GameState>((ref) {
   return GameStateNotifier();
 });
 
 class DuelScreen extends ConsumerStatefulWidget {
-  const DuelScreen({Key? key}) : super(key: key);
+
+
+    bool  isPlayingWithBot;
+  
+  // Opponent data
+  late String  opponentName;
+  late String  opponentCountry;
+  late String userCountryCode; 
+  late String?  userPhotoUrl;
+  late String?opponentPhotoUrl;
+    DuelScreen({
+    required this.isPlayingWithBot,
+    required this. opponentName,
+    required this. opponentCountry,
+    required this.userCountryCode,
+      this.opponentPhotoUrl,
+      this.userPhotoUrl
+  }) : super( );
 
   @override
   ConsumerState<DuelScreen> createState() => _DuelScreenState();
@@ -40,7 +61,16 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
       _showDefeatModal = true;
     });
   }
-
+String _getInitials(String name) {
+  if (name.isEmpty) return '?';
+  
+  List<String> words = name.split(' ');
+  if (words.length == 1) {
+    return words[0][0].toUpperCase();
+  } else {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+}
   void _hideDefeat() {
     setState(() {
       _showDefeatModal = false;
@@ -115,7 +145,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
     final gameState = ref.watch(gameStateProvider);
     final player1 = ref.watch(player1Provider);
     final player2 = ref.watch(player2Provider);
-    
+        
     // Listen for question changes to simulate player 2
     ref.listen(gameStateProvider.select((state) => state.currentQuestionIndex), 
       (previous, current) {
@@ -164,20 +194,22 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
 
     // Update player scores in the providers
     WidgetsBinding.instance.addPostFrameCallback((_) {
+        User? user = FirebaseAuth.instance.currentUser;
+  String currentUsername = user?.displayName ?? 'Player';
       ref.read(player1Provider.notifier).update((state) => 
         Player(
-          avatarUrl: state.avatarUrl,
-          countryCode: state.countryCode, 
-          username: state.username,
+          avatarUrl: widget.userPhotoUrl ?? '',
+          countryCode: widget.userCountryCode, 
+          username: currentUsername,
           score: player1Score
         )
       );
       
       ref.read(player2Provider.notifier).update((state) => 
         Player(
-          avatarUrl: state.avatarUrl,
-          countryCode: state.countryCode, 
-          username: state.username,
+          avatarUrl: widget.opponentPhotoUrl ?? '',
+           countryCode: widget.opponentCountry,
+          username: widget.opponentName,
           score: player2Score
         )
       );
@@ -250,9 +282,26 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
                           children: [
                             Stack(
                               children: [
-                                CircleAvatar(
-                                  backgroundImage: AssetImage(player1.avatarUrl),
-                                ),
+                               CircleAvatar(
+  radius: 20,
+  backgroundColor: Colors.blue[100],
+  backgroundImage: player1.avatarUrl.isNotEmpty 
+    ? NetworkImage(player1.avatarUrl) 
+    : null,
+  onBackgroundImageError: (exception, stackTrace) {
+    print('Error loading player1 avatar: $exception');
+  },
+  child: player1.avatarUrl.isEmpty 
+    ? Text(
+        _getInitials(player1.username),
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.blue[800],
+        ),
+      )
+    : null,
+),
                                 Positioned(
                                   right: 0,
                                   bottom: 0,
@@ -313,9 +362,22 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
                           children: [
                             Stack(
                               children: [
-                                CircleAvatar(
-                                  backgroundImage: AssetImage(player2.avatarUrl),
-                                ),
+                               CircleAvatar(
+  backgroundImage: player2.avatarUrl.isNotEmpty 
+    ? NetworkImage(player2.avatarUrl) 
+    : null,
+  child: player2.avatarUrl.isEmpty 
+    ? Text(
+        _getInitials(player2.username),
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.blue[800],
+        ),
+      )
+    : null,
+  backgroundColor: Colors.blue[100],
+),
                                 Positioned(
                                   right: 0,
                                   bottom: 0,

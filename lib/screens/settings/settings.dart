@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:quiz_app/core/services/firebase_auth.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/notifications/duel_notifications_provider.dart';
 import 'package:quiz_app/providers/notifications/notifications_provider.dart';
@@ -9,6 +10,7 @@ import 'package:quiz_app/providers/theme_mode_provider.dart';
 import 'package:quiz_app/screens/language/language.dart';
 import 'package:quiz_app/screens/login/login.dart';
 import 'package:quiz_app/screens/settings/faq.dart';
+ // AuthService import et
 // LanguageModal widget'ını import et!
   // yolunu kendine göre düzelt
 
@@ -25,18 +27,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     'Terms of Service',
     'Privacy Policy',
     'Rate Us',
-    'Connect Account',
+    'Connect Account', // Bu dinamik olarak değişecek
     'Reset Game',
     'FAQ',
     'Report a Problem',
   ];
 
   late List<bool> expanded;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
     expanded = List.generate(menuItems.length, (index) => false);
+  }
+
+  // Google hesabının bağlı olup olmadığını kontrol eden fonksiyon
+  bool _isGoogleAccountConnected() {
+    return _authService.currentUser != null;
   }
 
   @override
@@ -47,6 +55,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isDuelNotificationsOn = ref.watch(duelnotificationsEnabledProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+     
+    final isGoogleConnected = _isGoogleAccountConnected();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -84,6 +95,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 20),
           Column(
             children: List.generate(menuItems.length, (index) {
+              String itemTitle = menuItems[index];
+              
+              
+              if (menuItems[index] == 'Connect Account') {
+                itemTitle = isGoogleConnected ? 'Disconnect Account' : 'Connect Account';
+              }
+              
               return Column(
                 children: [
                   InkWell(
@@ -107,12 +125,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           MaterialPageRoute(builder: (context) => const FaqScreen()),
                         );
                       }
-
                       else if (menuItems[index] == 'Connect Account') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
+                        if (isGoogleConnected) {
+                          // Google hesabı bağlıysa, bağlantıyı kes
+                          _disconnectGoogleAccount();
+                        } else {
+                          // Google hesabı bağlı değilse, bağlantı kurma ekranına git
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          );
+                        }
                       }
                       // Diğer itemler için burada başka işlem yok.
                     },
@@ -130,7 +153,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            menuItems[index],
+                            itemTitle,
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.white,
@@ -145,6 +168,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               );
             }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Google hesabı bağlantısını kesen fonksiyon
+  void _disconnectGoogleAccount() {
+    // Confirmation dialog göster
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Disconnect Account'),
+        content: Text('Are you sure you want to disconnect your Google account?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                // AuthService kullanarak çıkış yap
+                await _authService.signOut();
+                Navigator.pop(context);
+                
+                // UI'yi güncelle
+                setState(() {});
+                
+                // Başarılı mesaj göster
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Google account disconnected successfully'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                // Hata mesajı göster
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to disconnect account: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: Text('Disconnect'),
           ),
         ],
       ),

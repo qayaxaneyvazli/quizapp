@@ -8,7 +8,7 @@ final heartsProvider = StateNotifierProvider<HeartsNotifier, int>((ref) {
 });
 
 class HeartsNotifier extends StateNotifier<int> {
-  HeartsNotifier() : super(0); // Start with 5 hearts
+  HeartsNotifier() : super(5); // Start with 5 hearts
 
   void useHeart() {
     if (state > 0) {

@@ -1,3 +1,4 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,7 +21,17 @@ void main()async  {
     projectId: 'quiz-app-df0cd',
     storageBucket: 'quiz-app-df0cd.firebasestorage.app',
   )
+  
 );
+
+  await FirebaseAppCheck.instance.activate(
+    // For Android
+    androidProvider: AndroidProvider.playIntegrity,
+    // For iOS
+    appleProvider: AppleProvider.appAttest,
+    // For web
+    webProvider: ReCaptchaV3Provider('your-recaptcha-site-key'),
+  );
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
  
   runApp(
