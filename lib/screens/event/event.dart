@@ -7,6 +7,8 @@ import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/models/question/question.dart';
 import 'package:quiz_app/providers/quiz/quiz_controller.dart';
 import 'package:quiz_app/providers/quiz/quiz_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 
 class EventScreen extends ConsumerWidget {
   @override
@@ -16,43 +18,32 @@ class EventScreen extends ConsumerWidget {
 
     // Quiz bitti ise sonuç ekranı
     if (currentQuestionIndex >= quizState.questions.length) {
-      return _buildResultScreen(context, quizState);
+      return _buildResultScreen(context, quizState, ref);
     }
     final question = quizState.questions[currentQuestionIndex];
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255), // Mor arka plan
+      backgroundColor: Colors.white, // Beyaz arka plan
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/icons/back_icon.svg',
+            width: 40,
+            height: 40,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          ref.tr('home.event'),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Saat ve üst bar
-            Padding(
-              padding: const EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 4),
-              child: Row(
-                children: [
-                  Text(
-                    "22:58",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.image, color: Colors.white, size: 18),
-                  const SizedBox(width: 3),
-                  Icon(Icons.cloud, color: Colors.white, size: 18),
-                  const SizedBox(width: 3),
-                  Icon(Icons.phone_android, color: Colors.white, size: 18),
-                  const Spacer(),
-                  Icon(Icons.signal_wifi_4_bar, color: Colors.white, size: 16),
-                  Icon(Icons.signal_cellular_4_bar, color: Colors.white, size: 16),
-                  Icon(Icons.battery_full, color: Colors.white, size: 16),
-                  SizedBox(width: 3),
-                  Text(
-                    "55%",
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
+
 
             // Cevap geçmişi (tik ve çarpı ikonları)
             Padding(
@@ -177,7 +168,7 @@ class EventScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Column(
-                children: List.generate(4, (index) {
+                children: List.generate(question.options.length, (index) {
                   final isEliminated = quizState.eliminatedOptions != null &&
                       quizState.eliminatedOptions!.contains(index);
                   final isSelected = quizState.selectedAnswerIndex == index;
@@ -281,7 +272,7 @@ class EventScreen extends ConsumerWidget {
                   ),
                   child: Center(
                     child: Text(
-                      "Next",
+                      ref.tr("event.next"),
                       style: TextStyle(
                           color: Colors.purple.shade700,
                           fontWeight: FontWeight.bold,
@@ -372,7 +363,7 @@ Widget _jokerButton({
 }
 
   // Quiz sonu ekranı
-  Widget _buildResultScreen(BuildContext context, QuizState state) {
+  Widget _buildResultScreen(BuildContext context, QuizState state, WidgetRef ref) {
     int correctAnswers = state.answerResults.where((result) => result == true).length;
     int totalQuestions = state.questions.length;
 
@@ -384,12 +375,12 @@ Widget _jokerButton({
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Quiz Tamamlandı!',
+                ref.tr('event.quiz_completed'),
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               SizedBox(height: 20),
               Text(
-                'Skorunuz: $correctAnswers / $totalQuestions',
+                '${ref.tr("event.your_score")}: $correctAnswers / $totalQuestions',
                 style: TextStyle(fontSize: 20, color: Colors.white),
               ),
               SizedBox(height: 40),
@@ -397,7 +388,7 @@ Widget _jokerButton({
                 onPressed: () {
                   // Yeniden başlat
                 },
-                child: Text('Yeniden Başla'),
+                child: Text(ref.tr('event.restart')),
               ),
             ],
           ),

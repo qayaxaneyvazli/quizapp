@@ -5,70 +5,40 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:quiz_app/models/chapter/chapter.dart';
+import 'package:quiz_app/providers/chapter/chapter_provider.dart';
 import 'package:quiz_app/screens/level/level_screen.dart';
 import 'package:quiz_app/screens/question/question.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:quiz_app/core/services/chapter_service.dart';
 
-class ChapterScreen extends StatefulWidget {
-  final String language; // Dynamic language parameter
+class ChapterScreen extends ConsumerStatefulWidget {
+  final String language;
   
   const ChapterScreen({Key? key, this.language = 'en'}) : super(key: key);
 
   @override
-  State<ChapterScreen> createState() => _ChapterScreenState();
+  ConsumerState<ChapterScreen> createState() => _ChapterScreenState();
 }
 
-class _ChapterScreenState extends State<ChapterScreen> {
-  List<ChapterModel> chapters = [];
-  bool isLoading = true;
-  String? errorMessage;
-
+class _ChapterScreenState extends ConsumerState<ChapterScreen> {
   @override
   void initState() {
     super.initState();
-    fetchChapters();
-  }
-
-  Future<void> fetchChapters() async {
-    try {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
-
-      final response = await http.get(
-        Uri.parse('http://116.203.188.209/api/chapters?lang=${widget.language}'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          chapters = data.map((json) => ChapterModel.fromJson(json)).toList();
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          errorMessage = 'Failed to load chapters: ${response.statusCode}';
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error loading chapters: $e';
-        isLoading = false;
+    // Dil parametresi varsa, o dil ile yeniden yükle
+    if (widget.language != 'en') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(chapterProvider.notifier).refreshChapters(language: widget.language);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final chaptersAsync = ref.watch(chapterProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0EAD6),
       body: Stack(
@@ -82,17 +52,16 @@ class _ChapterScreenState extends State<ChapterScreen> {
           ),
 
           // --- Main Content ---
-          if (isLoading)
-            const Center(
+          chaptersAsync.when(
+            loading: () => const Center(
               child: CircularProgressIndicator(),
-            )
-          else if (errorMessage != null)
-            Center(
+            ),
+            error: (error, stackTrace) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    errorMessage!,
+                    error.toString(),
                     style: const TextStyle(
                       color: Colors.red,
                       fontSize: 16,
@@ -101,14 +70,15 @@ class _ChapterScreenState extends State<ChapterScreen> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: fetchChapters,
+                    onPressed: () {
+                      ref.read(chapterProvider.notifier).refreshChapters(language: widget.language);
+                    },
                     child: const Text('Retry'),
                   ),
                 ],
               ),
-            )
-          else
-            SingleChildScrollView(
+            ),
+            data: (chapters) => SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
@@ -141,9 +111,9 @@ class _ChapterScreenState extends State<ChapterScreen> {
                               child: _buildChapterCard(
                                 chapter.name,
                                 locked: isLocked,
-                                stars: chapter.starsOutOf5, // API'den gelen yıldız sayısı
-                                coinProgress: "${chapter.earnedCoins} / ${chapter.maxCoins}", // Kazanılan/Max coin
-                                gemProgress: "${chapter.earnedStars} / ${chapter.maxStars}", // Kazanılan/Max star (gem olarak gösteriliyor)
+                                stars: chapter.starsOutOf5,
+                                coinProgress: "${chapter.earnedCoins} / ${chapter.maxCoins}",
+                                gemProgress: "${chapter.earnedStars} / ${chapter.maxStars}",
                                 percentComplete: "${chapter.completionPercent} %",  
                               ),
                             ),
@@ -158,6 +128,7 @@ class _ChapterScreenState extends State<ChapterScreen> {
                 ),
               ),
             ),
+          ),
 
           // Back button positioned at the top left
           Positioned(

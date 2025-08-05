@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 
 class CategoryData {
   final String name;
@@ -21,20 +23,20 @@ class CategoryData {
 // Provider for storing category data
 final categoriesProvider = StateProvider<List<CategoryData>>((ref) {
   return [
-    CategoryData(name: "Technology", icon: "🧪", questionsAnswered: 3, percentage: 60),
-    CategoryData(name: "Physic", icon: "⚛️", questionsAnswered: 3, percentage: 80),
-    CategoryData(name: "Chemistry", icon: "🧪", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Mixed", icon: "🔭", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Astrology", icon: "🌠", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Biology", icon: "🧬", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Literature", icon: "📚", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "True/false", icon: "❓", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Countries", icon: "🌎", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Movie & Tv", icon: "🎬", questionsAnswered: 3, percentage: 100),
-    CategoryData(name: "Culture", icon: "🎭", questionsAnswered: 5, percentage: 80),
-    CategoryData(name: "Geography", icon: "🌍", questionsAnswered: 4, percentage: 60),
-    CategoryData(name: "History", icon: "🏛️", questionsAnswered: 3, percentage: 40),
-    CategoryData(name: "Sport", icon: "🏈", questionsAnswered: 3, percentage: 20),
+    CategoryData(name: "category.technology", icon: "🧪", questionsAnswered: 3, percentage: 60),
+    CategoryData(name: "category.physic", icon: "⚛️", questionsAnswered: 3, percentage: 80),
+    CategoryData(name: "category.chemistry", icon: "🧪", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.mixed", icon: "🔭", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.astrology", icon: "🌠", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.biology", icon: "🧬", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.literature", icon: "📚", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.true_false", icon: "❓", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.countries", icon: "🌎", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.movie_tv", icon: "🎬", questionsAnswered: 3, percentage: 100),
+    CategoryData(name: "category.culture", icon: "🎭", questionsAnswered: 5, percentage: 80),
+    CategoryData(name: "category.geography", icon: "🌍", questionsAnswered: 4, percentage: 60),
+    CategoryData(name: "category.history", icon: "🏛️", questionsAnswered: 3, percentage: 40),
+    CategoryData(name: "category.sport", icon: "🏈", questionsAnswered: 3, percentage: 20),
   ];
 });
 
@@ -57,7 +59,7 @@ class StatisticScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: appBarColor,
         title: Text(
-          'Statistic',
+          ref.tr('menu.statistic'),
           style: TextStyle(
             color: Colors.white,
             fontSize: 24.sp,
@@ -84,7 +86,7 @@ class StatisticScreen extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: 12.h),
             child: Center(
               child: Text(
-                'Results by category',
+                ref.tr('statistic.results_by_category'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18.sp,
@@ -111,18 +113,18 @@ class StatisticScreen extends ConsumerWidget {
   }
 }
 
-class CategoryListItem extends StatelessWidget {
+class CategoryListItem extends ConsumerWidget {
   final CategoryData category;
   final bool isDarkMode;
 
   const CategoryListItem({
-    Key? key, 
-    required this.category, 
+    Key? key,
+    required this.category,
     required this.isDarkMode,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
@@ -166,7 +168,7 @@ class CategoryListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    category.name,
+                    ref.tr(category.name),
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
@@ -174,7 +176,7 @@ class CategoryListItem extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "${category.questionsAnswered} Questions answered",
+                    "${category.questionsAnswered} ${ref.tr('statistic.questions_answered')}",
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: subtextColor,

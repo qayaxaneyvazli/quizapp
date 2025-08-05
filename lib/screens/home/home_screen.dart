@@ -22,25 +22,27 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../providers/theme_mode_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
 
-String _getPageTitle(int navIndex) {
+String _getPageTitle(int navIndex, WidgetRef ref) {
     switch (navIndex) {
       case 0:
-        return 'Messages';
+        return ref.tr('menu.messages');
       case 1:
-        return 'Rank';
+        return ref.tr('menu.rank');
       case 2:
-        return 'Home';
+        return ref.tr('menu.home');
       case 3:
-        return 'Market';
+        return ref.tr('menu.market');
       case 4:
-        return 'Settings';
+        return ref.tr('menu.settings');
       default:
-        return 'Home';
+        return ref.tr('menu.home');
     }
   }
   @override
@@ -171,7 +173,7 @@ String _getPageTitle(int navIndex) {
                   height: 25.h,
                   child: Center(
                     child: Text(
-                      _getPageTitle(navController),
+                      _getPageTitle(navController, ref),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 21.sp, // Biraz küçülttük
@@ -201,7 +203,7 @@ String _getPageTitle(int navIndex) {
               width: navController == 0 ? 32.w : 24.w,
               height: navController == 0 ? 32.h : 24.h,
             ),
-            label: 'Messages',
+            label: ref.tr('menu.messages'),
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
@@ -209,7 +211,7 @@ String _getPageTitle(int navIndex) {
               width: navController == 1 ? 32.w : 24.w,
               height: navController == 1 ? 32.h : 24.h,
             ),
-            label: 'Rank',
+            label: ref.tr('menu.rank'),
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
@@ -217,7 +219,7 @@ String _getPageTitle(int navIndex) {
               width: navController == 2 ? 32.w : 24.w,
               height: navController == 2 ? 32.h : 24.h,
             ),
-            label: 'Home',
+            label: ref.tr('menu.home'),
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
@@ -225,7 +227,7 @@ String _getPageTitle(int navIndex) {
               width: navController == 3 ? 29.w : 21.w,
               height: navController == 3 ? 29.h : 21.h,
             ),
-            label: 'Market',
+            label: ref.tr('menu.market'),
           ),
           BottomNavigationBarItem(
             icon: SvgPicture.asset(
@@ -233,7 +235,7 @@ String _getPageTitle(int navIndex) {
               width: navController == 4 ? 32.w : 24.w,
               height: navController == 4 ? 32.h : 24.h,
             ),
-            label: 'Settings',
+            label: ref.tr('menu.settings'),
           ),
         ],
       ),
@@ -380,7 +382,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
-                displayName ?? '',
+                displayName ?? ref.tr('common.guest'),
                 style: TextStyle(
                   fontSize: usernameSize,
                   fontWeight: FontWeight.bold,
@@ -414,7 +416,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
                   //width: 24.w, height: 24.h
                   child: _buildMenuTile(
                     icon: SvgPicture.asset('assets/icons/play_quiz.svg', width: 34.w, height: 34.h),
-                    title: "Quizz Spielen",
+                    title: ref.tr("home.play_quiz"),
                     gradient: tileBgGradient,
                     isTablet: isTablet,
                   ),
@@ -429,7 +431,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
                   },
                   child: _buildMenuTile(
                     icon: SvgPicture.asset('assets/icons/duel.svg', width: 42.w, height: 42.h),
-                    title: "Duell",
+                    title: ref.tr("home.duel"),
                     gradient: tileBgGradient,
                     isTablet: isTablet,
                     customIcon: Row(
@@ -451,7 +453,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
                   },
                   child: _buildMenuTile(
                     icon: SvgPicture.asset('assets/icons/present.svg', width: 34.w, height: 34.h),
-                    title: "Daily Login\nRewards",
+                    title: ref.tr("home.daily_login"),
                     gradient: tileBgGradient,
                     isTablet: isTablet,
                   ),
@@ -474,7 +476,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
                   },                    
                  child: _buildMenuTile(
                     icon: SvgPicture.asset('assets/icons/trophy.svg', width: 34.w, height: 34.h),
-                    title: "Event",
+                    title: ref.tr("home.event"),
                     gradient: tileBgGradient,
                     isTablet: isTablet,
                   ),

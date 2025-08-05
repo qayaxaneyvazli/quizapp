@@ -5,6 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/models/progress/progress.dart';
 import 'package:quiz_app/providers/progress/progress_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 
 // Provider for quiz progress data
 
@@ -45,7 +47,7 @@ class ProgressScreen extends ConsumerWidget {
                   Expanded(
                     child: Center(
                       child: Text(
-                        "Progress",
+                        ref.tr("menu.progress"),
                         style: TextStyle(
                           color: Colors.white, // White works on both blue backgrounds
                           fontSize: 24.sp,
@@ -73,7 +75,7 @@ class ProgressScreen extends ConsumerWidget {
                 ),
                 itemBuilder: (context, index) {
                   final question = quizQuestions[index];
-                  return _buildQuestionItem(question, isDarkMode);
+                  return _buildQuestionItem(question, isDarkMode, ref);
                 },
               ),
             ),
@@ -83,7 +85,7 @@ class ProgressScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuestionItem(QuizQuestion question, bool isDarkMode) {
+  Widget _buildQuestionItem(QuizQuestion question, bool isDarkMode, WidgetRef ref) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       child: Column(
@@ -144,7 +146,7 @@ class ProgressScreen extends ConsumerWidget {
               children: [
                 // User's incorrect answer
                 _buildAnswerButton(
-                  answer: "Your Answer: ${question.userAnswer}",
+                  answer: "${ref.tr('progress.your_answer')}: ${question.userAnswer}",
                   isCorrect: false,
                   isUserAnswer: true,
                 ),
@@ -153,7 +155,7 @@ class ProgressScreen extends ConsumerWidget {
                 
                 // Correct answer
                 _buildAnswerButton(
-                  answer: "Correct Answer: ${question.correctAnswer}",
+                  answer: "${ref.tr('progress.correct_answer')}: ${question.correctAnswer}",
                   isCorrect: true,
                 ),
               ],

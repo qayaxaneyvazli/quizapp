@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:quiz_app/core/services/notifications_service.dart';
 import 'package:quiz_app/providers/music/music_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
 import 'package:quiz_app/screens/login/login.dart';
 import 'package:quiz_app/screens/login/register.dart';
 import 'core/theme/app_theme.dart';
@@ -47,6 +48,9 @@ class MyApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     
      ref.watch(musicEnabledProvider);
+     // Initialize translations when app starts
+     ref.watch(translationProvider);
+     
      WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(notificationsServiceProvider).initializeNotifications();
     });

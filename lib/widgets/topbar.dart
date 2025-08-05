@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 import 'package:quiz_app/screens/account/profile.dart';
 import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/progress/progress.dart';
@@ -58,7 +60,7 @@ String? photoUrl = user?.photoURL;
                   SizedBox(height: 12),
                   // Username
                   Text(
-                    displayName ?? '',
+                    displayName ?? ref.tr('common.guest'),
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -86,7 +88,7 @@ String? photoUrl = user?.photoURL;
                             color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
                       },
                     ),
-                    label: "Progress",
+                    label: ref.tr('menu.progress'),
                     leading: SvgPicture.asset(
                       'assets/icons/progress.svg',
                       width: 24,
@@ -118,7 +120,7 @@ String? photoUrl = user?.photoURL;
                             color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
                       },
                     ),
-                    label: "Statistic",
+                    label: ref.tr('menu.statistic'),
                     leading: Image.asset(
                       'assets/images/stats_icon.png',
                       width: 24,
@@ -151,7 +153,7 @@ String? photoUrl = user?.photoURL;
                             color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
                       },
                     ),
-                    label: "Account",
+                    label: ref.tr('menu.account'),
                     onTap: () {
                       Navigator.pop(context);
                       // Navigate to account screen
@@ -174,7 +176,7 @@ String? photoUrl = user?.photoURL;
                             color: isDarkMode ? Colors.white70 : const Color.fromARGB(255, 8, 8, 8));
                       },
                     ),
-                    label: "Inventory",
+                    label: ref.tr('menu.inventory'),
                     leading: Image.asset(
                       'assets/images/inventory_icon.png',
                       width: 24,

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 
-class LanguageModal extends StatelessWidget {
+class LanguageModal extends ConsumerWidget {
   final VoidCallback? onClose;
   final Function(String) onLanguageSelected;
 
@@ -11,7 +14,7 @@ class LanguageModal extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final List<Map<String, String>> languages = [
       {'label': 'English', 'value': 'en'},
       {'label': 'Deutsch', 'value': 'de'},
@@ -47,7 +50,7 @@ class LanguageModal extends StatelessWidget {
                   children: [
                     SizedBox(height: 8),
                     Text(
-                      'Language',
+                      ref.tr('settings.language'),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,

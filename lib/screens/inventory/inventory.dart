@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 import 'package:quiz_app/models/inventory.dart/inventory_item.dart';
 import 'package:quiz_app/providers/inventory/inventory_provider.dart';
 
@@ -24,7 +26,7 @@ class InventoryScreen extends ConsumerWidget {
         // Use theme-aware colors for app bar
         backgroundColor: isDarkMode ? theme.colorScheme.surface : Color(0xFF6A1B9A),
         title: Text(
-          'Inventory',
+          ref.tr('menu.inventory'),
           style: TextStyle(
             color: isDarkMode ? theme.colorScheme.onSurface : Colors.white,
             fontSize: 22,
@@ -70,7 +72,7 @@ class InventoryScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.name,
+                        ref.tr(item.name),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -79,7 +81,7 @@ class InventoryScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item.description,
+                        ref.tr(item.description),
                         style: TextStyle(
                           fontSize: 16,
                           color: isDarkMode 
@@ -115,15 +117,15 @@ class InventoryScreen extends ConsumerWidget {
 
     // Custom icons based on item name
     switch (item.name) {
-      case 'Coins':
+      case 'inventory.coins':
         return Icon(Icons.attach_money, color: Colors.amber, size: 40);
-      case 'Heart':
+      case 'inventory.heart':
         return Container(
           width: 48,
           height: 48,
           child: Icon(Icons.favorite, color: Colors.red, size: 40),
         );
-      case 'Duel Ticket':
+      case 'inventory.duel_ticket':
         return Container(
           width: 48,
           height: 48,
@@ -133,13 +135,13 @@ class InventoryScreen extends ConsumerWidget {
           ),
           child: Icon(Icons.confirmation_number, color: Colors.white),
         );
-      case 'Replay Ticket':
+      case 'inventory.replay_ticket':
         return Container(
           width: 48,
           height: 48,
           child: Icon(Icons.replay_circle_filled, color: iconBgColor(Colors.amber[700] ?? Colors.amber), size: 40),
         );
-      case 'True Answer':
+      case 'inventory.true_answer':
         return Container(
           width: 48,
           height: 48,
@@ -149,7 +151,7 @@ class InventoryScreen extends ConsumerWidget {
           ),
           child: Icon(Icons.check, color: Colors.white, size: 32),
         );
-      case 'Wrong Answer':
+      case 'inventory.wrong_answer':
         return Container(
           width: 48,
           height: 48,
@@ -159,7 +161,7 @@ class InventoryScreen extends ConsumerWidget {
           ),
           child: Icon(Icons.close, color: Colors.white, size: 32),
         );
-      case 'Fifty Fifty':
+      case 'inventory.fifty_fifty':
         return Container(
           width: 48,
           height: 48,
@@ -178,7 +180,7 @@ class InventoryScreen extends ConsumerWidget {
             ),
           ),
         );
-      case 'Freeze Time':
+      case 'inventory.freeze_time':
         return Container(
           width: 48,
           height: 48,

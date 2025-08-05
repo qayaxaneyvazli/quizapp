@@ -6,6 +6,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/providers/user/user_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
+import 'package:quiz_app/providers/translations/translation_provider.dart';
+import 'package:quiz_app/widgets/translation_helper.dart';
 
 class AccountPage extends ConsumerWidget {
   const AccountPage({Key? key}) : super(key: key);
@@ -26,7 +28,7 @@ class AccountPage extends ConsumerWidget {
         backgroundColor: isDarkMode ? theme.colorScheme.primary.withOpacity(0.7) : AppColors.primary,
         elevation: 0,
         title: Text(
-          'Account',
+          ref.tr('menu.account'),
           style: TextStyle(
             color: Colors.white,
             fontSize: isTablet ? 20.sp : 24.sp,
@@ -160,7 +162,7 @@ class AccountPage extends ConsumerWidget {
                         child: TextField(
                           controller: TextEditingController(text: userProfile.username),
                           decoration: InputDecoration(
-                            hintText: 'Enter your username',
+                            hintText: ref.tr('account.enter_username'),
                             hintStyle: TextStyle(
                               color: isDarkMode ? Colors.white38 : Colors.grey[400],
                             ),
@@ -188,7 +190,7 @@ class AccountPage extends ConsumerWidget {
                       child: Row(
                         children: [
                           Text(
-                            'ID: ${userProfile.userId}',
+                            '${ref.tr("account.user_id_label")}: ${userProfile.userId}',
                             style: TextStyle(
                               fontSize: isTablet ? 14.sp : 16.sp,
                               color: isDarkMode ? Colors.white60 : Colors.grey[600],
@@ -206,7 +208,7 @@ class AccountPage extends ConsumerWidget {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'ID copied to clipboard',
+                                    ref.tr('account.id_copied'),
                                     style: TextStyle(
                                       color: isDarkMode ? Colors.white : Colors.black87,
                                     ),
