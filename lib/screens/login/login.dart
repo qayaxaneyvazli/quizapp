@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Giriş uğursuz oldu
+       
         _showSnackBar('Google login failed: ${result['error']}', Colors.red);
       }
     } catch (e) {

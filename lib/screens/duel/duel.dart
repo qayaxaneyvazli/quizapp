@@ -1,6 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
-import 'dart:math';
 
 import 'package:country_flags/country_flags.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,8 +11,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/models/game/game_state.dart';
 import 'package:quiz_app/models/player/player.dart';
-import 'package:quiz_app/models/question/DuelQuestion.dart';
-import 'package:quiz_app/models/question/question.dart';
+import 'package:quiz_app/models/duel/duel_response.dart';
+import 'package:quiz_app/core/utils/duel_converter.dart';
+import 'package:quiz_app/core/services/duel_service.dart';
 import 'package:quiz_app/providers/game/game_state.dart';
 import 'package:quiz_app/screens/duel/answer_button.dart';
 import 'package:quiz_app/screens/duel/defeat_modal.dart';
@@ -26,24 +26,26 @@ final gameStateProvider = StateNotifierProvider.autoDispose<GameStateNotifier, G
 });
 
 class DuelScreen extends ConsumerStatefulWidget {
-
-
-    bool  isPlayingWithBot;
+  final bool isPlayingWithBot;
   
   // Opponent data
-  late String  opponentName;
-  late String  opponentCountry;
-  late String userCountryCode; 
-  late String?  userPhotoUrl;
-  late String?opponentPhotoUrl;
-    DuelScreen({
+  final String opponentName;
+  final String opponentCountry;
+  final String userCountryCode; 
+  final String? userPhotoUrl;
+  final String? opponentPhotoUrl;
+  final DuelResponse? duelResponse;
+  
+  const DuelScreen({
+    super.key,
     required this.isPlayingWithBot,
-    required this. opponentName,
-    required this. opponentCountry,
+    required this.opponentName,
+    required this.opponentCountry,
     required this.userCountryCode,
-      this.opponentPhotoUrl,
-      this.userPhotoUrl
-  }) : super( );
+    this.opponentPhotoUrl,
+    this.userPhotoUrl,
+    this.duelResponse,
+  });
 
   @override
   ConsumerState<DuelScreen> createState() => _DuelScreenState();
@@ -55,6 +57,12 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _showDrawModal = false;
   // Coins earned on victory
   final int _coinsEarned = 50;
+  
+  // API integration variables
+  int? _duelId;
+  bool _isUsingAPI = false;
+  List<Map<String, dynamic>> _playerAnswers = [];
+  bool _answersSubmitted = false;
 
   void _showDefeat() {
     setState(() {
@@ -108,17 +116,118 @@ String _getInitials(String name) {
       _showDefeatModal = false;
       _showDrawModal = false;
     });
-    ref.refresh(gameStateProvider);
+    final _ = ref.refresh(gameStateProvider);
+  }
+
+  // Collect answer for later submission
+  void _collectAnswerForAPI(int questionIndex, int selectedOptionIndex, double timeTaken) {
+    if (widget.duelResponse == null || _duelId == null) return;
+    
+    try {
+      final duelQuestionId = DuelConverter.getDuelQuestionId(widget.duelResponse!, questionIndex);
+      final optionId = DuelConverter.getOptionId(widget.duelResponse!, questionIndex, selectedOptionIndex);
+      
+      final answerData = {
+        'duel_question_id': duelQuestionId,
+        'selected_option_id': optionId,
+        'time_taken': timeTaken,
+      };
+      
+      // Add or update answer for this question
+      final existingIndex = _playerAnswers.indexWhere(
+        (answer) => answer['duel_question_id'] == duelQuestionId
+      );
+      
+      if (existingIndex >= 0) {
+        _playerAnswers[existingIndex] = answerData;
+      } else {
+        _playerAnswers.add(answerData);
+      }
+      
+      print('Collected answer for question $questionIndex: $answerData');
+    } catch (e) {
+      print('Exception in _collectAnswerForAPI: $e');
+    }
+  }
+
+  // Submit all collected answers to API (called at game end)
+  Future<void> _submitAllAnswersToAPI() async {
+    if (widget.duelResponse == null || _duelId == null || _playerAnswers.isEmpty) return;
+    
+    try {
+      print('Submitting all answers to API: $_playerAnswers');
+      
+      final result = await DuelService.submitAnswers(
+        duelId: _duelId!,
+        answers: _playerAnswers,
+        botSubmission: false,
+      );
+      
+      if (result['success'] == true) {
+        print('All answers submitted successfully');
+        print('API response: ${result['data']}');
+      } else {
+        print('Failed to submit answers: ${result['error']}');
+      }
+    } catch (e) {
+      print('Exception in _submitAllAnswersToAPI: $e');
+    }
+  }
+
+  // Submit answer to API (immediate submission - kept for backward compatibility)
+  Future<void> _submitAnswerToAPI(int questionIndex, int selectedOptionIndex) async {
+    if (widget.duelResponse == null || _duelId == null) return;
+    
+    try {
+      final duelQuestionId = DuelConverter.getDuelQuestionId(widget.duelResponse!, questionIndex);
+      final optionId = DuelConverter.getOptionId(widget.duelResponse!, questionIndex, selectedOptionIndex);
+      
+      print('Submitting answer: duelId=$_duelId, duelQuestionId=$duelQuestionId, optionId=$optionId');
+      
+      final result = await DuelService.submitAnswer(
+        duelId: _duelId!,
+        duelQuestionId: duelQuestionId,
+        selectedOptionId: optionId,
+        timeTaken: 5.0, // Default time, could be calculated from timer
+      );
+      
+      if (result['success'] == true) {
+        print('Answer submitted successfully');
+      } else {
+        print('Failed to submit answer: ${result['error']}');
+      }
+    } catch (e) {
+      print('Exception in _submitAnswerToAPI: $e');
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    // Start AI player simulation after a short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      final gameNotifier = ref.read(gameStateProvider.notifier);
-      gameNotifier.simulatePlayer2Answer();
-    });
+    
+    // Initialize game with API data if available
+    if (widget.duelResponse != null) {
+      _isUsingAPI = true;
+      _duelId = DuelConverter.getDuelId(widget.duelResponse!);
+      
+      // Initialize game state with API questions
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final gameNotifier = ref.read(gameStateProvider.notifier);
+        final questions = DuelConverter.convertToGameQuestions(widget.duelResponse!);
+        gameNotifier.initializeWithQuestions(questions);
+        
+        // Start AI player simulation after a short delay
+        Future.delayed(const Duration(milliseconds: 500), () {
+          gameNotifier.simulatePlayer2Answer();
+        });
+      });
+    } else {
+      // Fallback to default behavior for local games
+      Future.delayed(const Duration(milliseconds: 500), () {
+        final gameNotifier = ref.read(gameStateProvider.notifier);
+        gameNotifier.simulatePlayer2Answer();
+      });
+    }
   }
 
   String _getPageTitle(int navIndex) {
@@ -174,6 +283,14 @@ String _getInitials(String name) {
 
     // Check if game is over and show appropriate modal
     if (gameState.isGameOver) {
+      // Submit all answers to API if using API integration (only once)
+      if (_isUsingAPI && _duelId != null && _playerAnswers.isNotEmpty && !_answersSubmitted) {
+        _answersSubmitted = true; // Prevent multiple submissions
+        Future.delayed(Duration.zero, () {
+          _submitAllAnswersToAPI();
+        });
+      }
+      
       if (player1Score > player2Score && !_showVictoryModal) {
         // Show victory modal after a short delay
         Future.delayed(Duration.zero, () {
@@ -557,6 +674,11 @@ String _getInitials(String name) {
                             }
                             if (gameState.player1SelectedOption == null) {
                               ref.read(gameStateProvider.notifier).selectAnswer(1, index);
+                              
+                              // Collect answer for API submission if using API integration
+                              if (_isUsingAPI && _duelId != null && widget.duelResponse != null) {
+                                _collectAnswerForAPI(gameState.currentQuestionIndex, index, 5.0); // TODO: Calculate actual time taken
+                              }
                             }
                           },
                           player1Selected: gameState.player1SelectedOption == index,

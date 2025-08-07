@@ -6,6 +6,9 @@ import 'package:country_flags/country_flags.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:quiz_app/screens/duel/duel.dart';
+import 'package:quiz_app/core/services/duel_service.dart';
+import 'package:quiz_app/models/duel/duel_response.dart';
+import 'package:quiz_app/core/utils/duel_converter.dart';
 import 'dart:math';
 
 class OpponentFoundScreen extends ConsumerStatefulWidget {
@@ -22,6 +25,9 @@ class _OpponentFoundScreenState extends ConsumerState<OpponentFoundScreen> {
   bool _isSearchingForPlayer = true;
   bool _isPlayingWithBot = false;
   
+  // API integration
+  DuelResponse? _duelResponse;
+  String? _errorMessage;
   
   // Opponent data
  // Real opponent data
@@ -38,8 +44,8 @@ String? _botOpponentPhotoUrl;
   
   final Random _random = Random();
   
-  // Search timeout duration (in seconds)
-  static const int _searchTimeout = 10;
+  // Search timeout duration (in seconds) - kept for potential future use
+  // static const int _searchTimeout = 10;
   
   // Lists for random generation
   final List<String> _randomNames = [
@@ -98,39 +104,91 @@ String? _botOpponentPhotoUrl;
   void _startPlayerSearch() {
     setState(() {
       _isSearchingForPlayer = true;
+      _errorMessage = null;
     });
     
-    // Simulate searching for a real player
-    _searchForRealPlayer();
-    
-    // Set timeout for player search
-    Future.delayed(Duration(seconds: _searchTimeout), () {
-      if (mounted && _isSearchingForPlayer) {
-        // No real player found, activate bot
-        _activateBot();
+    // Call the API to create a duel
+    _createDuelFromAPI();
+  }
+
+  Future<void> _createDuelFromAPI() async {
+    try {
+      print('Creating duel from API...');
+      final result = await DuelService.createDuel();
+      
+      if (!mounted) return;
+      
+      if (result['success'] == true) {
+        final DuelResponse duelResponse = result['data'] as DuelResponse;
+        setState(() {
+          _duelResponse = duelResponse;
+          _isSearchingForPlayer = false;
+          _isPlayingWithBot = DuelConverter.isOpponentBot(duelResponse);
+          _isOpponentReal = !_isPlayingWithBot;
+          
+          // Set opponent data from API response
+          if (_isPlayingWithBot) {
+            _botOpponentName = DuelConverter.getOpponentName(duelResponse);
+            _botOpponentCountry = 'US'; // Default country for bot, could be randomized
+            _botOpponentPhotoUrl = DuelConverter.getOpponentAvatarUrl(duelResponse);
+          } else {
+            _realOpponentName = DuelConverter.getOpponentName(duelResponse);
+            _realOpponentCountry = 'US'; // This would come from real player data
+            _realOpponentPhotoUrl = DuelConverter.getOpponentAvatarUrl(duelResponse);
+          }
+        });
+        
+        print('Duel created successfully. Opponent: ${DuelConverter.getOpponentName(duelResponse)}, isBot: ${DuelConverter.isOpponentBot(duelResponse)}');
+        _startDuel();
+      } else {
+        setState(() {
+          _isSearchingForPlayer = false;
+          _errorMessage = result['error'] ?? 'Failed to create duel';
+        });
+        print('❌ Failed to create duel: ${result['error']}');
+        
+        // Immediate fallback to local bot for authentication issues
+        if (result['error']?.toString().contains('Unauthenticated') == true || 
+            result['error']?.toString().contains('authentication') == true ||
+            result['error']?.toString().contains('Rate limited') == true) {
+          print('🤖 Authentication issue detected, immediately switching to local bot');
+          _activateLocalBot();
+        } else {
+          // Other errors - wait 3 seconds before fallback
+          if (!_isPlayingWithBot && !_isOpponentReal) {
+            Future.delayed(const Duration(seconds: 3), () {
+              if (mounted && _duelResponse == null && !_isPlayingWithBot && !_isOpponentReal) {
+                print('⚠️ API failed, activating local bot as fallback');
+                _activateLocalBot();
+              }
+            });
+          }
+        }
       }
-    });
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isSearchingForPlayer = false;
+        _errorMessage = 'Network error: $e';
+      });
+      print('Exception in _createDuelFromAPI: $e');
+      
+      // Fallback to local bot after 3 seconds (only if not already done)
+      if (!_isPlayingWithBot && !_isOpponentReal) {
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted && _duelResponse == null && !_isPlayingWithBot && !_isOpponentReal) {
+            print('⚠️ Exception occurred, activating local bot as fallback');
+            _activateLocalBot();
+          }
+        });
+      }
+    }
   }
 
   Future<void> _searchForRealPlayer() async {
-    // TODO: Implement real player search logic here
-    // This would typically involve:
-    // 1. Connecting to your matchmaking service
-    // 2. Searching for available players
-    // 3. If found, set opponent data and mark as real player
-    
-    // For now, we'll simulate a random chance of finding a real player
-    await Future.delayed(Duration(seconds: 2));
-    
-    if (mounted) {
-      // Simulate 20% chance of finding a real player
-      bool foundRealPlayer = _random.nextDouble() < 0.2;
-      
-      if (foundRealPlayer) {
-        _setRealPlayerAsOpponent();
-      }
-      // If no real player found, the timeout will handle bot activation
-    }
+    // This method is kept for backward compatibility but not used anymore
+    // The API handles matchmaking automatically
   }
 
   void _setRealPlayerAsOpponent() {
@@ -148,7 +206,7 @@ String? _botOpponentPhotoUrl;
     _startDuel();
   }
 
-void _activateBot() {
+void _activateLocalBot() {
   if (!mounted) return;
   
   setState(() {
@@ -190,6 +248,7 @@ void _startDuel() {
                 userCountryCode: _userCountryCode,
                 userPhotoUrl: userPhotoUrl,
                 opponentPhotoUrl: _isOpponentReal ? _realOpponentPhotoUrl : _botOpponentPhotoUrl,
+                duelResponse: _duelResponse, // Pass the duel response
               ),
             ),
           );
@@ -213,7 +272,7 @@ void _startDuel() {
       // Check location permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+        permission = await Geolocator.requestPermission(); 
         if (permission == LocationPermission.denied) {
           setState(() {
             _isLoadingLocation = false;
@@ -262,7 +321,9 @@ void _startDuel() {
   }
 
   String _getStatusText() {
-    if (_isSearchingForPlayer) {
+    if (_errorMessage != null) {
+      return 'Xəta baş verdi. Bot ilə oyun başlayır...';
+    } else if (_isSearchingForPlayer) {
       return 'Oyunçu axtarılır...';
     } else if (_isPlayingWithBot) {
       return 'Oyunçu tapıldı!';

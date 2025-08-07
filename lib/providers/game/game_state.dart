@@ -1,18 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:country_flags/country_flags.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/models/game/game_state.dart';
 import 'package:quiz_app/models/player/player.dart';
 import 'package:quiz_app/models/question/DuelQuestion.dart';
-import 'package:quiz_app/models/question/question.dart';
-import 'package:quiz_app/screens/duel/answer_button.dart';
-import 'package:quiz_app/screens/duel/defeat_modal.dart';
 import 'dart:async';
 import 'dart:math';
-import 'package:quiz_app/screens/duel/victory_modal.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 final List<Question> sampleQuestions = [
   Question(
@@ -190,6 +181,26 @@ class GameStateNotifier extends StateNotifier<GameState> {
     );
     
     // Start the timer for the new question
+    startTimer();
+  }
+
+  // Initialize game with custom questions (for API integration)
+  void initializeWithQuestions(List<Question> questions) {
+    _timer?.cancel();
+    
+    state = GameState(
+      player1Results: List.filled(questions.length, null),
+      player2Results: List.filled(questions.length, null),
+      currentQuestionIndex: 0,
+      questions: questions,
+      timeUp: false,
+      progressValue: 1.0,
+      player1SelectedOption: null,
+      player2SelectedOption: null,
+      isAnswerRevealed: false,
+      isGameOver: false,
+    );
+    
     startTimer();
   }
 
