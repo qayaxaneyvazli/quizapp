@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:quiz_app/core/constants/app_colors.dart';
 import 'package:quiz_app/models/player/player.dart';
-import 'package:quiz_app/screens/duel/defeat_modal.dart';
-import 'dart:async';
-import 'dart:math';
-import 'package:quiz_app/screens/duel/victory_modal.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AnswerButton extends StatelessWidget {
   final String text;
@@ -80,7 +72,20 @@ class AnswerButton extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundImage: AssetImage(player1.avatarUrl),
+                        backgroundImage: player1.avatarUrl.isNotEmpty
+                            ? (player1.avatarUrl.startsWith('http')
+                                ? NetworkImage(player1.avatarUrl)
+                                : AssetImage(player1.avatarUrl) as ImageProvider)
+                            : null,
+                        child: player1.avatarUrl.isEmpty
+                            ? Text(
+                                _getInitials(player1.username),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
                       ),
                       Positioned(
                         right: 0,
@@ -100,7 +105,20 @@ class AnswerButton extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundImage: AssetImage(player2.avatarUrl),
+                        backgroundImage: player2.avatarUrl.isNotEmpty
+                            ? (player2.avatarUrl.startsWith('http')
+                                ? NetworkImage(player2.avatarUrl)
+                                : AssetImage(player2.avatarUrl) as ImageProvider)
+                            : null,
+                        child: player2.avatarUrl.isEmpty
+                            ? Text(
+                                _getInitials(player2.username),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
                       ),
                       Positioned(
                         right: 0,
@@ -119,5 +137,14 @@ class AnswerButton extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getInitials(String name) {
+    if (name.trim().isEmpty) return '?';
+    final parts = name.trim().split(RegExp(r"\s+"));
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 }

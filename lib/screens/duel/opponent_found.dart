@@ -47,52 +47,27 @@ String? _botOpponentPhotoUrl;
   // Search timeout duration (in seconds) - kept for potential future use
   // static const int _searchTimeout = 10;
   
-  // Lists for random generation
-  final List<String> _randomNames = [
-    'BrainMaster',
-    'QuizKing',
-    'ThinkFast',
-    'MindReader',
-    'SmartGuy',
-    'LogicLord',
-    'WisdomWolf',
-    'CleverCat',
-    'GeniusOne',
-    'BrainStorm',
-    'QuickWit',
-    'MasterMind',
-    'PuzzlePro',
-    'ThinkTank',
-    'BrainBox',
-    'IQHero',
-    'SmartStar',
-    'WiseOwl',
-    'QuizWhiz',
-    'MindBender',
-    'BrainWave',
-    'LogicLover',
-    'PuzzleKing',
-    'SmartCookie',
-    'ThinkGiant',
-    'WisdomSeeker',
-    'BrainPower',
-    'QuizMaster',
-    'MindGames',
-    'LogicNinja'
-  ];
+  // Realistic bot profiles with matching names and countries
+  final Map<String, List<String>> _botProfiles = {
+    'US': ['James Miller', 'Sarah Johnson', 'Michael Brown', 'Emily Davis', 'David Wilson', 'Jessica Garcia', 'Christopher Rodriguez', 'Ashley Martinez', 'Matthew Anderson', 'Amanda Taylor'],
+    'GB': ['Oliver Smith', 'Emma Jones', 'Harry Williams', 'Isla Brown', 'George Davis', 'Ava Miller', 'Noah Wilson', 'Sophia Moore', 'Jack Taylor', 'Grace Anderson'],
+    'DE': ['Maximilian Weber', 'Emma Schmidt', 'Alexander Müller', 'Mia Fischer', 'Paul Wagner', 'Hannah Becker', 'Leon Schulz', 'Lina Hoffmann', 'Felix Koch', 'Lea Richter'],
+    'FR': ['Louis Martin', 'Emma Bernard', 'Gabriel Dubois', 'Jade Thomas', 'Raphaël Robert', 'Louise Petit', 'Arthur Durand', 'Alice Leroy', 'Hugo Moreau', 'Chloé Simon'],
+    'ES': ['Hugo García', 'Lucía Rodríguez', 'Martín López', 'Sofía Martínez', 'Daniel Sánchez', 'María Pérez', 'Pablo Gómez', 'Carmen Martín', 'Alejandro Jiménez', 'Elena Ruiz'],
+    'IT': ['Francesco Rossi', 'Sofia Russo', 'Alessandro Ferrari', 'Giulia Esposito', 'Lorenzo Romano', 'Aurora Colombo', 'Matteo Ricci', 'Ginevra Marino', 'Gabriele Greco', 'Alice Conti'],
+    'RU': ['Alexander Petrov', 'Anastasia Ivanova', 'Dmitri Volkov', 'Ekaterina Smirnova', 'Maxim Kozlov', 'Daria Popova', 'Nikita Sokolov', 'Polina Lebedeva', 'Ivan Morozov', 'Arina Novikova'],
+    'TR': ['Mehmet Yılmaz', 'Zeynep Kaya', 'Mustafa Demir', 'Elif Çelik', 'Ahmet Şahin', 'Ayşe Yıldız', 'Emre Özkan', 'Sude Arslan', 'Burak Doğan', 'Ecrin Kılıç'],
+    'JP': ['Hiroshi Tanaka', 'Yuki Suzuki', 'Takeshi Watanabe', 'Sakura Ito', 'Kenji Yamamoto', 'Hana Nakamura', 'Ryo Kobayashi', 'Mei Kato', 'Shun Yoshida', 'Rin Yamada'],
+    'KR': ['Min-jun Kim', 'So-young Lee', 'Jae-hyun Park', 'Ji-woo Choi', 'Seung-ho Jung', 'Ye-jin Kang', 'Dong-hyun Cho', 'Min-ji Yoon', 'Hyun-woo Lim', 'Seo-yeon Han'],
+    'BR': ['Gabriel Silva', 'Ana Santos', 'Lucas Oliveira', 'Beatriz Costa', 'Mateus Souza', 'Larissa Lima', 'Pedro Ferreira', 'Camila Rodrigues', 'João Almeida', 'Isabela Pereira'],
+    'IN': ['Arjun Sharma', 'Priya Patel', 'Rohan Gupta', 'Ananya Singh', 'Vikram Kumar', 'Shreya Agarwal', 'Aditya Verma', 'Kavya Reddy', 'Rahul Jain', 'Pooja Mishra'],
+    'CA': ['Liam MacDonald', 'Emma Thompson', 'Noah Campbell', 'Olivia Stewart', 'William Clark', 'Ava Lewis', 'James Walker', 'Sophie Hall', 'Benjamin Young', 'Chloe King'],
+    'AU': ['Oliver Johnson', 'Charlotte Smith', 'Jack Williams', 'Amelia Brown', 'William Jones', 'Isla Davis', 'Thomas Wilson', 'Mia Taylor', 'Lucas Anderson', 'Grace White'],
+    'NL': ['Daan de Jong', 'Emma van den Berg', 'Sem Bakker', 'Tess Janssen', 'Lucas Visser', 'Julia Smit', 'Milan de Vries', 'Zoë van Dijk', 'Bram Mulder', 'Lotte Bos'],
+    'SE': ['William Andersson', 'Alice Johansson', 'Lucas Karlsson', 'Maja Nilsson', 'Oliver Eriksson', 'Ella Larsson', 'Hugo Olsson', 'Astrid Persson', 'Liam Svensson', 'Elsa Gustafsson']
+  };
   
-  final List<String> _countryCodes = [
-    'US', 'GB', 'DE', 'FR', 'ES', 'IT', 'CA', 'AU', 'JP', 'KR',
-    'CN', 'RU', 'BR', 'MX', 'AR', 'IN', 'PK', 'BD', 'ID', 'PH',
-    'VN', 'TH', 'MY', 'SG', 'NL', 'BE', 'CH', 'AT', 'SE', 'NO',
-    'DK', 'FI', 'PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI',
-    'EE', 'LV', 'LT', 'GR', 'TR', 'EG', 'SA', 'AE', 'QA', 'KW',
-    'IL', 'JO', 'LB', 'SY', 'IQ', 'IR', 'AF', 'PK', 'NP', 'LK',
-    'MM', 'KH', 'LA', 'MN', 'KZ', 'UZ', 'TM', 'KG', 'TJ', 'GE',
-    'AM', 'BY', 'UA', 'MD', 'LT', 'LV', 'EE', 'PT', 'IE', 'IS',
-    'MT', 'CY', 'LU', 'MC', 'LI', 'SM', 'VA', 'AD', 'MA', 'TN',
-    'DZ', 'LY', 'SD', 'ET', 'KE', 'UG', 'TZ', 'RW', 'BI', 'DJ'
-  ];
+  final List<String> _availableCountries = ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'RU', 'TR', 'JP', 'KR', 'BR', 'IN', 'CA', 'AU', 'NL', 'SE'];
   
   @override
   void initState() {
@@ -128,9 +103,16 @@ String? _botOpponentPhotoUrl;
           
           // Set opponent data from API response
           if (_isPlayingWithBot) {
-            _botOpponentName = DuelConverter.getOpponentName(duelResponse);
-            _botOpponentCountry = 'US'; // Default country for bot, could be randomized
-            _botOpponentPhotoUrl = DuelConverter.getOpponentAvatarUrl(duelResponse);
+            // For API bots, use realistic names instead of generic "Bot"
+            final selectedCountry = _availableCountries[_random.nextInt(_availableCountries.length)];
+            final namesForCountry = _botProfiles[selectedCountry]!;
+            final selectedName = namesForCountry[_random.nextInt(namesForCountry.length)];
+            
+            _botOpponentName = selectedName;
+            _botOpponentCountry = selectedCountry;
+            _botOpponentPhotoUrl = null; // Use initials from realistic name
+            
+            print('🤖 API bot disguised as: $selectedName from $selectedCountry');
           } else {
             _realOpponentName = DuelConverter.getOpponentName(duelResponse);
             _realOpponentCountry = 'US'; // This would come from real player data
@@ -199,7 +181,7 @@ String? _botOpponentPhotoUrl;
       _isSearchingForPlayer = false;
       _isOpponentReal = true;
       _realOpponentName  = "RealPlayer${_random.nextInt(999)}"; // This would be actual player name
-      _realOpponentCountry  = _countryCodes[_random.nextInt(_countryCodes.length)];
+      _realOpponentCountry  = _availableCountries[_random.nextInt(_availableCountries.length)];
       _realOpponentPhotoUrl  = null; // Real player photo URL would come from server
     });
     
@@ -209,15 +191,21 @@ String? _botOpponentPhotoUrl;
 void _activateLocalBot() {
   if (!mounted) return;
   
+  // Select a random country and matching name
+  final selectedCountry = _availableCountries[_random.nextInt(_availableCountries.length)];
+  final namesForCountry = _botProfiles[selectedCountry]!;
+  final selectedName = namesForCountry[_random.nextInt(namesForCountry.length)];
+  
   setState(() {
     _isSearchingForPlayer = false;
     _isPlayingWithBot = true;
     _isOpponentReal = false;
-    _botOpponentName = _randomNames[_random.nextInt(_randomNames.length)];
-    _botOpponentCountry = _countryCodes[_random.nextInt(_countryCodes.length)];
-    _botOpponentPhotoUrl = null;
+    _botOpponentName = selectedName;
+    _botOpponentCountry = selectedCountry;
+    _botOpponentPhotoUrl = null; // Will use initials from realistic name
   });
   
+  print('🤖 Local bot activated: $selectedName from $selectedCountry');
   _startDuel();
 }
 

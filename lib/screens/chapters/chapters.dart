@@ -27,7 +27,7 @@ class _ChapterScreenState extends ConsumerState<ChapterScreen> {
   @override
   void initState() {
     super.initState();
-    // Dil parametresi varsa, o dil ile yeniden yükle
+     
     if (widget.language != 'en') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(chapterProvider.notifier).refreshChapters(language: widget.language);

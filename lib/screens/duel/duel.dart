@@ -164,13 +164,32 @@ String _getInitials(String name) {
       );
       
       if (result['success'] == true) {
-        print('All answers submitted successfully');
-        print('API response: ${result['data']}');
+        print('✅ All answers submitted successfully');
+        print('📊 API response: ${result['data']}');
+        
+        // Log final game results for debugging
+        final gameState = ref.read(gameStateProvider);
+        int player1Score = 0;
+        int player2Score = 0;
+        
+        for (int i = 0; i < gameState.player1Results.length; i++) {
+          if (gameState.player1Results[i] == true) {
+            player1Score += gameState.questions[i].points;
+          }
+          if (gameState.player2Results[i] == true) {
+            player2Score += gameState.questions[i].points;
+          }
+        }
+        
+        String gameResult = player1Score > player2Score ? 'WON' : 
+                          player2Score > player1Score ? 'LOST' : 'DRAW';
+        
+        print('🏆 Final Result: Player1: $player1Score, Player2: $player2Score - $gameResult');
       } else {
-        print('Failed to submit answers: ${result['error']}');
+        print('❌ Failed to submit answers: ${result['error']}');
       }
     } catch (e) {
-      print('Exception in _submitAllAnswersToAPI: $e');
+      print('❌ Exception in _submitAllAnswersToAPI: $e');
     }
   }
 

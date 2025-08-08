@@ -6,23 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:quiz_app/providers/ticket/tickets_provider.dart';
 import 'package:quiz_app/screens/chapters/chapters.dart';
-import 'package:quiz_app/screens/duel/duel.dart';
 import 'package:quiz_app/screens/duel/duelloading.dart';
 import 'package:quiz_app/screens/event/event.dart';
 import 'package:quiz_app/screens/event/no_ticket_dialog.dart';
-import 'package:quiz_app/screens/inventory/inventory.dart';
 import 'package:quiz_app/screens/market/market.dart';
 import 'package:quiz_app/screens/messages/messages.dart';
 import 'package:quiz_app/screens/rank/rank.dart';
 import 'package:quiz_app/screens/rewards/rewards.dart';
 import 'package:quiz_app/screens/settings/settings.dart';
-import 'package:quiz_app/screens/statistic/statistic.dart';
 import 'package:quiz_app/widgets/topbar.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import '../../providers/theme_mode_provider.dart';
-import 'package:quiz_app/providers/translations/translation_provider.dart';
+// removed unused imports
 import 'package:quiz_app/widgets/translation_helper.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -58,8 +54,8 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
     final isTablet = screenWidth > 600;
 
     // Define colors based on theme
-    final backgroundColor = isDarkMode 
-        ? theme.scaffoldBackgroundColor 
+    final backgroundColor = isDarkMode
+        ? theme.scaffoldBackgroundColor
         : const Color(0xFFF0F0F0);
     
         final appBarColor = AppColors.primary;  // Keep blue for both modes
@@ -290,10 +286,8 @@ class HomeContentScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     User? user = FirebaseAuth.instance.currentUser;
 String displayName = user?.displayName ?? 'Guest';
-String? email = user?.email;
 String? photoUrl = user?.photoURL;
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
-    final theme = Theme.of(context);
     
     // Get screen dimensions to determine if we're on a tablet
     final screenWidth = MediaQuery.of(context).size.width;
@@ -343,18 +337,31 @@ final double flagPadding = isTablet ? 3.r : 5.r;
                     color: avatarBgColor,
                     border: Border.all(color: avatarBorderColor!, width: isTablet ? 3.r : 2.r),
                   ),
-                  child: Center(
-                    child: Image.asset(
-                      photoUrl ?? 'assets/images/avatar.png', // Replace with your avatar image
-                      width: avatarInnerSize,
-                      height: avatarInnerSize,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.person, 
-                          size: avatarInnerSize * 0.75, 
-                          color: isDarkMode ? Colors.grey[400] : Colors.grey,
-                        );
-                      },
+                  child: ClipOval(
+                    child: SizedBox.expand(
+                      child: (photoUrl != null && photoUrl.isNotEmpty && photoUrl.startsWith('http'))
+                          ? Image.network(
+                              photoUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.person,
+                                  size: avatarInnerSize * 0.75,
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              'assets/images/avatar.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.person,
+                                  size: avatarInnerSize * 0.75,
+                                  color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                                );
+                              },
+                            ),
                     ),
                   ),
                 ),
@@ -382,7 +389,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
               SizedBox(height: isTablet ? 6.h : 8.h),
               // Username
               Text(
-                displayName ?? ref.tr('common.guest'),
+                displayName,
                 style: TextStyle(
                   fontSize: usernameSize,
                   fontWeight: FontWeight.bold,
@@ -511,7 +518,6 @@ Widget _buildMenuTile({
   required bool isTablet,
   Widget? customIcon,
 }) {
-  final iconSize = isTablet ? 30.r : 36.r;
   final fontSize = isTablet ? 16.sp : 18.sp;
 
   return Container(
