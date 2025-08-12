@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,10 +10,12 @@ import 'package:quiz_app/widgets/translation_helper.dart';
 import 'package:quiz_app/providers/notifications/duel_notifications_provider.dart';
 import 'package:quiz_app/providers/notifications/notifications_provider.dart';
 import 'package:quiz_app/providers/theme_mode_provider.dart';
- 
+import 'package:quiz_app/providers/user_stats/user_stats_provider.dart';
 import 'package:quiz_app/screens/language/language.dart';
 import 'package:quiz_app/screens/login/login.dart';
 import 'package:quiz_app/screens/settings/faq.dart';
+import 'package:quiz_app/screens/settings/legal_webview_screen.dart';
+import 'package:quiz_app/core/utils/legal_urls.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -138,6 +139,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           context,
                           MaterialPageRoute(builder: (context) => const FaqScreen()),
                         );
+                      } else if (menuItems[index] == 'settings.terms_of_service') {
+                        final url = LegalUrls.getTermsOfServiceUrl(currentLanguage);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LegalWebViewScreen(
+                              url: url,
+                              title: ref.tr('settings.terms_of_service'),
+                            ),
+                          ),
+                        );
+                      } else if (menuItems[index] == 'settings.privacy_policy') {
+                        final url = LegalUrls.getPrivacyPolicyUrl(currentLanguage);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LegalWebViewScreen(
+                              url: url,
+                              title: ref.tr('settings.privacy_policy'),
+                            ),
+                          ),
+                        );
                       }
                       else if (menuItems[index] == 'settings.connect_account') {
                         if (isGoogleConnected) {
@@ -218,6 +241,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () async {
               try {
                 await _authService.signOut();
+                // Clear user stats provider
+                ref.read(userStatsProvider.notifier).clearUserStats();
                 Navigator.pop(context);
                 setState(() {});
                 ScaffoldMessenger.of(context).showSnackBar(

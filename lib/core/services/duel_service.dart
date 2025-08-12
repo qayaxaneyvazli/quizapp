@@ -235,6 +235,7 @@ class DuelService {
       };
 
       print('Request body: ${jsonEncode(requestBody)}');
+      print('Bot submission flag: $botSubmission');
 
       // Make API request
       final response = await http.post(
@@ -247,9 +248,33 @@ class DuelService {
       print('Submit answers response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-       // var body=response.body;
-        //print
         final Map<String, dynamic> responseData = jsonDecode(response.body);
+        
+        // If this was player submission, also submit bot answers
+        if (!botSubmission) {
+          print('Player answers submitted successfully, now submitting bot answers...');
+          
+          // Generate bot answers with same structure
+          List<Map<String, dynamic>> botAnswers = answers.map((answer) {
+            // Bot picks random answer (1-4 options typically)
+            int randomOption = 1 + ((answer['duel_question_id'] as int) % 4);
+            return {
+              'duel_question_id': answer['duel_question_id'],
+              'selected_option_id': randomOption,
+              'time_taken': 2.0 + ((answer['duel_question_id'] as int) % 3), // 2-5 seconds
+            };
+          }).toList();
+          
+          // Submit bot answers
+          final botResult = await submitAnswers(
+            duelId: duelId,
+            answers: botAnswers,
+            botSubmission: true,
+          );
+          
+          print('Bot answers submission result: ${botResult['success']}');
+        }
+        
         return {
           'success': true,
           'data': responseData,
@@ -271,6 +296,41 @@ class DuelService {
       }
     } catch (e) {
       print('Exception in submitAnswers: $e');
+      return {
+        'success': false,
+        'error': 'Network error: $e',
+      };
+    }
+  }
+
+  // Submit both player and bot answers for a duel
+  static Future<Map<String, dynamic>> submitAllAnswers({
+    required int duelId,
+    required List<Map<String, dynamic>> playerAnswers,
+    required List<Map<String, dynamic>> botAnswers,
+  }) async {
+    try {
+      // First submit player answers
+      final playerResult = await submitAnswers(
+        duelId: duelId,
+        answers: playerAnswers,
+        botSubmission: false,
+      );
+      
+      if (!playerResult['success']) {
+        return playerResult; // Return error if player submission fails
+      }
+      
+      // Then submit bot answers
+      final botResult = await submitAnswers(
+        duelId: duelId,
+        answers: botAnswers,
+        botSubmission: true,
+      );
+      
+      return botResult; // Return bot submission result
+    } catch (e) {
+      print('Exception in submitAllAnswers: $e');
       return {
         'success': false,
         'error': 'Network error: $e',

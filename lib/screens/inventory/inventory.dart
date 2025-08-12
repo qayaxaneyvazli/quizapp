@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:quiz_app/providers/translations/translation_provider.dart';
 import 'package:quiz_app/widgets/translation_helper.dart';
 import 'package:quiz_app/models/inventory.dart/inventory_item.dart';
 import 'package:quiz_app/providers/inventory/inventory_provider.dart';
+import 'package:quiz_app/providers/user_stats/user_stats_provider.dart';
 
 // Model for inventory items
 
@@ -18,8 +18,19 @@ class InventoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inventoryItems = ref.watch(inventoryProvider);
+    final userStatsAsync = ref.watch(userStatsProvider);
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+
+    // Fetch user stats when the screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Always try to fetch if we're in loading state or have no data
+      if (userStatsAsync is AsyncLoading || 
+          (userStatsAsync is AsyncData && userStatsAsync.value == null)) {
+        print('🔄 Inventory screen triggering user stats fetch...');
+        ref.read(userStatsProvider.notifier).fetchUserStats();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -43,10 +54,15 @@ class InventoryScreen extends ConsumerWidget {
   onPressed: () => Navigator.of(context).pop(),
 ),
       ),
-      body: ListView.builder(
-        itemCount: inventoryItems.length,
-        itemBuilder: (context, index) {
-          final item = inventoryItems[index];
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(userStatsProvider.notifier).refreshUserStats();
+        },
+        child: userStatsAsync.when(
+          data: (userStats) => ListView.builder(
+            itemCount: inventoryItems.length,
+            itemBuilder: (context, index) {
+              final item = inventoryItems[index];
           
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -105,6 +121,39 @@ class InventoryScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: theme.colorScheme.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load inventory',
+                  style: theme.textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.read(userStatsProvider.notifier).fetchUserStats();
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -189,6 +238,16 @@ class InventoryScreen extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.timer_off, color: Colors.white, size: 32),
+        );
+      case 'inventory.event_ticket':
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: iconBgColor(Colors.purple),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Icon(Icons.event, color: Colors.white, size: 32),
         );
       default:
         return Container(

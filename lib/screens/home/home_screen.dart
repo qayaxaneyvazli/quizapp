@@ -20,6 +20,7 @@ import '../../providers/bottom_nav_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 // removed unused imports
 import 'package:quiz_app/widgets/translation_helper.dart';
+import 'package:quiz_app/providers/user_stats/user_stats_provider.dart' as stats;
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -43,11 +44,47 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
   }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-  
+    // Initialize user stats when home screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userStatsAsync = ref.read(stats.userStatsProvider);
+      if (userStatsAsync is AsyncData && userStatsAsync.value == null) {
+        print('🏠 Home screen triggering user stats fetch...');
+        ref.read(stats.userStatsProvider.notifier).fetchUserStats();
+      }
+    });
    
     final navController = ref.watch(bottomNavProvider);
+    final userStatsAsync = ref.watch(stats.userStatsProvider);
     final isDarkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
     final theme = Theme.of(context);
+    
+    // Helper functions to get display values
+    String getCoinsDisplay() {
+      return userStatsAsync.when(
+        data: (userStats) => userStats?.coins.toString() ?? "0",
+        loading: () => "...",
+        error: (_, __) => "0",
+      );
+    }
+    
+    String getHeartsDisplay() {
+      return userStatsAsync.when(
+        data: (userStats) {
+          if (userStats == null) return "0";
+          if (userStats.hasInfiniteHearts) {
+            // Show countdown timer if we have hearts_infinite_until timestamp
+            final timeString = userStats.infiniteHeartsTimeString;
+            if (timeString.isNotEmpty) {
+              return timeString; // Show remaining time like "7:30:25"
+            }
+            return "∞"; // Fallback to infinity symbol
+          }
+          return userStats.heartsDisplayValue.toString();
+        },
+        loading: () => "...",
+        error: (_, __) => "0",
+      );
+    }
     
     // Get screen width to determine if we're on a tablet
     final screenWidth = MediaQuery.of(context).size.width;
@@ -102,7 +139,7 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              "1000",
+                              getCoinsDisplay(),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -126,7 +163,7 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              "7:30:25",
+                              getHeartsDisplay(),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -150,7 +187,7 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              "2500",
+                              getCoinsDisplay(),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
