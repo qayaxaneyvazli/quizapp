@@ -27,11 +27,11 @@ void main()async  {
 
   await FirebaseAppCheck.instance.activate(
     // For Android
-    androidProvider: AndroidProvider.playIntegrity,
+    androidProvider: AndroidProvider.debug,
     // For iOS
-    appleProvider: AppleProvider.appAttest,
-    // For web
-    webProvider: ReCaptchaV3Provider('your-recaptcha-site-key'),
+    // appleProvider: AppleProvider.appAttest,
+    // // For web
+    // webProvider: ReCaptchaV3Provider('your-recaptcha-site-key'),
   );
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
  
