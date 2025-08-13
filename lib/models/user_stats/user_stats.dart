@@ -12,6 +12,7 @@ class UserStats {
   final int ticketReplay;
   final int ticketDuel;
   final String heartsInfiniteUntil;
+  final int totalScore;
 
   UserStats({
     required this.id,
@@ -27,6 +28,7 @@ class UserStats {
     required this.ticketReplay,
     required this.ticketDuel,
     required this.heartsInfiniteUntil,
+    required this.totalScore,
   });
 
   factory UserStats.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class UserStats {
       ticketReplay: json['ticket_replay'] ?? 0,
       ticketDuel: json['ticket_duel'] ?? 0,
       heartsInfiniteUntil: json['hearts_infinite_until'] ?? '',
+      totalScore: json['total_score'] ?? 0,
     );
   }
 
@@ -62,6 +65,7 @@ class UserStats {
       'ticket_replay': ticketReplay,
       'ticket_duel': ticketDuel,
       'hearts_infinite_until': heartsInfiniteUntil,
+      'total_score': totalScore,
     };
   }
 

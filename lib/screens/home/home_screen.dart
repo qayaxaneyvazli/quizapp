@@ -26,22 +26,7 @@ class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
 
-String _getPageTitle(int navIndex, WidgetRef ref) {
-    switch (navIndex) {
-      case 0:
-        return ref.tr('menu.messages');
-      case 1:
-        return ref.tr('menu.rank');
-      case 2:
-        return ref.tr('menu.home');
-      case 3:
-        return ref.tr('menu.market');
-      case 4:
-        return ref.tr('menu.settings');
-      default:
-        return ref.tr('menu.home');
-    }
-  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize user stats when home screen loads
@@ -62,6 +47,14 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
     String getCoinsDisplay() {
       return userStatsAsync.when(
         data: (userStats) => userStats?.coins.toString() ?? "0",
+        loading: () => "...",
+        error: (_, __) => "0",
+      );
+    }
+
+        String getScoreDisplay() {
+      return userStatsAsync.when(
+        data: (userStats) => userStats?.totalScore.toString() ?? "0",
         loading: () => "...",
         error: (_, __) => "0",
       );
@@ -110,7 +103,7 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
       drawer: TopBar(),
       backgroundColor: backgroundColor,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(75.h), // AppBar yüksekliğini artırıyoruz
+        preferredSize: Size.fromHeight(50.h), // AppBar yüksekliğini artırıyoruz
         child: AppBar(
           backgroundColor: appBarColor,
           elevation: 0,
@@ -119,7 +112,7 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
               children: [
                 // Üst kısım - İkonlar ve drawer button
                 Container(
-                  height: 50.h, // Standart AppBar yüksekliği
+                  height: 48.h, // Standart AppBar yüksekliği
                   padding: EdgeInsets.symmetric(horizontal: 104.w),
                   child: Row(
                     children: [
@@ -148,7 +141,7 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              getCoinsDisplay(),
+                              getScoreDisplay(),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -210,20 +203,8 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
                   ),
                 ),
                 
-                // Alt kısım - Sayfa başlığı
-                Container(
-                  height: 25.h,
-                  child: Center(
-                    child: Text(
-                      _getPageTitle(navController, ref),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 21.sp, // Biraz küçülttük
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
+               
+           
               ],
             ),
           ),
@@ -369,7 +350,7 @@ final double flagPadding = isTablet ? 3.r : 5.r;
     return Column(
       children: [
         // Profile section
-        SizedBox(height: isTablet ? 16.h : 24.h),
+        SizedBox(height: isTablet ? 16.h : 20.h),
         Center(
           child: Column(
             children: [

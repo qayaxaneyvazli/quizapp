@@ -18,7 +18,7 @@ class UserStatsService {
   }
   
   // Helper method to get authenticated headers (similar to DuelService)
-  static Future<Map<String, String>?> _getAuthenticatedHeaders() async {
+  static Future<Map<String, String>?> getAuthenticatedHeaders() async {
     try {
       // Get current Firebase user and token
       final User? user = FirebaseAuth.instance.currentUser;
@@ -122,7 +122,7 @@ class UserStatsService {
       print('📊 Fetching user stats...');
       
       // Get authenticated headers
-      final headers = await _getAuthenticatedHeaders();
+      final headers = await getAuthenticatedHeaders();
       if (headers == null) {
         return {
           'success': false,
@@ -161,7 +161,7 @@ class UserStatsService {
         clearTokenCache();
         print('🔄 Token expired, retrying with fresh token...');
         
-        final retryHeaders = await _getAuthenticatedHeaders();
+        final retryHeaders = await getAuthenticatedHeaders();
         if (retryHeaders != null) {
           final retryResponse = await http.get(
             Uri.parse(statsUrl),
