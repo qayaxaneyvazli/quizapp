@@ -47,6 +47,9 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
         print('✅ Successfully parsed user stats:');
         print('   - Coins: ${userStats.coins}');
         print('   - Total Score: ${userStats.totalScore}');
+        print('   - Quiz Score: ${userStats.quizScore}');
+        print('   - Duel Score: ${userStats.duelScore}');
+        print('   - Event Score: ${userStats.eventScore}');
         print('   - Hearts Count: ${userStats.heartsCount}');
         print('   - Hearts Infinite Until: ${userStats.heartsInfiniteUntil}');
         print('   - Has Infinite Hearts: ${userStats.hasInfiniteHearts}');
@@ -79,6 +82,9 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
           "avatar_url": "",
           "coins": 2500,
           "total_score": 15000,
+          "quiz_score": 8000,
+          "duel_score": 4000,
+          "event_score": 3000,
           "hearts": "infinite", // Set to infinite for testing
           "joker_fifty_fifty": 3,
           "joker_freeze_time": 2,

@@ -54,7 +54,23 @@ class HomeScreen extends ConsumerWidget {
 
         String getScoreDisplay() {
       return userStatsAsync.when(
-        data: (userStats) => userStats?.totalScore.toString() ?? "0",
+        data: (userStats) {
+          if (userStats == null) return "0";
+          // Show total score for now, can be changed based on current screen/context
+          return userStats.totalScore.toString();
+        },
+        loading: () => "...",
+        error: (_, __) => "0",
+      );
+    }
+
+    // Helper method to get score by type
+    String getScoreByType(String type) {
+      return userStatsAsync.when(
+        data: (userStats) {
+          if (userStats == null) return "0";
+          return userStats.getScoreByType(type).toString();
+        },
         loading: () => "...",
         error: (_, __) => "0",
       );

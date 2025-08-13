@@ -12,7 +12,10 @@ class UserStats {
   final int ticketReplay;
   final int ticketDuel;
   final String heartsInfiniteUntil;
-  final int totalScore;
+  final int totalScore; // Backend henüz total_score döndürüyor
+  final int quizScore; // Quiz score
+  final int duelScore; // Duel score  
+  final int eventScore; // Event score
 
   UserStats({
     required this.id,
@@ -29,6 +32,9 @@ class UserStats {
     required this.ticketDuel,
     required this.heartsInfiniteUntil,
     required this.totalScore,
+    required this.quizScore,
+    required this.duelScore,
+    required this.eventScore,
   });
 
   factory UserStats.fromJson(Map<String, dynamic> json) {
@@ -47,6 +53,9 @@ class UserStats {
       ticketDuel: json['ticket_duel'] ?? 0,
       heartsInfiniteUntil: json['hearts_infinite_until'] ?? '',
       totalScore: json['total_score'] ?? 0,
+      quizScore: json['quiz_score'] ?? 0,
+      duelScore: json['duel_score'] ?? 0,
+      eventScore: json['event_score'] ?? 0,
     );
   }
 
@@ -66,6 +75,9 @@ class UserStats {
       'ticket_duel': ticketDuel,
       'hearts_infinite_until': heartsInfiniteUntil,
       'total_score': totalScore,
+      'quiz_score': quizScore,
+      'duel_score': duelScore,
+      'event_score': eventScore,
     };
   }
 
@@ -108,5 +120,25 @@ class UserStats {
       return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
     return '';
+  }
+
+  // Helper method to get score based on type
+  int getScoreByType(String type) {
+    switch (type.toLowerCase()) {
+      case 'quiz':
+        return quizScore;
+      case 'duel':
+        return duelScore;
+      case 'event':
+        return eventScore;
+      case 'total':
+      default:
+        return totalScore;
+    }
+  }
+
+  // Helper method to get total score (sum of all scores)
+  int get calculatedTotalScore {
+    return quizScore + duelScore + eventScore;
   }
 }

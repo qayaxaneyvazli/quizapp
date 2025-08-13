@@ -84,10 +84,10 @@ class RankScreen extends ConsumerWidget {
           
 
           
-          // Leaderboard section with yellow items
-          Expanded(
-            child: buildLeaderboard(context, leaderboardAsync, isDarkMode, ref),
-          ),
+                     // Leaderboard section with yellow items
+           Expanded(
+             child: buildLeaderboard(context, leaderboardAsync, isDarkMode, ref, selectedTabIndex),
+           ),
         ],
       ),
     );
@@ -141,8 +141,12 @@ Widget buildRangTrophySection() {
             children: List.generate(
               tabs.length,
               (index) => Expanded(
-                child: InkWell(
-                  onTap: () => ref.read(selectedTabProvider.notifier).state = index,
+                                 child: InkWell(
+                   onTap: () {
+                     ref.read(selectedTabProvider.notifier).state = index;
+                     // Refresh leaderboard when tab changes
+                     ref.read(leaderboardProvider.notifier).refreshLeaderboard();
+                   },
                   child: Center(
                     child: Text(
                       tabs[index],
@@ -175,7 +179,7 @@ Widget buildRangTrophySection() {
 
 
 
-  Widget buildLeaderboard(BuildContext context, AsyncValue<LeaderboardResponse?> leaderboardAsync, bool isDarkMode, WidgetRef ref) {
+     Widget buildLeaderboard(BuildContext context, AsyncValue<LeaderboardResponse?> leaderboardAsync, bool isDarkMode, WidgetRef ref, int selectedTabIndex) {
     return leaderboardAsync.when(
       data: (leaderboardResponse) {
         if (leaderboardResponse == null) {
@@ -199,15 +203,28 @@ Widget buildRangTrophySection() {
         String userEmail = user?.email ?? '';
         String photoUrl = user?.photoURL ?? '';
         
-        // Get user stats for score
-        final userStatsAsync = ref.watch(stats.userStatsProvider);
-        int userScore = 0;
-        
-        userStatsAsync.whenData((userStats) {
-          if (userStats != null) {
-            userScore = userStats.totalScore; // Using total_score from API
-          }
-        });
+                 // Get user stats for score based on selected tab
+         final userStatsAsync = ref.watch(stats.userStatsProvider);
+         int userScore = 0;
+         
+         userStatsAsync.whenData((userStats) {
+           if (userStats != null) {
+             // Get score based on selected tab
+             switch (selectedTabIndex) {
+               case 0: // World (Quiz)
+                 userScore = userStats.quizScore;
+                 break;
+               case 1: // Duel
+                 userScore = userStats.duelScore;
+                 break;
+               case 2: // Event
+                 userScore = userStats.eventScore;
+                 break;
+               default:
+                 userScore = userStats.quizScore;
+             }
+           }
+         });
         
         // Create combined leaderboard with current user
         List<Map<String, dynamic>> combinedLeaderboard = [];
