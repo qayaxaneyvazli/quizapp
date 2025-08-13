@@ -26,6 +26,7 @@ class NotificationsService {
       sound: true,
     );
     
+    
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       

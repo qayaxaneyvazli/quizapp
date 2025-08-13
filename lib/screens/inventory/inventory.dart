@@ -32,6 +32,17 @@ class InventoryScreen extends ConsumerWidget {
       }
     });
 
+    // Debug: Print current user stats for debugging
+    userStatsAsync.whenData((userStats) {
+      if (userStats != null) {
+        print('📊 Current user stats in inventory:');
+        print('   - Coins: ${userStats.coins}');
+        print('   - Duel Tickets: ${userStats.ticketDuel}');
+        print('   - Replay Tickets: ${userStats.ticketReplay}');
+        print('   - Event Tickets: ${userStats.ticketEvent}');
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         // Use theme-aware colors for app bar
@@ -45,83 +56,125 @@ class InventoryScreen extends ConsumerWidget {
           ),
         ),
         leading: IconButton(
-  icon: SvgPicture.asset(
-    'assets/icons/back_icon.svg',  
- 
-    width: 40,  
-    height: 40,
-  ),
-  onPressed: () => Navigator.of(context).pop(),
-),
+          icon: SvgPicture.asset(
+            'assets/icons/back_icon.svg',  
+            width: 40,  
+            height: 40,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.refresh,
+              color: isDarkMode ? theme.colorScheme.onSurface : Colors.white,
+            ),
+            onPressed: () {
+              ref.read(userStatsProvider.notifier).refreshUserStats();
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           await ref.read(userStatsProvider.notifier).refreshUserStats();
         },
         child: userStatsAsync.when(
-          data: (userStats) => ListView.builder(
-            itemCount: inventoryItems.length,
-            itemBuilder: (context, index) {
-              final item = inventoryItems[index];
-          
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: isDarkMode ? theme.cardColor : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _buildItemIcon(item, isDarkMode, theme),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        ref.tr(item.name),
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? theme.colorScheme.onSurface : null,
-                        ),
+          data: (userStats) => Column(
+            children: [
+              // Last updated indicator
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                color: isDarkMode ? theme.colorScheme.surface.withOpacity(0.5) : Colors.grey[100],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Last updated: ${DateTime.now().toString().substring(11, 19)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode ? theme.colorScheme.onSurface.withOpacity(0.7) : Colors.grey[600],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        ref.tr(item.description),
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDarkMode 
-                              ? theme.colorScheme.onSurface.withOpacity(0.7) 
-                              : Colors.grey[600],
-                        ),
+                    ),
+                    Text(
+                      'Auto-refresh: 30s',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode ? theme.colorScheme.onSurface.withOpacity(0.7) : Colors.grey[600],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  item.quantity.toString(),
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? theme.colorScheme.onSurface : null,
-                  ),
+              ),
+                            // Inventory items
+              Expanded(
+                child: ListView.builder(
+                  itemCount: inventoryItems.length,
+                  itemBuilder: (context, index) {
+                    final item = inventoryItems[index];
+                    
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? theme.cardColor : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDarkMode ? Colors.black26 : Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 3,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          _buildItemIcon(item, isDarkMode, theme),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ref.tr(item.name),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDarkMode ? theme.colorScheme.onSurface : null,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  ref.tr(item.description),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: isDarkMode 
+                                        ? theme.colorScheme.onSurface.withOpacity(0.7) 
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            item.quantity.toString(),
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? theme.colorScheme.onSurface : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+            ],
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: Column(

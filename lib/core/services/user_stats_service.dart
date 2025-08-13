@@ -146,7 +146,8 @@ class UserStatsService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data);
+        print('✅ API Response received: $data');
+        print('🔍 Hearts field in API response: ${data['hearts']} (type: ${data['hearts']?.runtimeType})');
         
         // Parse the response into UserStats model
         final userStats = UserStats.fromJson(data);

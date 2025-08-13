@@ -71,6 +71,15 @@ String _getPageTitle(int navIndex, WidgetRef ref) {
       return userStatsAsync.when(
         data: (userStats) {
           if (userStats == null) return "0";
+          
+          // Debug logging
+          print('🏠 Home Screen Hearts Debug:');
+          print('   - Raw heartsCount: "${userStats.heartsCount}"');
+          print('   - heartsCount type: ${userStats.heartsCount.runtimeType}');
+          print('   - hasInfiniteHearts: ${userStats.hasInfiniteHearts}');
+          print('   - heartsDisplayValue: ${userStats.heartsDisplayValue}');
+          print('   - heartsInfiniteUntil: "${userStats.heartsInfiniteUntil}"');
+          
           if (userStats.hasInfiniteHearts) {
             // Show countdown timer if we have hearts_infinite_until timestamp
             final timeString = userStats.infiniteHeartsTimeString;

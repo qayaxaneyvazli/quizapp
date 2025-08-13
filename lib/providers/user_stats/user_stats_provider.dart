@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/user_stats/user_stats.dart';
 import '../../core/services/user_stats_service.dart';
+import 'dart:async';
 
 // Provider for user stats
 final userStatsProvider = StateNotifierProvider<UserStatsNotifier, AsyncValue<UserStats?>>((ref) {
@@ -8,7 +9,29 @@ final userStatsProvider = StateNotifierProvider<UserStatsNotifier, AsyncValue<Us
 });
 
 class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
-  UserStatsNotifier() : super(const AsyncValue.data(null));
+  Timer? _autoRefreshTimer;
+  
+  UserStatsNotifier() : super(const AsyncValue.data(null)) {
+    // Start auto-refresh timer (refresh every 30 seconds)
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      // Only refresh if we have data (not in loading or error state)
+      if (state is AsyncData && state.value != null) {
+        print('🔄 Auto-refreshing user stats...');
+        fetchUserStats();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
 
   // Fetch user stats from API
   Future<void> fetchUserStats() async {
@@ -26,6 +49,7 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
         print('   - Hearts Count: ${userStats.heartsCount}');
         print('   - Hearts Infinite Until: ${userStats.heartsInfiniteUntil}');
         print('   - Has Infinite Hearts: ${userStats.hasInfiniteHearts}');
+        print('   - Hearts Display Value: ${userStats.heartsDisplayValue}');
         if (userStats.hasInfiniteHearts && userStats.infiniteHeartsTimeString.isNotEmpty) {
           print('   - Infinite Hearts Countdown: ${userStats.infiniteHeartsTimeString}');
         }
@@ -53,7 +77,7 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
           "name": "Test User",
           "avatar_url": "",
           "coins": 2500,
-          "hearts_count": "infinite", // Set to infinite for testing
+          "hearts": "infinite", // Set to infinite for testing
           "joker_fifty_fifty": 3,
           "joker_freeze_time": 2,
           "joker_wrong_answer": 1,
@@ -85,6 +109,7 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
 
   // Clear user stats (call on logout)
   void clearUserStats() {
+    _autoRefreshTimer?.cancel();
     state = const AsyncValue.data(null);
     UserStatsService.clearTokenCache();
   }
