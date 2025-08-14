@@ -1,15 +1,18 @@
 class LeaderboardResponse {
   final String scope;
+  final String? type;
   final List<LeaderboardEntry> leaderboard;
 
   LeaderboardResponse({
     required this.scope,
+    this.type,
     required this.leaderboard,
   });
 
   factory LeaderboardResponse.fromJson(Map<String, dynamic> json) {
     return LeaderboardResponse(
       scope: json['scope'] ?? '',
+      type: json['type'],
       leaderboard: (json['leaderboard'] as List<dynamic>?)
           ?.map((entry) => LeaderboardEntry.fromJson(entry))
           .toList() ?? [],
@@ -19,6 +22,7 @@ class LeaderboardResponse {
   Map<String, dynamic> toJson() {
     return {
       'scope': scope,
+      'type': type,
       'leaderboard': leaderboard.map((entry) => entry.toJson()).toList(),
     };
   }
@@ -41,8 +45,8 @@ class LeaderboardEntry {
     return LeaderboardEntry(
       userId: json['user_id'] ?? 0,
       name: json['name'] ?? '',
-      totalScore: json['total_score'] ?? 0,
-      totalStars: json['total_stars'] ?? 0,
+      totalScore: json['score'] ?? json['total_score'] ?? 0, // Try 'score' first, then 'total_score'
+      totalStars: json['stars'] ?? json['total_stars'] ?? 0, // Try 'stars' first, then 'total_stars'
     );
   }
 
@@ -50,8 +54,8 @@ class LeaderboardEntry {
     return {
       'user_id': userId,
       'name': name,
-      'total_score': totalScore,
-      'total_stars': totalStars,
+      'score': totalScore,
+      'stars': totalStars,
     };
   }
 } 

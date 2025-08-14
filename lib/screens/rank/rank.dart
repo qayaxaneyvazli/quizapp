@@ -48,6 +48,20 @@ class UserStats {
 class RankScreen extends ConsumerWidget {
   const RankScreen({Key? key}) : super(key: key);
 
+  // Helper method to get type parameter based on selected tab
+  String _getTypeForTab(int tabIndex) {
+    switch (tabIndex) {
+      case 0: // World tab
+        return 'quiz';
+      case 1: // Duel tab
+        return 'duel';
+      case 2: // Event tab
+        return 'event';
+      default:
+        return 'quiz';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     User? user = FirebaseAuth.instance.currentUser;
@@ -64,7 +78,8 @@ class RankScreen extends ConsumerWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (leaderboardAsync is AsyncData && leaderboardAsync.value == null) {
         print('🏆 Rank screen triggering leaderboard fetch...');
-        ref.read(leaderboardProvider.notifier).fetchLeaderboard();
+        final type = _getTypeForTab(selectedTabIndex);
+        ref.read(leaderboardProvider.notifier).fetchLeaderboard(type: type);
       }
       if (userStatsAsync is AsyncData && userStatsAsync.value == null) {
         print('🏆 Rank screen triggering user stats fetch...');
@@ -144,8 +159,9 @@ Widget buildRangTrophySection() {
                                  child: InkWell(
                    onTap: () {
                      ref.read(selectedTabProvider.notifier).state = index;
-                     // Refresh leaderboard when tab changes
-                     ref.read(leaderboardProvider.notifier).refreshLeaderboard();
+                     // Refresh leaderboard when tab changes with appropriate type
+                     final type = _getTypeForTab(index);
+                     ref.read(leaderboardProvider.notifier).refreshLeaderboard(type: type);
                    },
                   child: Center(
                     child: Text(
@@ -207,9 +223,9 @@ Widget buildRangTrophySection() {
          final userStatsAsync = ref.watch(stats.userStatsProvider);
          int userScore = 0;
          
+         // Get score based on selected tab safely using when
          userStatsAsync.whenData((userStats) {
            if (userStats != null) {
-             // Get score based on selected tab
              switch (selectedTabIndex) {
                case 0: // World (Quiz)
                  userScore = userStats.quizScore;
@@ -232,10 +248,18 @@ Widget buildRangTrophySection() {
         // Add API leaderboard entries
         for (int i = 0; i < leaderboard.length; i++) {
           final entry = leaderboard[i];
+          print('🏆 API Entry ${i + 1}: ${entry.name} - Score: ${entry.totalScore} - Stars: ${entry.totalStars}');
+          print('🏆 Entry details: userId=${entry.userId}, name=${entry.name}, totalScore=${entry.totalScore}, totalStars=${entry.totalStars}');
+          
+          // Check if score is 0 and log it
+          if (entry.totalScore == 0) {
+            print('⚠️ WARNING: Entry ${i + 1} has 0 score!');
+          }
+          
           combinedLeaderboard.add({
             'userId': entry.userId,
             'name': entry.name,
-            'score': entry.totalScore,
+            'score': entry.totalScore, // API'den gelen score'u direkt kullan
             'stars': entry.totalStars,
             'isCurrentUser': false,
             'photoUrl': '',
@@ -255,6 +279,7 @@ Widget buildRangTrophySection() {
         print('   - User exists in leaderboard: $userExists');
         
         if (!userExists) {
+          print('🏆 User not found in API, adding with local score: $userScore');
           combinedLeaderboard.add({
             'userId': 0, // Special ID for current user
             'name': displayName,
@@ -271,11 +296,8 @@ Widget buildRangTrophySection() {
               print('🏆 Found user in leaderboard, updating...');
               combinedLeaderboard[i]['isCurrentUser'] = true;
               combinedLeaderboard[i]['photoUrl'] = photoUrl;
-              // Update score with current user's score if it's higher
-              if (userScore > combinedLeaderboard[i]['score']) {
-                combinedLeaderboard[i]['score'] = userScore;
-                print('🏆 Updated user score to: $userScore');
-              }
+              // API'den gelen score'u kullan, local score'u sadece debug için yazdır
+              print('🏆 API score: ${combinedLeaderboard[i]['score']}, Local score: $userScore');
               break;
             }
           }
@@ -287,6 +309,13 @@ Widget buildRangTrophySection() {
         // Calculate ranks
         for (int i = 0; i < combinedLeaderboard.length; i++) {
           combinedLeaderboard[i]['rank'] = i + 1;
+        }
+        
+        // Debug: Print final combined leaderboard
+        print('🏆 Final Combined Leaderboard:');
+        for (int i = 0; i < combinedLeaderboard.length; i++) {
+          final entry = combinedLeaderboard[i];
+          print('   ${entry['rank']}. ${entry['name']} - Score: ${entry['score']} (Current User: ${entry['isCurrentUser']})');
         }
         
         return ListView.builder(
@@ -310,65 +339,74 @@ Widget buildRangTrophySection() {
                    ),
                  ],
                ),
-               child: Padding(
-                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: isCurrentUser ? 16 : 12),
-                child: Row(
-                  children: [
-                                         // Rank
-                     Text(
-                       "${entry['rank']}",
-                       style: TextStyle(
-                         fontSize: isCurrentUser ? 22 : 18,
-                         fontWeight: FontWeight.bold,
-                         color: Colors.black87,
-                       ),
-                     ),
-                    SizedBox(width: 12),
+                                child: Padding(
+                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: isCurrentUser ? 16 : 12),
+                  child: Row(
+                    children: [
+                       // Rank
+                      Container(
+                        width: 30,
+                        child: Text(
+                          "${entry['rank']}",
+                          style: TextStyle(
+                            fontSize: isCurrentUser ? 22 : 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                     SizedBox(width: 8),
                     
                                          // Avatar
                      _buildUserAvatar(entry['countryCode'], entry['photoUrl'], isCurrentUser),
-                    SizedBox(width: 12),
+                    SizedBox(width: 8),
                     
                                          // Username
-                     Text(
-                       entry['name'],
-                       style: TextStyle(
-                         fontSize: isCurrentUser ? 20 : 16,
-                         fontWeight: FontWeight.bold,
-                         color: Colors.black87,
+                     Expanded(
+                       child: Text(
+                         entry['name'],
+                         style: TextStyle(
+                           fontSize: isCurrentUser ? 20 : 16,
+                           fontWeight: FontWeight.bold,
+                           color: Colors.black87,
+                         ),
+                         overflow: TextOverflow.ellipsis,
+                         maxLines: 1,
                        ),
                      ),
-                    
-                    Spacer(),
                     
                                          // Score
-                     Text(
-                       "${entry['score']}",
-                       style: TextStyle(
-                         fontSize: isCurrentUser ? 22 : 18,
-                         fontWeight: FontWeight.bold,
-                         color: Colors.black87,
+                     Container(
+                       constraints: BoxConstraints(minWidth: 60),
+                       child: Text(
+                         "${entry['score']}",
+                         style: TextStyle(
+                           fontSize: isCurrentUser ? 22 : 18,
+                           fontWeight: FontWeight.bold,
+                           color: Colors.black87,
+                         ),
+                         textAlign: TextAlign.end,
                        ),
                      ),
-                    SizedBox(width: 6),
+                     SizedBox(width: 8),
                     
-                    // Star icon - matches the gold icon in the image
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFFAB00),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Color(0xFFE65100), width: 1),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.star,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                    ),
+                                         // Star icon - matches the gold icon in the image
+                     Container(
+                       width: 20,
+                       height: 20,
+                       decoration: BoxDecoration(
+                         color: Color(0xFFFFAB00),
+                         shape: BoxShape.circle,
+                         border: Border.all(color: Color(0xFFE65100), width: 1),
+                       ),
+                       child: Center(
+                         child: Icon(
+                           Icons.star,
+                           color: Colors.white,
+                           size: 14,
+                         ),
+                       ),
+                     ),
                   ],
                 ),
               ),

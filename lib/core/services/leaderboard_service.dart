@@ -7,9 +7,9 @@ class LeaderboardService {
   static const String _baseUrl = 'http://116.203.188.209/api';
 
   // Fetch leaderboard data from API
-  static Future<Map<String, dynamic>> getLeaderboard() async {
+  static Future<Map<String, dynamic>> getLeaderboard({String? type}) async {
     try {
-      print('🏆 Fetching leaderboard...');
+      print('🏆 Fetching leaderboard with type: $type');
       
       // Get authenticated headers
       final headers = await UserStatsService.getAuthenticatedHeaders();
@@ -20,8 +20,11 @@ class LeaderboardService {
         };
       }
 
-      // Make GET request to leaderboard endpoint
-      const String leaderboardUrl = '$_baseUrl/score/leaderboard';
+      // Build URL with type parameter if provided
+      String leaderboardUrl = '$_baseUrl/score/leaderboard';
+      if (type != null) {
+        leaderboardUrl += '?type=$type';
+      }
       final response = await http.get(
         Uri.parse(leaderboardUrl),
         headers: headers,
@@ -37,9 +40,17 @@ class LeaderboardService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('✅ Leaderboard API Response received: $data');
+        print('✅ Raw response body: ${response.body}');
         
         // Parse the response into LeaderboardResponse model
         final leaderboardResponse = LeaderboardResponse.fromJson(data);
+        
+        // Debug: Print parsed data
+        print('✅ Parsed leaderboard entries:');
+        for (int i = 0; i < leaderboardResponse.leaderboard.length; i++) {
+          final entry = leaderboardResponse.leaderboard[i];
+          print('   Entry ${i + 1}: userId=${entry.userId}, name=${entry.name}, totalScore=${entry.totalScore}, totalStars=${entry.totalStars}');
+        }
         
         return {
           'success': true,
@@ -87,29 +98,38 @@ class LeaderboardService {
         print('🔄 Using fallback leaderboard data...');
         final fallbackData = {
           "scope": "global",
+          "type": type ?? "quiz",
           "leaderboard": [
             {
               "user_id": 1,
               "name": "rasulzadeamin@gmail.com",
-              "total_score": 29000,
-              "total_stars": 9
+              "score": 29000,
+              "stars": 9
             },
             {
               "user_id": 2,
               "name": "test@example.com",
-              "total_score": 25000,
-              "total_stars": 8
+              "score": 25000,
+              "stars": 8
             },
             {
               "user_id": 3,
               "name": "demo@example.com",
-              "total_score": 22000,
-              "total_stars": 7
+              "score": 22000,
+              "stars": 7
             }
           ]
         };
         
         final leaderboardResponse = LeaderboardResponse.fromJson(fallbackData);
+        
+        // Debug: Print fallback data
+        print('✅ Fallback leaderboard entries:');
+        for (int i = 0; i < leaderboardResponse.leaderboard.length; i++) {
+          final entry = leaderboardResponse.leaderboard[i];
+          print('   Entry ${i + 1}: userId=${entry.userId}, name=${entry.name}, totalScore=${entry.totalScore}, totalStars=${entry.totalStars}');
+        }
+        
         return {
           'success': true,
           'data': leaderboardResponse,
