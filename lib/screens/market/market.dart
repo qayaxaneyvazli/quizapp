@@ -9,6 +9,7 @@ import '../../core/constants/app_padding.dart';
 import '../../providers/bottom_nav_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/theme_mode_provider.dart';
+import '../../widgets/translation_helper.dart';
 
 class MarketScreen extends ConsumerStatefulWidget {
   const MarketScreen({Key? key}) : super(key: key);
@@ -116,9 +117,9 @@ Widget _buildTrueAnswerScreen() {
                   height: 34,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Ad Free for 30 days",
+                  ref.tr("market.ad_free_for_30_days"),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
@@ -1066,9 +1067,9 @@ Widget _buildTrueAnswerScreen() {
                   height: 24,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Ad Free for 30 days",
+                  ref.tr("market.ad_free_for_30_days"),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
@@ -1364,7 +1365,7 @@ Padding(
         ),
         const SizedBox(width: 10),
         Text(
-          'Duel Tickets',
+          ref.tr("market.duel_tickets"),
           style: TextStyle(
             color: Colors.white,
             fontSize: 22, // Kiçik etdik ki, konteynerdə tam görünsün
@@ -1400,7 +1401,7 @@ Padding(
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        "Get 1 Duel Ticket",
+                        ref.tr("market.get_1_duel_ticket"),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -1459,7 +1460,7 @@ Padding(
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        "1 Duel Ticket",
+                        ref.tr("market.1_duel_ticket"),
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -1505,13 +1506,13 @@ Padding(
         ),
         const SizedBox(height: 16),
         // 5 Replay Ticket (Euro)
-        _buildMoneyReplayItem("+5 Duel Tickets", "0.49 €"),
+        _buildMoneyReplayItem(ref.tr("market.+5_duel_tickets"), "0.49 €"),
         const SizedBox(height: 16),
-        _buildMoneyReplayItem("+10 Duel Tickets", "0.99 €"),
+        _buildMoneyReplayItem(ref.tr("market.+10_duel_tickets"), "0.99 €"),
         const SizedBox(height: 16),
-        _buildMoneyReplayItem("+20 Duel Tickets", "1.79 €"),
+        _buildMoneyReplayItem(ref.tr("market.+20_duel_tickets"), "1.79 €"),
         const SizedBox(height: 16),
-        _buildMoneyReplayItem("+50 Duel Tickets", "4.49 €"),
+        _buildMoneyReplayItem(ref.tr("market.+50_duel_tickets"), "4.49 €"),
  const SizedBox(height: 18),
 
           Padding(
@@ -1533,8 +1534,8 @@ Padding(
                 height: 32,
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Replay Tickets',
+              Text(
+                ref.tr("market.replay_tickets"),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 22,
@@ -1565,9 +1566,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "+1 Replay Ticket",
+                  ref.tr("market.+1_replay_ticket"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1619,9 +1620,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "+5 Replay Tickets",
+                  ref.tr("market.+5_replay_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1673,9 +1674,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "+10 Replay Tickets",
+                  ref.tr("market.+10_replay_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1727,9 +1728,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+                Expanded(
                 child: Text(
-                  "+20 Replay Tickets",
+                   ref.tr("market.+20_replay_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1783,8 +1784,8 @@ Padding(
                 height: 32,
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Event Tickets',
+              Text(
+                ref.tr("market.event_tickets"),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 22,
@@ -1815,9 +1816,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+                Expanded(
                 child: Text(
-                  "+5 Event Tickets",
+                  ref.tr("market.+5_event_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1869,9 +1870,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "+10 Event Tickets",
+                  ref.tr("market.+10_event_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1923,9 +1924,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "+20 Event Tickets",
+                  ref.tr("market.+20_event_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1977,9 +1978,9 @@ Padding(
                   height: 28,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "+50 Event Tickets",
+                  ref.tr("market.+50_event_tickets"),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -2132,9 +2133,9 @@ Widget _buildMoneyReplayItem(String title, String price) {
                   height: 34,
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  "Ad Free for 30 days",
+                  ref.tr("market.ad_free_for_30_days"),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
@@ -2167,15 +2168,15 @@ Widget _buildMoneyReplayItem(String title, String price) {
       ),
           _buildWatchAdItem(),
           const SizedBox(height: 16),
-          _buildCoinItem("1 Heart", "600"),
+          _buildCoinItem(ref.tr("market.1_heart"), "600"),
           const SizedBox(height: 16),
-          _buildMoneyItem("+10 Hearts", "0.49 €"),
+          _buildMoneyItem(ref.tr("market.+10_hearts"), "0.49 €"),
           const SizedBox(height: 16),
-          _buildInfiniteCoinItem("Infinite Hearts for 30 minutes", "15000"),
+                      _buildInfiniteCoinItem(ref.tr("market.infinite_hearts_for_30_minutes"), "15000"),
           const SizedBox(height: 16),
-          _buildMoneyItem("Infinite Hearts for 1 hour", "0.99 €"),
+                      _buildMoneyItem(ref.tr("market.infinite_hearts_for_1_hour"), "0.99 €"),
           const SizedBox(height: 16),
-          _buildMoneyItem("Infinite Hearts for 3 hours", "1.99 €"),
+                      _buildMoneyItem(ref.tr("market.infinite_hearts_for_3_hours"), "1.99 €"),
           Padding(
     padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8),
     child: Container(
@@ -2208,7 +2209,7 @@ Widget _buildMoneyReplayItem(String title, String price) {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Text("Bronze Pack", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
+          Text(ref.tr("market.bronze_pack"), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
@@ -2256,7 +2257,7 @@ Widget _buildMoneyReplayItem(String title, String price) {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Text("Silver Pack", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
+          Text(ref.tr("market.silver_pack"), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
@@ -2304,7 +2305,7 @@ Widget _buildMoneyReplayItem(String title, String price) {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Text("Gold Pack", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.purple)),
+          Text(ref.tr("market.gold_pack"), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.purple)),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
@@ -2352,7 +2353,7 @@ Widget _buildMoneyReplayItem(String title, String price) {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Text("Platinum Pack", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.purple)),
+          Text(ref.tr("market.platinum_pack"), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.purple)),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
@@ -2438,7 +2439,7 @@ Widget _packIcon(String text, String iconPath) {
             ),
                   const SizedBox(width: 12),
                   Text(
-                    "Get 1 Heart",
+                    ref.tr("market.get_1_heart"),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,

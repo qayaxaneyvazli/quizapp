@@ -24,7 +24,7 @@ class CategoryData {
 final categoriesProvider = StateProvider<List<CategoryData>>((ref) {
   return [
     CategoryData(name: "category.technology", icon: "🧪", questionsAnswered: 3, percentage: 60),
-    CategoryData(name: "category.physic", icon: "⚛️", questionsAnswered: 3, percentage: 80),
+    CategoryData(name: "category.physics", icon: "⚛️", questionsAnswered: 3, percentage: 80),
     CategoryData(name: "category.chemistry", icon: "🧪", questionsAnswered: 3, percentage: 100),
     CategoryData(name: "category.mixed", icon: "🔭", questionsAnswered: 3, percentage: 100),
     CategoryData(name: "category.astrology", icon: "🌠", questionsAnswered: 3, percentage: 100),
@@ -86,7 +86,7 @@ class StatisticScreen extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: 12.h),
             child: Center(
               child: Text(
-                ref.tr('statistic.results_by_category'),
+                ref.tr('statistic.result_by_category'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18.sp,
