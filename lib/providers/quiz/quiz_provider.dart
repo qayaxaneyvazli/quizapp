@@ -48,3 +48,9 @@ final quizControllerProvider = StateNotifierProvider.autoDispose<QuizController,
   final questions = ref.watch(questionsProvider);
   return QuizController(questions);
 });
+
+// Provider that accepts levelId parameter
+final quizControllerWithLevelProvider = StateNotifierProvider.family<QuizController, QuizState, int>((ref, levelId) {
+  final questions = ref.watch(questionsProvider);
+  return QuizController(questions, levelId: levelId);
+});

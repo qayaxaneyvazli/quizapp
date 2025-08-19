@@ -22,7 +22,7 @@ class QuizScreen extends ConsumerWidget {
   }) : super(key: key);
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final quizState = ref.watch(quizControllerProvider);
+    final quizState = ref.watch(quizControllerWithLevelProvider(levelId));
     final currentQuestionIndex = quizState.currentQuestionIndex;
   final hearts = ref.watch(heartsProvider);
     
@@ -289,7 +289,7 @@ class QuizScreen extends ConsumerWidget {
                                     ? null
                                     : () {
                                         ref
-                                            .read(quizControllerProvider.notifier)
+                                            .read(quizControllerWithLevelProvider(levelId).notifier)
                                             .selectAnswer(index);
                                       },
                                 child: AnimatedContainer(
@@ -371,7 +371,7 @@ class QuizScreen extends ConsumerWidget {
                                   ? null
                                   : () {
                                       ref
-                                          .read(quizControllerProvider.notifier)
+                                          .read(quizControllerWithLevelProvider(levelId).notifier)
                                           .selectAnswer(index);
                                     },
                               child: AnimatedContainer(
@@ -419,7 +419,7 @@ class QuizScreen extends ConsumerWidget {
               child: GestureDetector(
                 onTap: quizState.isAnswerRevealed
                     ? () {
-                        ref.read(quizControllerProvider.notifier).goToNextQuestion();
+                        ref.read(quizControllerWithLevelProvider(levelId).notifier).goToNextQuestion();
                       }
                     : null,
                 child: AnimatedContainer(
@@ -465,25 +465,25 @@ Spacer(),
     svgPath: 'assets/icons/wrong_answer.svg',
     enabled: quizState.hintCount > 0 && !quizState.isAnswerRevealed,
     onTap: () {
-      ref.read(quizControllerProvider.notifier).useHint();
+      ref.read(quizControllerWithLevelProvider(levelId).notifier).useHint();
     }),
 _jokerButton(
     svgPath:'assets/icons/fifty_fifty.svg',
     enabled: quizState.fiftyFiftyCount > 0 && !quizState.isAnswerRevealed,
     onTap: () {
-      ref.read(quizControllerProvider.notifier).useFiftyFifty();
+      ref.read(quizControllerWithLevelProvider(levelId).notifier).useFiftyFifty();
     }),
 _jokerButton(
     svgPath: 'assets/icons/true_answer.svg',
     enabled: quizState.correctAnswerHintCount > 0 && !quizState.isAnswerRevealed,
     onTap: () {
-      ref.read(quizControllerProvider.notifier).showCorrectAnswerHint();
+      ref.read(quizControllerWithLevelProvider(levelId).notifier).showCorrectAnswerHint();
     }),
 _jokerButton(
     svgPath: 'assets/icons/freeze_time.svg',
     enabled: quizState.timePauseCount > 0 && !quizState.isAnswerRevealed,
     onTap: () {
-      ref.read(quizControllerProvider.notifier).useTimePause();
+      ref.read(quizControllerWithLevelProvider(levelId).notifier).useTimePause();
     }),
                   _jokerButton(
                      svgPath: quizState.hasInfo ? 'assets/icons/info.svg' : 'assets/icons/link.svg',

@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_app/models/question/question.dart';
+import 'package:quiz_app/core/services/quiz_submission.dart';
  
 class QuizState {
-
-
-
-
-   final int fiftyFiftyCount;
+  final int fiftyFiftyCount;
   final int hintCount;
   final int timePauseCount;
   final int correctAnswerHintCount;
@@ -24,9 +21,13 @@ class QuizState {
   final List<int>? eliminatedOptions; // Make sure this can be null
   final bool showCorrectAnswer;
   final bool hasInfo; // <------ yeni alan
+  final int levelId; // Add level ID for quiz submission
+  final List<double> answerTimes; // Track time taken for each answer
+  final List<int?> selectedAnswers; // Track the actual selected answers
+  final DateTime? quizStartTime; // Track when quiz started
 
   QuizState({
-     this.fiftyFiftyCount = 2,
+    this.fiftyFiftyCount = 2,
     this.hintCount = 2,
     this.timePauseCount = 1,
     this.correctAnswerHintCount = 1,
@@ -42,49 +43,61 @@ class QuizState {
     this.hasUsedTimePause = false,
     this.eliminatedOptions, // No default value, can be null
     this.showCorrectAnswer = false,
-    this.hasInfo = false, 
+    this.hasInfo = false,
+    this.levelId = 0, // Default level ID
+    this.answerTimes = const [], // Track time taken for each answer
+    this.selectedAnswers = const [], // Track the actual selected answers
+    this.quizStartTime, // Track when quiz started
   });
 
   // Make sure copyWith handles null correctly
   QuizState copyWith({
- List<QuizQuestion>? questions,
-  int? currentQuestionIndex,
-  List<bool?>? answerResults,
-  int? selectedAnswerIndex,
-  bool? isAnswerRevealed,
-  double? timerValue,
-  bool? isTimerPaused,
-  bool? hasUsedFiftyFifty,
-  bool? hasUsedHint,
-  bool? hasUsedTimePause,
-  List<int>? eliminatedOptions,
-  bool? showCorrectAnswer,
-  bool? hasInfo,
-  int? fiftyFiftyCount,
-  int? hintCount,
-  int? timePauseCount,
-  int? correctAnswerHintCount,
-  bool resetEliminatedOptions = false, // New parameter to explicitly reset
+    List<QuizQuestion>? questions,
+    int? currentQuestionIndex,
+    List<bool?>? answerResults,
+    int? selectedAnswerIndex,
+    bool? isAnswerRevealed,
+    double? timerValue,
+    bool? isTimerPaused,
+    bool? hasUsedFiftyFifty,
+    bool? hasUsedHint,
+    bool? hasUsedTimePause,
+    List<int>? eliminatedOptions,
+    bool? showCorrectAnswer,
+    bool? hasInfo,
+    int? fiftyFiftyCount,
+    int? hintCount,
+    int? timePauseCount,
+    int? correctAnswerHintCount,
+    int? levelId,
+    List<double>? answerTimes,
+    List<int?>? selectedAnswers,
+    DateTime? quizStartTime,
+    bool resetEliminatedOptions = false, // New parameter to explicitly reset
   }) {
-    return QuizState(
-      questions: questions ?? this.questions,
-      currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
-      answerResults: answerResults ?? this.answerResults,
-      selectedAnswerIndex: selectedAnswerIndex,
-      isAnswerRevealed: isAnswerRevealed ?? this.isAnswerRevealed,
-      timerValue: timerValue ?? this.timerValue,
-      isTimerPaused: isTimerPaused ?? this.isTimerPaused,
-      hasUsedFiftyFifty: hasUsedFiftyFifty ?? this.hasUsedFiftyFifty,
-      hasUsedHint: hasUsedHint ?? this.hasUsedHint,
-      hasUsedTimePause: hasUsedTimePause ?? this.hasUsedTimePause,
-      eliminatedOptions: resetEliminatedOptions ? null : (eliminatedOptions ?? this.eliminatedOptions),
-      showCorrectAnswer: showCorrectAnswer ?? this.showCorrectAnswer,
-       hasInfo: hasInfo ?? this.hasInfo,    
-fiftyFiftyCount: fiftyFiftyCount ?? this.fiftyFiftyCount,
-      hintCount: hintCount ?? this.hintCount,
-      timePauseCount: timePauseCount ?? this.timePauseCount,
-      correctAnswerHintCount: correctAnswerHintCount ?? this.correctAnswerHintCount,
-    );
+          return QuizState(
+        questions: questions ?? this.questions,
+        currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
+        answerResults: answerResults ?? this.answerResults,
+        selectedAnswerIndex: selectedAnswerIndex,
+        isAnswerRevealed: isAnswerRevealed ?? this.isAnswerRevealed,
+        timerValue: timerValue ?? this.timerValue,
+        isTimerPaused: isTimerPaused ?? this.isTimerPaused,
+        hasUsedFiftyFifty: hasUsedFiftyFifty ?? this.hasUsedFiftyFifty,
+        hasUsedHint: hasUsedHint ?? this.hasUsedHint,
+        hasUsedTimePause: hasUsedTimePause ?? this.hasUsedTimePause,
+        eliminatedOptions: resetEliminatedOptions ? null : (eliminatedOptions ?? this.eliminatedOptions),
+        showCorrectAnswer: showCorrectAnswer ?? this.showCorrectAnswer,
+        hasInfo: hasInfo ?? this.hasInfo,
+        levelId: levelId ?? this.levelId,
+        answerTimes: answerTimes ?? this.answerTimes,
+        selectedAnswers: selectedAnswers ?? this.selectedAnswers,
+        quizStartTime: quizStartTime ?? this.quizStartTime,
+        fiftyFiftyCount: fiftyFiftyCount ?? this.fiftyFiftyCount,
+        hintCount: hintCount ?? this.hintCount,
+        timePauseCount: timePauseCount ?? this.timePauseCount,
+        correctAnswerHintCount: correctAnswerHintCount ?? this.correctAnswerHintCount,
+      );
   }
 }
 
@@ -92,13 +105,17 @@ class QuizController extends StateNotifier<QuizState> {
   Timer? _timer;
   Timer? _nextQuestionTimer;
   final int _timerDuration = 15; // seconds
+  DateTime? _questionStartTime;
   
-  QuizController(List<QuizQuestion> questions) 
+  QuizController(List<QuizQuestion> questions, {int levelId = 0}) 
       : super(QuizState(
           questions: questions,
           answerResults: List.filled(questions.length, null),
+          levelId: levelId,
+          quizStartTime: DateTime.now(),
         )) {
     _startTimer();
+    _questionStartTime = DateTime.now();
   }
 
   void restartQuiz() {
@@ -108,16 +125,20 @@ class QuizController extends StateNotifier<QuizState> {
     selectedAnswerIndex: null,
     timerValue: 1.0,
     answerResults: [],
+    answerTimes: [],
+    selectedAnswers: [],
     eliminatedOptions: null,
     isAnswerRevealed: false,
     hasUsedHint: false,
     hasUsedFiftyFifty: false,
     showCorrectAnswer: false,
     hasUsedTimePause: false,
+    quizStartTime: DateTime.now(),
   );
   
   // Timer'ı yeniden başlat
   _startTimer();
+  _questionStartTime = DateTime.now();
 }
 
   void _startTimer() {
@@ -139,12 +160,27 @@ class QuizController extends StateNotifier<QuizState> {
   void _answerTimeout() {
     print("Süre doldu, bir sonraki soruya geçiliyor");
     
+    // Calculate time taken for this answer (full time)
+    double timeTaken = _timerDuration.toDouble();
+    if (_questionStartTime != null) {
+      final now = DateTime.now();
+      timeTaken = now.difference(_questionStartTime!).inMilliseconds / 1000.0;
+    }
+    
     // Bu soruyu yanlış olarak işaretle
     final newResults = List<bool?>.from(state.answerResults);
     newResults[state.currentQuestionIndex] = false;
     
+    final newAnswerTimes = List<double>.from(state.answerTimes);
+    newAnswerTimes.add(timeTaken);
+    
+    final newSelectedAnswers = List<int?>.from(state.selectedAnswers);
+    newSelectedAnswers.add(null); // No answer selected due to timeout
+    
     state = state.copyWith(
       answerResults: newResults,
+      answerTimes: newAnswerTimes,
+      selectedAnswers: newSelectedAnswers,
       isAnswerRevealed: true,
     );
     
@@ -161,18 +197,33 @@ class QuizController extends StateNotifier<QuizState> {
     // Zamanlayıcıyı durdur
     _timer?.cancel();
     
+    // Calculate time taken for this answer
+    double timeTaken = 0.0;
+    if (_questionStartTime != null) {
+      final now = DateTime.now();
+      timeTaken = now.difference(_questionStartTime!).inMilliseconds / 1000.0;
+    }
+    
     final currentQuestion = state.questions[state.currentQuestionIndex];
     final isCorrect = selectedIndex == currentQuestion.correctAnswerIndex;
     
-    // Update answer results
+    // Update answer results and times
     final newResults = List<bool?>.from(state.answerResults);
     newResults[state.currentQuestionIndex] = isCorrect;
+    
+    final newAnswerTimes = List<double>.from(state.answerTimes);
+    newAnswerTimes.add(timeTaken);
+    
+    final newSelectedAnswers = List<int?>.from(state.selectedAnswers);
+    newSelectedAnswers.add(selectedIndex);
     
     // Reveal answer
     state = state.copyWith(
       selectedAnswerIndex: selectedIndex,
       isAnswerRevealed: true,
       answerResults: newResults,
+      answerTimes: newAnswerTimes,
+      selectedAnswers: newSelectedAnswers,
     );
     
     // Move to next question after delay
@@ -189,6 +240,8 @@ void _moveToNextQuestion() {
     // Eğer son sorudaysak quiz'i bitir
     if (state.currentQuestionIndex >= state.questions.length - 1) {
       print("Quiz tamamlandı!");
+      // Submit quiz data to backend
+      _submitQuizData();
       // Quiz bitince yapılacak işlemler
       state = state.copyWith(
         currentQuestionIndex: state.currentQuestionIndex + 1, // Son sorudan bir sonraki indekse geç (sonuç ekranını göstermek için)
@@ -205,12 +258,13 @@ void _moveToNextQuestion() {
       isTimerPaused: false,
       resetEliminatedOptions: true, // Explicitly request to reset eliminatedOptions
       showCorrectAnswer: false,
-
       hasUsedFiftyFifty: false,
       hasUsedHint: false,
       hasUsedTimePause: false,
-      
     );
+    
+    // Reset question start time for next question
+    _questionStartTime = DateTime.now();
     
     // Add debug print to confirm state
     print("Eliminated options after reset: ${state.eliminatedOptions}");
@@ -317,11 +371,15 @@ void _checkAllWrongOptionsEliminated() {
     final newResults = List<bool?>.from(state.answerResults);
     newResults[state.currentQuestionIndex] = true;
     
+    final newSelectedAnswers = List<int?>.from(state.selectedAnswers);
+    newSelectedAnswers.add(correctIndex);
+    
     // Reveal the correct answer
     state = state.copyWith(
       selectedAnswerIndex: correctIndex,
       isAnswerRevealed: true,
       answerResults: newResults,
+      selectedAnswers: newSelectedAnswers,
     );
     
     // Move to next question after delay
@@ -354,20 +412,71 @@ void showCorrectAnswerHint() {
   // Stop the timer
   _timer?.cancel();
   
+  final currentQuestion = state.questions[state.currentQuestionIndex];
+  
   // Mark this question as incorrect
   final newResults = List<bool?>.from(state.answerResults);
   newResults[state.currentQuestionIndex] = false;
+  
+  final newSelectedAnswers = List<int?>.from(state.selectedAnswers);
+  newSelectedAnswers.add(currentQuestion.correctAnswerIndex); // Show correct answer (0-based)
   
   state = state.copyWith(
     showCorrectAnswer: true,
     isAnswerRevealed: true, // This will effectively reveal the answer
     answerResults: newResults,
-      correctAnswerHintCount: state.correctAnswerHintCount - 1,
+    selectedAnswers: newSelectedAnswers,
+    correctAnswerHintCount: state.correctAnswerHintCount - 1,
   );
   
   // Move to next question after delay (reuse existing method)
   _moveToNextQuestion();
 }
+
+  /// Submit quiz data to backend when quiz is completed
+  void _submitQuizData() {
+    try {
+      // Calculate total duration
+      int totalDuration = 0;
+      if (state.quizStartTime != null) {
+        final now = DateTime.now();
+        totalDuration = now.difference(state.quizStartTime!).inSeconds;
+      }
+      
+      // Prepare answers for submission
+      List<QuizAnswer> answers = [];
+      
+      // Use the actual selected answers
+      for (int i = 0; i < state.questions.length && i < state.answerTimes.length; i++) {
+        final question = state.questions[i];
+        final timeTaken = state.answerTimes[i];
+        final selectedAnswer = i < state.selectedAnswers.length ? state.selectedAnswers[i] : null;
+        
+        // Only add answers that were actually answered
+        if (selectedAnswer != null) {
+          final convertedOptionId = selectedAnswer + 1; // Convert 0-based index to 1-based for backend
+          print('📝 Question ${i + 1}: Selected answer ${selectedAnswer} (0-based) -> option_id ${convertedOptionId} (1-based)');
+          
+          answers.add(QuizAnswer(
+            questionId: i + 1, // Assuming question IDs start from 1
+            optionId: convertedOptionId,
+            time: timeTaken,
+          ));
+        }
+      }
+      
+      // Submit to backend in background
+      QuizSubmissionService.submitQuizAnswers(
+        levelId: state.levelId,
+        duration: totalDuration,
+        answers: answers,
+      );
+      
+      print('Quiz data submitted to backend');
+    } catch (e) {
+      print('Error submitting quiz data: $e');
+    }
+  }
 
   @override
   void dispose() {
