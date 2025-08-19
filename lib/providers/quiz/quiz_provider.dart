@@ -1,46 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_app/models/question/question.dart';
+import 'package:quiz_app/models/question/api_question.dart';
+import 'package:quiz_app/core/services/questions_service.dart';
  
 import 'quiz_controller.dart';
 
+// Provider that fetches questions for a specific level
+final questionsForLevelProvider = FutureProvider.family<List<QuizQuestion>, int>((ref, levelId) async {
+  try {
+    final apiQuestions = await QuestionsService.fetchQuestionsForLevel(levelId);
+    return apiQuestions.map((apiQuestion) => apiQuestion.toQuizQuestion()).toList();
+  } catch (e) {
+    print('Error fetching questions for level $levelId: $e');
+    // Return empty list as fallback
+    return [];
+  }
+});
 
+// Legacy provider for backward compatibility (returns empty list)
 final questionsProvider = Provider<List<QuizQuestion>>((ref) {
-  // Sample questions
-  return [
-       QuizQuestion(
-  question: "Is the sky blue?",
-  options: ["True", "False"], // These won't be used for true/false questions
-  correctAnswerIndex: 0, // 0 for True, 1 for False
-  isTrueFalse: true,
-),
-    QuizQuestion(
-      question: 'What is the capital of Azerbaijan?',
-      options: ['Baku', 'Ankara', 'Tbilisi', 'Yerevan'],
-      correctAnswerIndex: 0,
-    ),
-    QuizQuestion(
-      question: 'Which river is the longest in the world?',
-      options: ['Amazon', 'Nile', 'Mississippi', 'Yangtze'],
-      correctAnswerIndex: 1,
-    ),
-    QuizQuestion(
-      question: 'Who painted the Mona Lisa?',
-      options: ['Van Gogh', 'Picasso', 'Da Vinci', 'Michelangelo'],
-      correctAnswerIndex: 2,
-    ),
-       QuizQuestion(
-      question: 'Who coded you?',
-      options: ['Chat Gpt', 'Qayaxan Eyvazli', 'Elon Musk', 'Mark Zuckerberg'],
-      correctAnswerIndex: 1,
-    ),
-        QuizQuestion(
-      question: 'President of America?',
-      options: ['Trump', 'Biden', 'Bush', 'Obama'],
-      correctAnswerIndex: 1,
-    ),
- 
-    
-  ];
+  return [];
 });
 
 
@@ -49,8 +28,13 @@ final quizControllerProvider = StateNotifierProvider.autoDispose<QuizController,
   return QuizController(questions);
 });
 
-// Provider that accepts levelId parameter
+// Provider that accepts levelId parameter and fetches questions dynamically
 final quizControllerWithLevelProvider = StateNotifierProvider.family<QuizController, QuizState, int>((ref, levelId) {
-  final questions = ref.watch(questionsProvider);
-  return QuizController(questions, levelId: levelId);
+  final questionsAsync = ref.watch(questionsForLevelProvider(levelId));
+  
+  return questionsAsync.when(
+    data: (questions) => QuizController(questions, levelId: levelId),
+    loading: () => QuizController([], levelId: levelId), // Empty questions while loading
+    error: (error, stack) => QuizController([], levelId: levelId), // Empty questions on error
+  );
 });

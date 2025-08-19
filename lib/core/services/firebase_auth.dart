@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'user_stats_service.dart';
 import 'quiz_submission.dart';
+import 'questions_service.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -233,5 +234,7 @@ class AuthService {
     UserStatsService.clearTokenCache();
     // Clear quiz submission cache
     QuizSubmissionService.clearTokenCache();
+    // Clear questions service cache
+    QuestionsService.clearTokenCache();
   }
 }

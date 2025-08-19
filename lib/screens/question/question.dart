@@ -24,7 +24,95 @@ class QuizScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final quizState = ref.watch(quizControllerWithLevelProvider(levelId));
     final currentQuestionIndex = quizState.currentQuestionIndex;
-  final hearts = ref.watch(heartsProvider);
+    final hearts = ref.watch(heartsProvider);
+    
+    // Check if questions are still loading
+    final questionsAsync = ref.watch(questionsForLevelProvider(levelId));
+    
+    return questionsAsync.when(
+      loading: () => _buildLoadingScreen(),
+      error: (error, stack) => _buildErrorScreen(context, error.toString()),
+      data: (questions) {
+        // If no questions loaded, show error
+        if (questions.isEmpty) {
+          return _buildErrorScreen(context, 'No questions available for this level');
+        }
+        
+        return _buildQuizScreen(context, ref, quizState, currentQuestionIndex, hearts);
+      },
+    );
+  }
+  
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: Color(0xFF8539A8),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Loading questions...',
+              style: TextStyle(
+                fontSize: 18,
+                color: Color(0xFF8539A8),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildErrorScreen(BuildContext context, String errorMessage) {
+    return Scaffold(
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Error loading questions',
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              errorMessage,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Refresh the questions - we'll handle this in the main build method
+                Navigator.pop(context);
+              },
+              child: Text('Go Back'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildQuizScreen(BuildContext context, WidgetRef ref, QuizState quizState, int currentQuestionIndex, int hearts) {
     
      WidgetsBinding.instance.addPostFrameCallback((_) {
       if (hearts <= 0) {
@@ -335,7 +423,7 @@ class QuizScreen extends ConsumerWidget {
                     )
                   : Column(
                       children: List.generate(
-                        4,
+                        question.options.length,
                         (index) {
                           final isEliminated = quizState.eliminatedOptions != null &&
                               quizState.eliminatedOptions!.contains(index);
