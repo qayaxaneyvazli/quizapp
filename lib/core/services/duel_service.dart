@@ -49,7 +49,7 @@ class DuelService {
       print('⚠️ No valid cached token, need to authenticate with backend');
       
       // Try to get session token, but with careful rate limiting
-      final backendResponse = await _authenticateWithBackend(idToken);
+      final backendResponse = await authenticateWithBackend(idToken);
       if (backendResponse['success'] == true) {
         final sessionToken = backendResponse['data']?['token'] ?? 
                            backendResponse['data']?['access_token'] ??
@@ -72,7 +72,7 @@ class DuelService {
         // Wait and retry once with exponential backoff
         await Future.delayed(Duration(seconds: 2));
         
-        final retryResponse = await _authenticateWithBackend(idToken);
+        final retryResponse = await authenticateWithBackend(idToken);
         if (retryResponse['success'] == true) {
           final sessionToken = retryResponse['data']?['token'] ?? 
                              retryResponse['data']?['access_token'] ??
@@ -102,7 +102,7 @@ class DuelService {
   }
 
   // Authenticate with backend using Firebase token
-  static Future<Map<String, dynamic>> _authenticateWithBackend(String idToken) async {
+  static Future<Map<String, dynamic>> authenticateWithBackend(String idToken) async {
     try {
       print('Authenticating with backend...');
       final response = await http.post(

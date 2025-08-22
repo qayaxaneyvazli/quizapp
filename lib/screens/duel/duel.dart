@@ -19,6 +19,7 @@ import 'package:quiz_app/screens/duel/answer_button.dart';
 import 'package:quiz_app/screens/duel/defeat_modal.dart';
 import 'package:quiz_app/screens/duel/draw_modal.dart';
 import 'package:quiz_app/screens/duel/victory_modal.dart';
+import 'package:quiz_app/core/services/websocket_service.dart';
 
 // Game state provider
 final gameStateProvider = StateNotifierProvider.autoDispose<GameStateNotifier, GameState>((ref) {
@@ -63,6 +64,10 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _isUsingAPI = false;
   List<Map<String, dynamic>> _playerAnswers = [];
   bool _answersSubmitted = false;
+  
+  // WebSocket integration
+  final WebSocketService _webSocketService = WebSocketService();
+  StreamSubscription<Map<String, dynamic>>? _webSocketSubscription;
 
   void _showDefeat() {
     setState(() {
@@ -117,6 +122,88 @@ String _getInitials(String name) {
       _showDrawModal = false;
     });
     final _ = ref.refresh(gameStateProvider);
+  }
+
+  // Initialize WebSocket connection
+  Future<void> _initializeWebSocket() async {
+    try {
+      print('🔌 Initializing WebSocket for duel $_duelId');
+      
+      // Initialize WebSocket service
+      final success = await _webSocketService.initialize();
+      if (!success) {
+        print('❌ Failed to initialize WebSocket');
+        return;
+      }
+
+      // Subscribe to duel channel
+      final subscribed = await _webSocketService.subscribeToDuel(_duelId!);
+      if (!subscribed) {
+        print('❌ Failed to subscribe to duel channel');
+        return;
+      }
+
+      // Listen to WebSocket events
+      _webSocketSubscription = _webSocketService.eventStream.listen((event) {
+        _handleWebSocketEvent(event);
+      });
+
+      print('✅ WebSocket initialized successfully');
+    } catch (e) {
+      print('❌ Error initializing WebSocket: $e');
+    }
+  }
+
+  // Handle WebSocket events
+  void _handleWebSocketEvent(Map<String, dynamic> event) {
+    final eventType = event['type'] as String?;
+    final data = event['data'];
+    
+    print('📡 WebSocket event received: $eventType');
+    
+    switch (eventType) {
+      case 'duel.matched':
+        print('🎯 Duel matched with opponent');
+        break;
+        
+      case 'duel.started':
+        print('🚀 Duel started');
+        break;
+        
+      case 'duel.answer_submitted':
+        print('📝 Opponent submitted answer: $data');
+        // Handle opponent's answer submission
+        _handleOpponentAnswer(data);
+        break;
+        
+      case 'duel.score_updated':
+        print('📊 Score updated: $data');
+        // Update scores if needed
+        break;
+        
+      case 'duel.ended':
+        print('🏁 Duel ended: $data');
+        // Handle duel end
+        break;
+        
+      case 'member_added':
+        print('👤 New member joined duel');
+        break;
+        
+      case 'member_removed':
+        print('👤 Member left duel');
+        break;
+        
+      default:
+        print('📡 Unknown WebSocket event: $eventType');
+    }
+  }
+
+  // Handle opponent's answer submission
+  void _handleOpponentAnswer(dynamic data) {
+    // This will be called when opponent submits an answer
+    // You can update the UI or game state accordingly
+    print('Opponent answer data: $data');
   }
 
   // Collect answer for later submission
@@ -229,6 +316,9 @@ String _getInitials(String name) {
       _isUsingAPI = true;
       _duelId = DuelConverter.getDuelId(widget.duelResponse!);
       
+      // Initialize WebSocket connection for real-time updates
+      _initializeWebSocket();
+      
       // Initialize game state with API questions
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final gameNotifier = ref.read(gameStateProvider.notifier);
@@ -247,6 +337,14 @@ String _getInitials(String name) {
         gameNotifier.simulatePlayer2Answer();
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // Clean up WebSocket resources
+    _webSocketSubscription?.cancel();
+    _webSocketService.unsubscribeFromDuel();
+    super.dispose();
   }
 
   String _getPageTitle(int navIndex) {
@@ -421,13 +519,13 @@ String _getInitials(String name) {
                                CircleAvatar(
   radius: 20,
   backgroundColor: Colors.blue[100],
-  backgroundImage: player1.avatarUrl.isNotEmpty 
+  backgroundImage: player1.avatarUrl.isNotEmpty && player1.avatarUrl.startsWith('http')
     ? NetworkImage(player1.avatarUrl) 
     : null,
   onBackgroundImageError: (exception, stackTrace) {
     print('Error loading player1 avatar: $exception');
   },
-  child: player1.avatarUrl.isEmpty 
+  child: player1.avatarUrl.isEmpty || !player1.avatarUrl.startsWith('http')
     ? Text(
         _getInitials(player1.username),
         style: TextStyle(
@@ -499,10 +597,10 @@ String _getInitials(String name) {
                             Stack(
                               children: [
                                CircleAvatar(
-  backgroundImage: player2.avatarUrl.isNotEmpty 
+  backgroundImage: player2.avatarUrl.isNotEmpty && player2.avatarUrl.startsWith('http')
     ? NetworkImage(player2.avatarUrl) 
     : null,
-  child: player2.avatarUrl.isEmpty 
+  child: player2.avatarUrl.isEmpty || !player2.avatarUrl.startsWith('http')
     ? Text(
         _getInitials(player2.username),
         style: TextStyle(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quiz_app/screens/duel/opponent_found.dart';
+import 'package:quiz_app/core/services/websocket_service.dart';
 
 // Provider to track if a duel opponent has been found
 final duelOpponentProvider = StateProvider<bool>((ref) => false);
@@ -13,9 +14,14 @@ class DuelLoadingScreen extends ConsumerStatefulWidget {
 }
 
 class _DuelLoadingScreenState extends ConsumerState<DuelLoadingScreen> {
+  final WebSocketService _webSocketService = WebSocketService();
+  
   @override
   void initState() {
     super.initState();
+    
+    // Initialize WebSocket for real-time opponent matching
+    _initializeWebSocketForMatching();
     
     // Simulate finding an opponent after some time (for demo purposes)
     Future.delayed(const Duration(seconds: 10), () {
@@ -26,6 +32,26 @@ class _DuelLoadingScreenState extends ConsumerState<DuelLoadingScreen> {
         );
       }
     });
+  }
+
+  // Initialize WebSocket for opponent matching
+  Future<void> _initializeWebSocketForMatching() async {
+    try {
+      print('🔌 Initializing WebSocket for opponent matching...');
+      
+      // Initialize WebSocket service
+      final success = await _webSocketService.initialize();
+      if (!success) {
+        print('❌ Failed to initialize WebSocket for matching');
+        return;
+      }
+
+      // Listen for general duel events (not specific to a duel ID)
+      // This would be for finding opponents
+      print('✅ WebSocket initialized for opponent matching');
+    } catch (e) {
+      print('❌ Error initializing WebSocket for matching: $e');
+    }
   }
 
   @override
