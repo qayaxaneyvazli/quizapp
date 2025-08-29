@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,11 +7,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:quiz_app/core/services/websocket_service.dart';
 import 'package:quiz_app/screens/duel/duel.dart';
 import 'package:quiz_app/core/services/duel_service.dart';
 import 'package:quiz_app/models/duel/duel_response.dart';
 import 'package:quiz_app/core/utils/duel_converter.dart';
 import 'dart:math';
+import 'dart:async';
 
 class OpponentFoundScreen extends ConsumerStatefulWidget {
   const OpponentFoundScreen({super.key});
@@ -41,6 +45,12 @@ String? _botOpponentCountry;
 String? _botOpponentPhotoUrl;
 
   bool _isOpponentReal = false;
+  
+  // WebSocket integration for real-time sync
+  final WebSocketService _webSocketService = WebSocketService();
+  StreamSubscription<Map<String, dynamic>>? _webSocketSubscription;
+  bool _sentReadySignal = false;
+  bool _bothPlayersReady = false;
   
   final Random _random = Random();
   
@@ -121,7 +131,120 @@ String? _botOpponentPhotoUrl;
         });
         
         print('Duel created successfully. Opponent: ${DuelConverter.getOpponentName(duelResponse)}, isBot: ${DuelConverter.isOpponentBot(duelResponse)}');
-        _startDuel();
+
+        // Immediately proceed to start flow; do not block on WS signal
+        // 1) Try to subscribe and send ready for real-time sync
+        try {
+          final duelId = DuelConverter.getDuelId(duelResponse);
+          _webSocketService.initialize().then((ok) async {
+            if (ok) {
+              await _webSocketService.subscribeToDuel(duelId);
+              await _webSocketService.sendDuelReady(duelId);
+
+                if (!_isPlayingWithBot) {
+      print('🎯 Real player duel, waiting for DuelStarted...');
+      final started = await _waitForDuelStarted(duelId);
+
+      if (mounted) {
+        if (started) {
+          print('🚀 DuelStarted alındı, maça giriyoruz');
+          _startDuelImmediately();
+        } else {
+          print('⏳ DuelStarted gelmedi (timeout), fallback ile başlatıyoruz');
+          _startDuelImmediately(); // veya küçük bir ekstra bekleme koyabilirsiniz
+        }
+      }
+    }
+            }
+          });
+        } catch (_) {}
+
+        // 2) Start duel after a short delay to ensure both sides reached this screen
+        // Future.delayed(const Duration(seconds: 1), () {
+        //   if (mounted && !_readyToDuel) {
+        //     print('⏩ No WS start signal, proceeding to start duel locally');
+        //     _startDuelImmediately();
+        //   }
+        // });
+
+        // Still keep verbose WS logging for visibility
+        print('🔌 Setting up WebSocket event listener in OpponentFoundScreen');
+        print('🔌 WebSocket stream controller status: ${WebSocketService().streamControllerStatus}');
+        WebSocketService().eventStream.listen((event) {
+          final eventType = event['type'] as String;
+          
+          // Skip heartbeat and internal events for cleaner logging
+          if (eventType == 'unknown_event' && event['data']?['event']?.startsWith('pusher:') == true) {
+            return; // Skip Pusher internal events
+          }
+          
+          print('📡 OpponentFoundScreen received WebSocket event: $eventType');
+          print('📡 Event data: ${event['data']}');
+          print('📡 Event timestamp: ${event['timestamp']}');
+          
+          switch (eventType) {
+            case 'DuelStarted':
+              print('🚀 Duel started event received, starting duel...');
+              _startDuel();
+              break;
+            case 'duel.ready':
+              print('🎯 Duel ready event received');
+              // When both players are ready, start the duel
+              if (!_bothPlayersReady) {
+                setState(() {
+                  _bothPlayersReady = true;
+                });
+                Future.delayed(const Duration(seconds: 1), () {
+                  if (mounted) {
+                    _startDuelImmediately();
+                  }
+                });
+              }
+              break;
+            case 'DuelMatched':
+              print('🎯 Duel matched event received');
+              break;
+            case 'member_added':
+              print('👤 Member added to duel');
+              break;
+            case 'member_removed':
+              print('👤 Member removed from duel');
+              break;
+            case 'connection_established':
+              print('✅ WebSocket connection established');
+              break;
+            case 'subscription_succeeded':
+              print('📡 WebSocket subscription succeeded');
+              // After successful subscription, send ready signal
+              if (_duelResponse != null && !_sentReadySignal) {
+                final duelId = DuelConverter.getDuelId(_duelResponse!);
+                print('📤 Sending ready signal for duel $duelId');
+                _webSocketService.sendDuelReady(duelId);
+                _sentReadySignal = true;
+              }
+              break;
+            case 'pusher_error':
+              print('❌ Pusher error occurred');
+              // Don't block the game for WebSocket errors
+              // The game will continue with local fallback
+              break;
+            case 'subscription_error':
+              print('❌ Subscription error occurred');
+              // Don't block the game for WebSocket errors
+              // The game will continue with local fallback
+              break;
+            case 'error':
+              print('❌ WebSocket error occurred');
+              break;
+            case 'disconnected':
+              print('🔌 WebSocket disconnected');
+              break;
+            default:
+             
+                print('❓ Unknown event type in OpponentFoundScreen: $eventType');
+              
+          }
+        });
       } else {
         setState(() {
           _isSearchingForPlayer = false;
@@ -214,8 +337,46 @@ void _activateLocalBot() {
   //   _realOpponentCountry = _countryCodes[_random.nextInt(_countryCodes.length)];
   //   _realOpponentPhotoUrl = null;  
   // }
+Future<bool> _waitForDuelStarted(int duelId, {Duration timeout = const Duration(seconds: 8)}) async {
+  try {
+    final event = await WebSocketService()
+        .eventStream
+        .firstWhere((e) {
+          final type = (e['type'] as String? ?? '');
+          if (type != 'DuelStarted') return false;
+
+          // data string olabilir, map olabilir
+          final raw = e['data'];
+          final map = raw is String ? jsonDecode(raw) : raw as Map<String, dynamic>?;
+          if (map == null) return false;
+
+          return map['duel_id'] == duelId;
+        })
+        .timeout(timeout);
+
+    return event != null; // bulunduysa true
+  } catch (_) {
+    return false; // timeout vs.
+  }
+}
 
 void _startDuel() {
+  if (_isPlayingWithBot) {
+    // For bot games, start immediately
+    _startDuelImmediately();
+  } else {
+    // For real player games, start with a delay to simulate waiting for opponent
+    print('🎯 Real player duel, starting with delay...');
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        print('🚀 Starting duel for real player');
+        _startDuelImmediately();
+      }
+    });
+  }
+}
+
+void _startDuelImmediately() {
   Future.delayed(const Duration(seconds: 2), () {
     if (mounted) {
       setState(() {
@@ -224,27 +385,33 @@ void _startDuel() {
       
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
-          User? user = FirebaseAuth.instance.currentUser;
-          String? userPhotoUrl = user?.photoURL;
-          
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => DuelScreen(
-                isPlayingWithBot: _isPlayingWithBot,
-                opponentName: _isOpponentReal ? _realOpponentName! : _botOpponentName!,
-                opponentCountry: _isOpponentReal ? _realOpponentCountry! : _botOpponentCountry!,
-                userCountryCode: _userCountryCode,
-                userPhotoUrl: userPhotoUrl,
-                opponentPhotoUrl: _isOpponentReal ? _realOpponentPhotoUrl : _botOpponentPhotoUrl,
-                duelResponse: _duelResponse, // Pass the duel response
-              ),
-            ),
-          );
+          _navigateToDuel();
         }
       });
     }
   });
 }
+
+void _navigateToDuel() {
+  User? user = FirebaseAuth.instance.currentUser;
+  String? userPhotoUrl = user?.photoURL;
+  
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute(
+      builder: (context) => DuelScreen(
+        isPlayingWithBot: _isPlayingWithBot,
+        opponentName: _isOpponentReal ? _realOpponentName! : _botOpponentName!,
+        opponentCountry: _isOpponentReal ? _realOpponentCountry! : _botOpponentCountry!,
+        userCountryCode: _userCountryCode,
+        userPhotoUrl: userPhotoUrl,
+        opponentPhotoUrl: _isOpponentReal ? _realOpponentPhotoUrl : _botOpponentPhotoUrl,
+        duelResponse: _duelResponse,
+      ),
+    ),
+  );
+}
+
+// WebSocket methods removed for now - using simple fallback mechanism
 
   Future<void> _getUserLocation() async {
     try {

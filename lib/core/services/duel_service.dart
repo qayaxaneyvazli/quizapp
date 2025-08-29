@@ -17,6 +17,17 @@ class DuelService {
     print('Token cache cleared');
   }
   
+
+  static Future<bool> ready(int duelId) async {
+  final headers = await _getAuthenticatedHeaders();
+  if (headers == null) return false;
+  final res = await http.post(
+    Uri.parse('$_baseUrl/duels/$duelId/ready'),
+    headers: headers,
+  );
+  return res.statusCode == 200;
+}
+
   // Helper method to get authenticated headers
   static Future<Map<String, String>?> _getAuthenticatedHeaders() async {
     try {

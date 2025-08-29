@@ -68,6 +68,12 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   // WebSocket integration
   final WebSocketService _webSocketService = WebSocketService();
   StreamSubscription<Map<String, dynamic>>? _webSocketSubscription;
+  bool _gameStarted = false;
+  bool _sentGameStart = false;
+  bool _sentReadySignal = false;
+  bool _waitingForOpponent = false;
+  bool _opponentReady = false;
+  Timer? _timerSyncTimer;
 
   void _showDefeat() {
     setState(() {
@@ -125,49 +131,76 @@ String _getInitials(String name) {
   }
 
   // Initialize WebSocket connection
-  Future<void> _initializeWebSocket() async {
-    try {
-      print('🔌 Initializing WebSocket for duel $_duelId');
-      
-      // Initialize WebSocket service
-      final success = await _webSocketService.initialize();
-      if (!success) {
-        print('❌ Failed to initialize WebSocket');
-        return;
-      }
+Future<void> _initializeWebSocket() async {
+  try {
+    print('🔌 DuelScreen: Initializing WebSocket for duel $_duelId');
 
-      // Subscribe to duel channel
-      final subscribed = await _webSocketService.subscribeToDuel(_duelId!);
-      if (!subscribed) {
-        print('❌ Failed to subscribe to duel channel');
-        return;
-      }
-
-      // Listen to WebSocket events
-      _webSocketSubscription = _webSocketService.eventStream.listen((event) {
-        _handleWebSocketEvent(event);
-      });
-
-      print('✅ WebSocket initialized successfully');
-    } catch (e) {
-      print('❌ Error initializing WebSocket: $e');
+    final ok = await _webSocketService.initialize();
+    if (!ok) {
+      print('❌ DuelScreen: WS init fail');
+      return;
     }
+
+    // Event stream’i ÖNCE bağla ki connection_established’ı yakalayalım
+    _webSocketSubscription?.cancel();
+     await _webSocketService.waitConnected();
+    _webSocketSubscription = _webSocketService.eventStream.listen((event) async {
+      final type = event['type'] as String?;
+      if (type == 'connection_established') {
+        print('✅ DuelScreen: connection_established geldi; subscribe ediyorum...');
+        final subscribed = await _webSocketService.subscribeToDuel(_duelId!);
+        if (!subscribed) {
+          print('❌ DuelScreen: subscribe başarısız');
+          return;
+        }
+        print('✅ DuelScreen: subscribe OK');
+      } else if (type == 'pusher:subscription_succeeded' || type == 'subscription_succeeded') {
+        print('✅ DuelScreen: subscription_succeeded');
+      } else {
+        _handleWebSocketEvent(event);
+      }
+    });
+
+    print('✅ DuelScreen: WS init OK (subscribe, connection_established bekleniyor)');
+  } catch (e) {
+    print('❌ DuelScreen: Error initializing WebSocket: $e');
   }
+}
+
 
   // Handle WebSocket events
   void _handleWebSocketEvent(Map<String, dynamic> event) {
     final eventType = event['type'] as String?;
     final data = event['data'];
+    final timestamp = event['timestamp'];
     
-    print('📡 WebSocket event received: $eventType');
+    // Skip heartbeat and internal events for cleaner logging
+    if (eventType == 'unknown_event' && data?['event']?.startsWith('pusher:') == true) {
+      return; // Skip Pusher internal events
+    }
+    
+    print('📡 DuelScreen received WebSocket event: $eventType');
+    print('📡 Event data: $data');
+    print('📡 Event timestamp: $timestamp');
     
     switch (eventType) {
-      case 'duel.matched':
+      case 'subscription_succeeded':
+        print('🎯 subscription_succeeded from backend');
+        print('🎯 Subs success data: $data');
+        break;
+      case 'DuelMatched':
         print('🎯 Duel matched with opponent');
+        print('🎯 Match data: $data');
         break;
         
-      case 'duel.started':
+      case 'DuelStarted':
+       if (!_gameStarted) {
+      _gameStarted = true;
+      _waitingForOpponent = false;
+       
+    }
         print('🚀 Duel started');
+        print('🚀 Start data: $data');
         break;
         
       case 'duel.answer_submitted':
@@ -187,15 +220,95 @@ String _getInitials(String name) {
         break;
         
       case 'member_added':
-        print('👤 New member joined duel');
+        print('👤 New member joined duel: $data');
         break;
         
       case 'member_removed':
-        print('👤 Member left duel');
+        print('👤 Member left duel: $data');
+        break;
+        
+      case 'connection_established':
+        print('✅ WebSocket connection established in DuelScreen');
+        break;
+        
+      case 'subscription_succeeded':
+        print('📡 WebSocket subscription succeeded in DuelScreen');
+        // After successful subscription, send ready signal and wait for opponent
+        if (_duelId != null && !_sentReadySignal) {
+          setState(() {
+            _waitingForOpponent = true;
+          });
+          print('⏳ Waiting for opponent to be ready...');
+          
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && !_sentReadySignal) {
+              print('📤 Sending ready signal for duel $_duelId');
+              _webSocketService.sendDuelReady(_duelId!);
+              _sentReadySignal = true;
+            }
+          });
+        }
+        break;
+        
+      case 'duel.ready':
+        print('🎯 Duel ready signal received in DuelScreen');
+        // Mark opponent as ready
+        setState(() {
+          _opponentReady = true;
+        });
+        print('✅ Opponent is ready');
+        
+        // If both players are ready, send start signal
+        if (_sentReadySignal && _opponentReady && !_sentGameStart) {
+          print('🎯 Both players ready, starting game...');
+          setState(() {
+            _waitingForOpponent = false;
+          });
+          
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted && !_sentGameStart) {
+              print('📤 Sending game start signal for duel $_duelId');
+              _webSocketService.sendGameStart(_duelId!);
+              _sentGameStart = true;
+            }
+          });
+        }
+        break;
+        
+      case 'duel.start':
+        print('🚀 Game start signal received in DuelScreen');
+        if (!_gameStarted) {
+          _gameStarted = true;
+          // Game is already started, just mark as synchronized
+          print('✅ Game synchronized via WebSocket');
+        }
+        break;
+        
+      case 'pusher_error':
+        print('❌ Pusher error in DuelScreen: $data');
+        // Don't block the game for WebSocket errors
+        // The game will continue with local fallback
+        break;
+        
+      case 'subscription_error':
+        print('❌ Subscription error in DuelScreen: $data');
+        // Don't block the game for WebSocket errors
+        // The game will continue with local fallback
+        break;
+        
+      case 'error':
+        print('❌ WebSocket error in DuelScreen: $data');
+        break;
+        
+      case 'disconnected':
+        print('🔌 WebSocket disconnected in DuelScreen');
         break;
         
       default:
-        print('📡 Unknown WebSocket event: $eventType');
+        if (eventType != null && !eventType.startsWith('pusher_')) {
+          print('❓ Unknown WebSocket event in DuelScreen: $eventType');
+          print('❓ Full event data: $event');
+        }
     }
   }
 
@@ -485,6 +598,41 @@ String _getInitials(String name) {
       ),
       body: Stack(
         children: [
+          // Waiting for opponent overlay
+          if (_waitingForOpponent)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Waiting for opponent...',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (_opponentReady)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          'Opponent is ready!',
+                          style: TextStyle(
+                            color: Colors.green[300],
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
         
           SafeArea(
             child: Padding(
@@ -522,9 +670,11 @@ String _getInitials(String name) {
   backgroundImage: player1.avatarUrl.isNotEmpty && player1.avatarUrl.startsWith('http')
     ? NetworkImage(player1.avatarUrl) 
     : null,
-  onBackgroundImageError: (exception, stackTrace) {
-    print('Error loading player1 avatar: $exception');
-  },
+  onBackgroundImageError: player1.avatarUrl.isNotEmpty && player1.avatarUrl.startsWith('http')
+    ? (exception, stackTrace) {
+        print('Error loading player1 avatar: $exception');
+      }
+    : null,
   child: player1.avatarUrl.isEmpty || !player1.avatarUrl.startsWith('http')
     ? Text(
         _getInitials(player1.username),
@@ -599,6 +749,11 @@ String _getInitials(String name) {
                                CircleAvatar(
   backgroundImage: player2.avatarUrl.isNotEmpty && player2.avatarUrl.startsWith('http')
     ? NetworkImage(player2.avatarUrl) 
+    : null,
+  onBackgroundImageError: player2.avatarUrl.isNotEmpty && player2.avatarUrl.startsWith('http')
+    ? (exception, stackTrace) {
+        print('Error loading player2 avatar: $exception');
+      }
     : null,
   child: player2.avatarUrl.isEmpty || !player2.avatarUrl.startsWith('http')
     ? Text(

@@ -63,7 +63,7 @@ WebSocket sistemi şu event'leri destekler:
 - `pusher:member_removed`: Üye ayrıldı
 
 ### Duel Events
-- `duel.matched`: Duel eşleşmesi bulundu
+- ``: Duel eşleşmesi bulundu
 - `duel.started`: Duel başladı
 - `duel.answer_submitted`: Cevap gönderildi
 - `duel.score_updated`: Skor güncellendi
