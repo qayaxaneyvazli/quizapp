@@ -353,7 +353,7 @@ Future<bool> _waitForDuelStarted(int duelId, {Duration timeout = const Duration(
           return map['duel_id'] == duelId;
         })
         .timeout(timeout);
-
+           
     return event != null; // bulunduysa true
   } catch (_) {
     return false; // timeout vs.

@@ -184,10 +184,7 @@ Future<void> _initializeWebSocket() async {
     print('📡 Event timestamp: $timestamp');
     
     switch (eventType) {
-      case 'subscription_succeeded':
-        print('🎯 subscription_succeeded from backend');
-        print('🎯 Subs success data: $data');
-        break;
+  
       case 'DuelMatched':
         print('🎯 Duel matched with opponent');
         print('🎯 Match data: $data');
