@@ -38,7 +38,62 @@ class WebSocketService {
     return _eventController!.stream;
   }
 
- 
+// WebSocketService class'ında sendDuelReady metodunu şu şekilde güncelleyin:
+
+  // Send duel ready signal via API (not WebSocket)
+ Future<bool> sendDuelReady(int duelId) async {
+    try {
+      print('📤 WebSocketService: Sending ready signal for duel $duelId');
+      
+      // Get authentication token
+      final token = await _getAuthToken();
+      if (token == null) {
+        print('❌ Failed to get auth token for ready signal');
+        return false;
+      }
+      
+      print('🔑 Got auth token for ready signal');
+
+      // Make API request to ready endpoint
+      final url = 'http://116.203.188.209/api/duels/$duelId/ready';
+      print('📮 Sending POST request to: $url');
+      
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'ready': true}),
+      );
+
+      print('📥 Ready response status: ${response.statusCode}');
+      print('📥 Ready response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('✅ Successfully sent ready signal to API for duel $duelId');
+        
+        // Parse response to check status
+        try {
+          final responseData = jsonDecode(response.body);
+          print('📊 Ready response data: $responseData');
+        } catch (e) {
+          print('⚠️ Could not parse ready response: $e');
+        }
+        
+        return true;
+      } else {
+        print('❌ Failed to send ready signal. Status: ${response.statusCode}');
+        print('❌ Response body: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Exception in sendDuelReady: $e');
+      return false;
+    }
+  }
+
   Future<bool> initialize() async {
     try {
         if (_connectedCompleter != null && _connectedCompleter!.isCompleted) {
@@ -141,7 +196,7 @@ class WebSocketService {
 
   // Subscribe to duel channel
  Future<bool> subscribeToDuel(int duelId) async {
-  final channelName = 'presence-duel.$duelId';
+  final channelName = 'private-duel.$duelId';
   print('WS subscribe begin; token=$_sessionToken socketId=$_socketId');
 
   if (_channel == null) {
@@ -214,9 +269,9 @@ class WebSocketService {
 
 
   // Handle incoming messages
-  void _handleMessage(dynamic message) {
+ void _handleMessage(dynamic message) {
     try {
-      print('📨 Received WebSocket message: $message');
+      print('🔨 Received WebSocket message: $message');
       
       if (message is String) {
         final data = jsonDecode(message);
@@ -225,99 +280,112 @@ class WebSocketService {
         if (data['event'] != null) {
           final event = data['event'] as String;
           final eventData = data['data'];
-
-
-              if (event == 'pusher:connection_established') {
-      final payload = jsonDecode(data['data']); // data string -> json
-      _socketId = payload['socket_id'];        // KRİTİK
-      print('✅ WS socket_id=$_socketId');     // LOG ekle
-      if (_connectedCompleter != null && !_connectedCompleter!.isCompleted) {
-        _connectedCompleter!.complete();       // EKLE
-      }
-      _emitEvent('connection_established', payload);
-      return;
-    }
+          
           print('🔍 Processing WebSocket event: $event');
-          print('📊 Event data: $eventData');
+          
+          // Parse eventData if it's a string
+          dynamic parsedEventData = eventData;
+          if (eventData is String) {
+            try {
+              parsedEventData = jsonDecode(eventData);
+            } catch (e) {
+              // Keep as string if not JSON
+              parsedEventData = eventData;
+            }
+          }
+          
+          
+          print('📊 Parsed event data: $parsedEventData');
           
           switch (event) {
             case 'pusher:connection_established':
               print('✅ WebSocket connection established');
-              _emitEvent('connection_established', eventData);
+              
+              // Extract socket_id from connection data
+              if (parsedEventData != null && parsedEventData['socket_id'] != null) {
+                _socketId = parsedEventData['socket_id'];
+                print('🔑 Socket ID: $_socketId');
+              }
+              
+              // Mark connection as ready for subscribers waiting on waitConnected()
+              try {
+                if (_connectedCompleter != null && !_connectedCompleter!.isCompleted) {
+                  _connectedCompleter!.complete();
+                }
+              } catch (_) {}
+
+              _emitEvent('connection_established', parsedEventData);
+                print('🔑 connection_established');
+                
               break;
               
             case 'pusher:subscription_succeeded':
             case 'pusher_internal:subscription_succeeded':
               print('📡 WebSocket subscription succeeded');
-              _emitEvent('subscription_succeeded', eventData);
+              _emitEvent('subscription_succeeded', parsedEventData);
               break;
-              
-            case 'pusher:member_added':
-              print('👤 WebSocket member added: $eventData');
-              _emitEvent('member_added', eventData);
-              break;
-              
-            case 'pusher:member_removed':
-              print('👤 WebSocket member removed: $eventData');
-              _emitEvent('member_removed', eventData);
-              break;
-              
-            case 'pusher:pong':
-              // This is a heartbeat response from the server, no need to emit
-              print('🏓 WebSocket pong received (heartbeat)');
-              break;
-              
-            case 'pusher:error':
-              print('❌ Pusher error: $eventData');
-              _emitEvent('pusher_error', eventData);
-              break;
-              
-            case 'pusher:subscription_error':
-              print('❌ Pusher subscription error: $eventData');
-              _emitEvent('subscription_error', eventData);
-              break;
-              
-            case 'DuelMatched':
-              print('🎯 Duel matched event: $eventData');
-              _emitEvent('DuelMatched', eventData);
-              break;
-              
-            case 'DuelStarted':
-              print('🚀 Duel started event: $eventData');
-              _emitEvent('DuelStarted', eventData);
+            case 'pusher:ping':
+  _emitEvent('pusher:ping', parsedEventData);
+  break;
+case 'pusher:pong':
+  _emitEvent('pusher:pong', parsedEventData);
+  break;
+            // Add duel-specific events
+            case 'duel.matched':
+              print('🎯 Duel matched event');
+              _emitEvent('duel.matched', parsedEventData);
               break;
               
             case 'duel.ready':
-              print('🎯 Duel ready event: $eventData');
-              _emitEvent('duel.ready', eventData);
+              print('✅ Duel ready event - someone is ready');
+              _emitEvent('duel.ready', parsedEventData);
               break;
               
-            case 'duel.answer_submitted':
-              print('📝 Duel answer submitted: $eventData');
-              _emitEvent('duel.answer_submitted', eventData);
+            case 'DuelStarted':
+              print('🚀 DUEL STARTED EVENT!');
+              _emitEvent('DuelStarted', parsedEventData);
               break;
               
-            case 'duel.score_updated':
-              print('📊 Duel score updated: $eventData');
-              _emitEvent('duel.score_updated', eventData);
+            case 'DuelUpdate':
+              print('📊 Duel update event');
+              _emitEvent('DuelUpdate', parsedEventData);
+              break;
+              
+            case 'duel.answer_result':
+              print('📝 Duel answer result event');
+              _emitEvent('duel.answer_result', parsedEventData);
               break;
               
             case 'duel.ended':
-              print('🏁 Duel ended: $eventData');
-              _emitEvent('duel.ended', eventData);
+              print('🏁 Duel ended event');
+              _emitEvent('duel.ended', parsedEventData);
+              break;
+              
+            case 'pusher:member_added':
+              print('👤 WebSocket member added: $parsedEventData');
+              _emitEvent('member_added', parsedEventData);
+              break;
+              
+            case 'pusher:member_removed':
+              print('👤 WebSocket member removed: $parsedEventData');
+              _emitEvent('member_removed', parsedEventData);
+              break;
+              
+  
+              
+            case 'pusher:error':
+              print('❌ Pusher error: $parsedEventData');
+              _emitEvent('pusher_error', parsedEventData);
+              break;
+              
+            case 'pusher:subscription_error':
+              print('❌ Pusher subscription error: $parsedEventData');
+              _emitEvent('subscription_error', parsedEventData);
               break;
               
             default:
-              // Only log unknown events that are not Pusher internal events
-              if (!event.startsWith('pusher:')) {
-                print('❓ Unknown WebSocket event: $event with data: $eventData');
-                _emitEvent('unknown_event', {
-                  'event': event,
-                  'data': eventData,
-                });
-              } else {
-                print('🔧 Pusher internal event: $event (not emitting)');
-              }
+              // Log unknown events (except internal pusher events)
+          _emitEvent(event, parsedEventData);
           }
         } else {
           print('⚠️ WebSocket message without event field: $data');
@@ -532,30 +600,30 @@ class WebSocketService {
   }
   
   // Send duel ready signal
-  Future<bool> sendDuelReady(int duelId) async {
-    try {
-      if (_channel == null) {
-        print('❌ WebSocket not connected');
-        return false;
-      }
+  // Future<bool> sendDuelReady(int duelId) async {
+  //   try {
+  //     if (_channel == null) {
+  //       print('❌ WebSocket not connected');
+  //       return false;
+  //     }
 
-      final readyMessage = {
-        'event': 'duel.ready',
-        'data': {
-          'duel_id': duelId,
-          'timestamp': DateTime.now().toIso8601String(),
-        }
-      };
+  //     final readyMessage = {
+  //       'event': 'duel.ready',
+  //       'data': {
+  //         'duel_id': duelId,
+  //         'timestamp': DateTime.now().toIso8601String(),
+  //       }
+  //     };
       
-      print('📤 Sending duel ready message: ${jsonEncode(readyMessage)}');
-      _channel?.sink.add(jsonEncode(readyMessage));
-      print('✅ Sent duel ready signal for duel $duelId');
-      return true;
-    } catch (e) {
-      print('❌ Error sending duel ready: $e');
-      return false;
-    }
-  }
+  //     print('📤 Sending duel ready message: ${jsonEncode(readyMessage)}');
+  //     _channel?.sink.add(jsonEncode(readyMessage));
+  //     print('✅ Sent duel ready signal for duel $duelId');
+  //     return true;
+  //   } catch (e) {
+  //     print('❌ Error sending duel ready: $e');
+  //     return false;
+  //   }
+  // }
 
   // Send game start signal
   Future<bool> sendGameStart(int duelId) async {
@@ -583,3 +651,9 @@ class WebSocketService {
     }
   }
 } 
+
+// lib/core/services/websocket_service.dart içindeki sendDuelReady metodunu değiştir
+
+ 
+
+// Send duel ready signal via API (not WebSocket)

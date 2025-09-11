@@ -15,6 +15,61 @@ import 'package:quiz_app/core/utils/duel_converter.dart';
 import 'dart:math';
 import 'dart:async';
 
+
+
+StreamSubscription<Map<String, dynamic>>? _wsLogSub;
+
+// Requires: import 'dart:convert';
+
+/// Normalizes WS event `data` (Map<dynamic,dynamic> or JSON String)
+/// to a `Map<String, dynamic>?`. Returns null if it's not an object.
+Map<String, dynamic>? _toMap(dynamic data) {
+  if (data == null) return null;
+
+ 
+  if (data is Map) {
+    return data.map((k, v) => MapEntry(k.toString(), v));
+  }
+
+ 
+  if (data is String && data.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(data);
+      if (decoded is Map) {
+        return decoded.map((k, v) => MapEntry(k.toString(), v));
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
+  }
+
+  // Not an object
+  return null;
+}
+
+
+void _attachWsLogger() {
+  _wsLogSub?.cancel();
+  _wsLogSub = WebSocketService().eventStream.listen((e) {
+    final type = e['type'];
+    final data = e['data'];
+    final ts = e['timestamp'];
+    String payload;
+    try {
+      payload = data is String
+          ? data
+          : const JsonEncoder.withIndent('  ').convert(data);
+    } catch (_) {
+      payload = data.toString();
+    }
+    debugPrint('🎯 WS [$ts] $type\n$payload');
+  }, onError: (err, st) {
+    debugPrint('WS LOGGER ERROR: $err');
+  });
+}
+
+
+
 class OpponentFoundScreen extends ConsumerStatefulWidget {
   const OpponentFoundScreen({super.key});
 
@@ -28,7 +83,7 @@ class _OpponentFoundScreenState extends ConsumerState<OpponentFoundScreen> {
   bool _isLoadingLocation = true;
   bool _isSearchingForPlayer = true;
   bool _isPlayingWithBot = false;
-  
+ 
   // API integration
   DuelResponse? _duelResponse;
   String? _errorMessage;
@@ -53,7 +108,10 @@ String? _botOpponentPhotoUrl;
   bool _bothPlayersReady = false;
   
   final Random _random = Random();
-  
+  bool _isPlayerReady = false;
+  bool _isOpponentReady = false;
+  bool _waitingForDuelStart = false;
+  StreamSubscription<Map<String, dynamic>>? _eventSubscription;
   // Search timeout duration (in seconds) - kept for potential future use
   // static const int _searchTimeout = 10;
   
@@ -82,9 +140,17 @@ String? _botOpponentPhotoUrl;
   @override
   void initState() {
     super.initState();
+    _attachWsLogger();
     _getUserLocation();
     _startPlayerSearch();
+      _listenToWebSocketEvents();
   }
+
+@override
+void dispose() {
+  _wsLogSub?.cancel();
+  super.dispose();
+}
 
   void _startPlayerSearch() {
     setState(() {
@@ -95,16 +161,198 @@ String? _botOpponentPhotoUrl;
     // Call the API to create a duel
     _createDuelFromAPI();
   }
+  
+Future<void> _sendReadySignal() async {
+    if (_duelResponse == null) {
+      print('❌ No duel response available');
+      return;
+    }
+    
+    setState(() {
+      _isPlayerReady = true;
+      _waitingForDuelStart = true;
+    });
+    
+    final duelId = DuelConverter.getDuelId(_duelResponse!);
+    print('📤 Sending ready signal for duel $duelId');
+    
+    // Ensure WebSocket is connected and subscribed
+    if (!_webSocketService.isConnected) {
+      print('⚠️ WebSocket not connected, initializing first...');
+      await _initializeWebSocketConnection();
+      await Future.delayed(const Duration(seconds: 1));
+    }
+    
+    // Send ready via API
+    final result = await DuelService.sendReady(duelId);
+    
+    if (result['success'] == true) {
+      print('✅ Ready signal sent successfully');
+      print('📥 Ready response: ${result['data']}');
+      
+      // If playing with bot, bot should also send ready automatically
+      if (_isPlayingWithBot) {
+        print('🤖 Playing with bot, bot should auto-ready on backend');
+        
+        // Wait a bit for backend to process
+        await Future.delayed(const Duration(seconds: 2));
+        
+        // If still no duel.started event, navigate anyway
+        if (mounted && _waitingForDuelStart) {
+          print('⏰ Timeout waiting for duel.started with bot, starting anyway...');
+          _navigateToDuel();
+        }
+      } else {
+        print('👥 Playing with real player, waiting for opponent ready...');
+      }
+    } else {
+      print('❌ Failed to send ready signal: ${result['error']}');
+      setState(() {
+        _isPlayerReady = false;
+        _waitingForDuelStart = false;
+      });
+      
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hazır sinyali gönderilemedi: ${result['error']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+   Future<void> _initializeWebSocketConnection() async {
+    try {
+      print('🔌 Initializing WebSocket connection...');
+      final success = await _webSocketService.initialize();
+      
+      if (success && _duelResponse != null) {
+        final duelId = DuelConverter.getDuelId(_duelResponse!);
+        print('📡 WebSocket connected, subscribing to duel: $duelId');
+        
+        await Future.delayed(const Duration(milliseconds: 500));
+        await _webSocketService.subscribeToDuel(duelId);
+        
+        // Re-setup listener after connection
+        _listenToWebSocketEvents();
+      } else {
+        print('❌ Failed to initialize WebSocket');
+      }
+    } catch (e) {
+      print('❌ Error initializing WebSocket: $e');
+    }
+  }
+  
+ void _listenToWebSocketEvents() {
+  print('🔌 Setting up WebSocket event listener in OpponentFoundScreen');
+
+  _eventSubscription?.cancel();
+
+  if (!_webSocketService.isConnected) {
+    print('⚠️ WebSocket not connected, initializing...');
+    _initializeWebSocketConnection();
+    return;
+  }
+
+  _eventSubscription = _webSocketService.eventStream.listen((event) {
+    final type = event['type'] as String?;
+    final dataMap = _toMap(event['data']) ?? const <String, dynamic>{};
+    final currentDuelId =
+        _duelResponse != null ? DuelConverter.getDuelId(_duelResponse!) : null;
+
+    // Handle transport-level events regardless of duel id
+    switch (type) {
+      case 'connection_established':
+        print('✅ WebSocket connection established');
+        if (_duelResponse != null) {
+          final duelId = DuelConverter.getDuelId(_duelResponse!);
+          print('📡 Subscribing to duel channel: $duelId');
+          _webSocketService.subscribeToDuel(duelId);
+        }
+        return;
+
+      case 'subscription_succeeded':
+        print('✅ Successfully subscribed to duel channel');
+        return;
+    }
+
+    // From here on, ignore events that don't belong to this duel
+    if (currentDuelId == null) return;
+    final payloadDuelId = (dataMap['duel_id'] ?? dataMap['match_id']);
+    if (payloadDuelId is int && payloadDuelId != currentDuelId) return;
+    if (payloadDuelId is String &&
+        int.tryParse(payloadDuelId) != currentDuelId) return;
+
+    switch (type) {
+      case 'duel.ready':
+        // Only UI hint; do NOT navigate
+        if (mounted) {
+          setState(() {
+            _isOpponentReady = true;
+          });
+        }
+        break;
+
+      case 'duel.started':
+        // Countdown/overlay; navigation will occur on first running update
+        if (mounted) {
+          setState(() {
+            _isOpponentReady = true;
+            _waitingForDuelStart = true;
+          });
+        }
+        break; // <-- important to prevent fall-through
+
+      case 'duel.update': {
+        final status = dataMap['status'];
+        final qIdxRaw = dataMap['q_index'] ?? dataMap['question_index'];
+        final qIndex = qIdxRaw is int ? qIdxRaw : int.tryParse('$qIdxRaw') ?? 0;
+
+        if (status == 'running' && qIndex >= 1) {
+          _navigateToDuel();
+        }
+        break;
+      }
+
+      case 'duel.state': {
+        // If backend emits a consolidated state event
+        final state = dataMap['state'];
+        final qRaw = dataMap['question_index'];
+        final q = qRaw is int ? qRaw : int.tryParse('$qRaw') ?? 0;
+
+        if ((state == 'running' || state == 'qN_active' || state == 'q1_active') &&
+            q >= 1) {
+          _navigateToDuel();
+        }
+        break;
+      }
+
+      default:
+        if (type != null && !type.startsWith('pusher:')) {
+          print('❓ Unknown event: $type');
+        }
+    }
+  });
+}
+  // _createDuelFromAPI metodunu şu şekilde güncelleyin:
+
+  // _createDuelFromAPI metodunu şu şekilde güncelleyin:
 
   Future<void> _createDuelFromAPI() async {
     try {
-      print('Creating duel from API...');
+      print('🎮 Creating duel from API...');
       final result = await DuelService.createDuel();
       
       if (!mounted) return;
       
       if (result['success'] == true) {
         final DuelResponse duelResponse = result['data'] as DuelResponse;
+        final duelId = DuelConverter.getDuelId(duelResponse);
+        
+        print('✅ Duel created successfully with ID: $duelId');
+        
         setState(() {
           _duelResponse = duelResponse;
           _isSearchingForPlayer = false;
@@ -113,138 +361,53 @@ String? _botOpponentPhotoUrl;
           
           // Set opponent data from API response
           if (_isPlayingWithBot) {
-            // For API bots, use realistic names instead of generic "Bot"
+            // For API bots, use realistic names
             final selectedCountry = _availableCountries[_random.nextInt(_availableCountries.length)];
             final namesForCountry = _botProfiles[selectedCountry]!;
             final selectedName = namesForCountry[_random.nextInt(namesForCountry.length)];
             
             _botOpponentName = selectedName;
             _botOpponentCountry = selectedCountry;
-            _botOpponentPhotoUrl = null; // Use initials from realistic name
+            _botOpponentPhotoUrl = null;
             
-            print('🤖 API bot disguised as: $selectedName from $selectedCountry');
+            print('🤖 Playing with bot disguised as: $selectedName from $selectedCountry');
           } else {
             _realOpponentName = DuelConverter.getOpponentName(duelResponse);
             _realOpponentCountry = 'US'; // This would come from real player data
             _realOpponentPhotoUrl = DuelConverter.getOpponentAvatarUrl(duelResponse);
+            print('👥 Playing with real player: $_realOpponentName');
           }
         });
         
-        print('Duel created successfully. Opponent: ${DuelConverter.getOpponentName(duelResponse)}, isBot: ${DuelConverter.isOpponentBot(duelResponse)}');
-
-        // Immediately proceed to start flow; do not block on WS signal
-        // 1) Try to subscribe and send ready for real-time sync
-        try {
-          final duelId = DuelConverter.getDuelId(duelResponse);
-          _webSocketService.initialize().then((ok) async {
-            if (ok) {
-              await _webSocketService.subscribeToDuel(duelId);
-              await _webSocketService.sendDuelReady(duelId);
-
-                if (!_isPlayingWithBot) {
-      print('🎯 Real player duel, waiting for DuelStarted...');
-      final started = await _waitForDuelStarted(duelId);
-
-      if (mounted) {
-        if (started) {
-          print('🚀 DuelStarted alındı, maça giriyoruz');
-          _startDuelImmediately();
+        // Initialize WebSocket and subscribe to duel channel
+        print('🔌 Initializing WebSocket for duel $duelId...');
+        final wsSuccess = await _webSocketService.initialize();
+        
+        if (wsSuccess) {
+          print('✅ WebSocket initialized successfully');
+          
+          // Wait a bit for connection to establish
+          await Future.delayed(const Duration(milliseconds: 500));
+          
+          // Subscribe to duel channel
+          print('📡 Subscribing to duel channel: private-duel.$duelId');
+          final subscribeSuccess = await _webSocketService.subscribeToDuel(duelId);
+          
+          if (subscribeSuccess) {
+            print('✅ Successfully subscribed to duel channel');
+          } else {
+            print('⚠️ Failed to subscribe to duel channel, continuing anyway...');
+          }
         } else {
-          print('⏳ DuelStarted gelmedi (timeout), fallback ile başlatıyoruz');
-          _startDuelImmediately(); // veya küçük bir ekstra bekleme koyabilirsiniz
+          print('⚠️ Failed to initialize WebSocket, continuing without real-time updates');
         }
-      }
-    }
-            }
-          });
-        } catch (_) {}
-
-        // 2) Start duel after a short delay to ensure both sides reached this screen
-        // Future.delayed(const Duration(seconds: 1), () {
-        //   if (mounted && !_readyToDuel) {
-        //     print('⏩ No WS start signal, proceeding to start duel locally');
-        //     _startDuelImmediately();
-        //   }
-        // });
-
-        // Still keep verbose WS logging for visibility
-        print('🔌 Setting up WebSocket event listener in OpponentFoundScreen');
-        print('🔌 WebSocket stream controller status: ${WebSocketService().streamControllerStatus}');
-        WebSocketService().eventStream.listen((event) {
-          final eventType = event['type'] as String;
-          
-          // Skip heartbeat and internal events for cleaner logging
-          if (eventType == 'unknown_event' && event['data']?['event']?.startsWith('pusher:') == true) {
-            return; // Skip Pusher internal events
-          }
-          
-          print('📡 OpponentFoundScreen received WebSocket event: $eventType');
-          print('📡 Event data: ${event['data']}');
-          print('📡 Event timestamp: ${event['timestamp']}');
-          
-          switch (eventType) {
-            case 'DuelStarted':
-              print('🚀 Duel started event received, starting duel...');
-              _startDuel();
-              break;
-            case 'duel.ready':
-              print('🎯 Duel ready event received');
-              // When both players are ready, start the duel
-              if (!_bothPlayersReady) {
-                setState(() {
-                  _bothPlayersReady = true;
-                });
-                Future.delayed(const Duration(seconds: 1), () {
-                  if (mounted) {
-                    _startDuelImmediately();
-                  }
-                });
-              }
-              break;
-            case 'DuelMatched':
-              print('🎯 Duel matched event received');
-              break;
-            case 'member_added':
-              print('👤 Member added to duel');
-              break;
-            case 'member_removed':
-              print('👤 Member removed from duel');
-              break;
-            case 'connection_established':
-              print('✅ WebSocket connection established');
-              break;
-            case 'subscription_succeeded':
-              print('📡 WebSocket subscription succeeded');
-              // After successful subscription, send ready signal
-              if (_duelResponse != null && !_sentReadySignal) {
-                final duelId = DuelConverter.getDuelId(_duelResponse!);
-                print('📤 Sending ready signal for duel $duelId');
-                _webSocketService.sendDuelReady(duelId);
-                _sentReadySignal = true;
-              }
-              break;
-            case 'pusher_error':
-              print('❌ Pusher error occurred');
-              // Don't block the game for WebSocket errors
-              // The game will continue with local fallback
-              break;
-            case 'subscription_error':
-              print('❌ Subscription error occurred');
-              // Don't block the game for WebSocket errors
-              // The game will continue with local fallback
-              break;
-            case 'error':
-              print('❌ WebSocket error occurred');
-              break;
-            case 'disconnected':
-              print('🔌 WebSocket disconnected');
-              break;
-            default:
-             
-                print('❓ Unknown event type in OpponentFoundScreen: $eventType');
-              
-          }
-        });
+        
+        // For bot games, we might want to auto-ready after a delay
+        if (_isPlayingWithBot) {
+          print('🤖 Bot game detected, showing ready button');
+          // Don't auto-ready, let user click the button
+        }
+        
       } else {
         setState(() {
           _isSearchingForPlayer = false;
@@ -252,22 +415,12 @@ String? _botOpponentPhotoUrl;
         });
         print('❌ Failed to create duel: ${result['error']}');
         
-        // Immediate fallback to local bot for authentication issues
+        // Handle errors...
         if (result['error']?.toString().contains('Unauthenticated') == true || 
             result['error']?.toString().contains('authentication') == true ||
             result['error']?.toString().contains('Rate limited') == true) {
-          print('🤖 Authentication issue detected, immediately switching to local bot');
+          print('🤖 Authentication issue detected, switching to local bot');
           _activateLocalBot();
-        } else {
-          // Other errors - wait 3 seconds before fallback
-          if (!_isPlayingWithBot && !_isOpponentReal) {
-            Future.delayed(const Duration(seconds: 3), () {
-              if (mounted && _duelResponse == null && !_isPlayingWithBot && !_isOpponentReal) {
-                print('⚠️ API failed, activating local bot as fallback');
-                _activateLocalBot();
-              }
-            });
-          }
         }
       }
     } catch (e) {
@@ -277,19 +430,10 @@ String? _botOpponentPhotoUrl;
         _isSearchingForPlayer = false;
         _errorMessage = 'Network error: $e';
       });
-      print('Exception in _createDuelFromAPI: $e');
-      
-      // Fallback to local bot after 3 seconds (only if not already done)
-      if (!_isPlayingWithBot && !_isOpponentReal) {
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted && _duelResponse == null && !_isPlayingWithBot && !_isOpponentReal) {
-            print('⚠️ Exception occurred, activating local bot as fallback');
-            _activateLocalBot();
-          }
-        });
-      }
+      print('❌ Exception in _createDuelFromAPI: $e');
     }
   }
+
 
   Future<void> _searchForRealPlayer() async {
     // This method is kept for backward compatibility but not used anymore
@@ -392,24 +536,30 @@ void _startDuelImmediately() {
   });
 }
 
-void _navigateToDuel() {
-  User? user = FirebaseAuth.instance.currentUser;
-  String? userPhotoUrl = user?.photoURL;
-  
-  Navigator.of(context).pushReplacement(
-    MaterialPageRoute(
-      builder: (context) => DuelScreen(
-        isPlayingWithBot: _isPlayingWithBot,
-        opponentName: _isOpponentReal ? _realOpponentName! : _botOpponentName!,
-        opponentCountry: _isOpponentReal ? _realOpponentCountry! : _botOpponentCountry!,
-        userCountryCode: _userCountryCode,
-        userPhotoUrl: userPhotoUrl,
-        opponentPhotoUrl: _isOpponentReal ? _realOpponentPhotoUrl : _botOpponentPhotoUrl,
-        duelResponse: _duelResponse,
+  void _navigateToDuel() {
+    if (!mounted) return;
+    
+    setState(() {
+      _waitingForDuelStart = false;
+    });
+    
+    User? user = FirebaseAuth.instance.currentUser;
+    String? userPhotoUrl = user?.photoURL;
+    
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => DuelScreen(
+          isPlayingWithBot: _isPlayingWithBot,
+          opponentName: _isOpponentReal ? _realOpponentName! : _botOpponentName!,
+          opponentCountry: _isOpponentReal ? _realOpponentCountry! : _botOpponentCountry!,
+          userCountryCode: _userCountryCode,
+          userPhotoUrl: userPhotoUrl,
+          opponentPhotoUrl: _isOpponentReal ? _realOpponentPhotoUrl : _botOpponentPhotoUrl,
+          duelResponse: _duelResponse,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
 // WebSocket methods removed for now - using simple fallback mechanism
 
@@ -475,15 +625,21 @@ void _navigateToDuel() {
     }
   }
 
-  String _getStatusText() {
+ String _getStatusText() {
     if (_errorMessage != null) {
       return 'Xəta baş verdi. Bot ilə oyun başlayır...';
     } else if (_isSearchingForPlayer) {
       return 'Oyunçu axtarılır...';
-    } else if (_isPlayingWithBot) {
-      return 'Oyunçu tapıldı!';
-    } else if (_isOpponentReal) {
-      return 'Oyunçu tapıldı!';
+    } else if (_waitingForDuelStart) {
+      if (_isOpponentReady) {
+        return 'Oyun başladılır...';
+      } else {
+        return 'Rəqib gözlənilir...';
+      }
+    } else if (_isPlayerReady) {
+      return 'Hazırsınız!';
+    } else if (_duelResponse != null) {
+      return 'Rəqib tapıldı! Hazır olduğunuzda "HAZIRIM" düyməsinə basın';
     } else {
       return 'Hazırlanır...';
     }
@@ -574,7 +730,7 @@ void _navigateToDuel() {
     );
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
     String? displayName = user?.displayName;
@@ -582,216 +738,327 @@ void _navigateToDuel() {
     
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: Center(
-        child: AnimatedOpacity(
-          opacity: _readyToDuel ? 0.0 : 1.0,
-          duration: const Duration(milliseconds: 500),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              
-              // Status text
-              Text(
-                _getStatusText(),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // Top user (Opponent or placeholder)
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 40),
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          _isSearchingForPlayer
-                              ? Container(
-                                  width: 80,
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.grey, width: 2),
-                                  ),
-                                  child: ClipOval(
-                                    child: Container(
-                                      color: Colors.grey[300],
-                                      child: const Icon(
-                                        Icons.search,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : _buildAvatar(
-                                size:80,
-name: _isOpponentReal ? (_realOpponentName ?? 'Player') : (_botOpponentName ?? 'Bot'),
-                                ),
-                          if (!_isSearchingForPlayer)
-                            Positioned(
-                              bottom: -2,
-                              right: -2,
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                                child: ClipOval(
-                                  child: CountryFlag.fromCountryCode(
-  _isOpponentReal ? (_realOpponentCountry ?? 'US') : (_botOpponentCountry ?? 'US'),
-  height: 24,
-  width: 24,
-),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                Text(
-  _isSearchingForPlayer ? '???' : (_isOpponentReal ? (_realOpponentName ?? 'Player') : (_botOpponentName ?? 'Bot')),
-  style: const TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-  ),
-),
-                    ],
+      body: Stack(
+        children: [
+          // Main content
+          Center(
+            child: AnimatedOpacity(
+              opacity: _waitingForDuelStart ? 0.5 : 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+                  
+                  // Status text
+                  Text(
+                    _getStatusText(),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
                   ),
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Middle brain logo
-              Container(
-                width: 180,
-                height: 180,
-                child: SvgPicture.asset(
-                  'assets/images/opponentfound_brain.svg',
-                  fit: BoxFit.contain,
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Bottom user (Current user)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 40),
-                  child: Column(
-                    children: [
-                      Stack(
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Top user (Opponent)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 40),
+                      child: Column(
                         children: [
-                          _buildAvatar(
-                            name: displayName ?? 'Player',
-                            photoUrl: photoUrl,
-                            size: 80,
-                          ),
-                          Positioned(
-                            bottom: -2,
-                            right: -2,
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: ClipOval(
-                                child: _isLoadingLocation
-                                    ? Container(
-                                        color: Colors.grey[300],
-                                        child: const SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                          Stack(
+                            children: [
+                              _isSearchingForPlayer
+                                  ? Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.grey, width: 2),
+                                      ),
+                                      child: ClipOval(
+                                        child: Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(
+                                            Icons.search,
+                                            size: 40,
+                                            color: Colors.grey,
                                           ),
                                         ),
-                                      )
-                                    : CountryFlag.fromCountryCode(
-                                        _userCountryCode,
+                                      ),
+                                    )
+                                  : _buildAvatar(
+                                      name: _isOpponentReal ? (_realOpponentName ?? 'Player') : (_botOpponentName ?? 'Bot'),
+                                      photoUrl: _isOpponentReal ? _realOpponentPhotoUrl : _botOpponentPhotoUrl,
+                                      size: 80,
+                                      isBot: _isPlayingWithBot,
+                                    ),
+                              if (!_isSearchingForPlayer)
+                                Positioned(
+                                  bottom: -2,
+                                  right: -2,
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                    child: ClipOval(
+                                      child: CountryFlag.fromCountryCode(
+                                        _isOpponentReal ? (_realOpponentCountry ?? 'US') : (_botOpponentCountry ?? 'US'),
                                         height: 24,
                                         width: 24,
                                       ),
-                              ),
+                                    ),
+                                  ),
+                                ),
+                              // Ready indicator for opponent
+                              if (_isOpponentReady)
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.check,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _isSearchingForPlayer ? '???' : (_isOpponentReal ? (_realOpponentName ?? 'Player') : (_botOpponentName ?? 'Bot')),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                          if (_isOpponentReady)
+                            const Text(
+                              'HAZIR',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        displayName ?? 'Player',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Middle brain logo
+                  Container(
+                    width: 180,
+                    height: 180,
+                    child: SvgPicture.asset(
+                      'assets/images/opponentfound_brain.svg',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Bottom user (Current user)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 40),
+                      child: Column(
+                        children: [
+                          Stack(
+                            children: [
+                              _buildAvatar(
+                                name: displayName ?? 'Player',
+                                photoUrl: photoUrl,
+                                size: 80,
+                              ),
+                              Positioned(
+                                bottom: -2,
+                                right: -2,
+                                child: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: ClipOval(
+                                    child: _isLoadingLocation
+                                        ? Container(
+                                            color: Colors.grey[300],
+                                            child: const SizedBox(
+                                              width: 12,
+                                              height: 12,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            ),
+                                          )
+                                        : CountryFlag.fromCountryCode(
+                                            _userCountryCode,
+                                            height: 24,
+                                            width: 24,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                              // Ready indicator for player
+                              if (_isPlayerReady)
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.check,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            displayName ?? 'Player',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (_isPlayerReady)
+                            const Text(
+                              'HAZIR',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                  
+                  // Ready button or status
+                  if (!_isSearchingForPlayer && _duelResponse != null)
+                    Column(
+                      children: [
+                        if (!_isPlayerReady)
+                          ElevatedButton.icon(
+                            onPressed: _sendReadySignal,
+                            icon: const Icon(Icons.check_circle),
+                            label: const Text(
+                              'HAZIRIM',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 15,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 5,
+                            ),
+                          ),
+                        
+                        if (_isPlayerReady && !_isPlayingWithBot)
+                          Column(
+                            children: [
+                              const CircularProgressIndicator(
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                _isOpponentReady 
+                                  ? 'Oyun başlatılıyor...' 
+                                  : 'Rəqib gözlənilir...',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  
+                  // Search progress indicator
+                  if (_isSearchingForPlayer)
+                    Column(
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Oyuncu axtarılır...',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Waiting overlay
+          if (_waitingForDuelStart)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          _isOpponentReady 
+                            ? 'Oyun başlayır...' 
+                            : 'Rəqib gözlənilir...',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-
-              const SizedBox(height: 40),
-              
-              // Search progress indicator
-              if (_isSearchingForPlayer)
-                Column(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Oyunçu axtarılır...',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              
-              // Debug info (remove in production)
-              if (!_isSearchingForPlayer)
-                Column(
-                  children: [
-                    Text(
-                      'Your Country: $_userCountryCode',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  Text(
-  'Opponent: ${_isOpponentReal ? (_realOpponentName ?? 'Unknown') : (_botOpponentName ?? 'Bot')} (${_isOpponentReal ? (_realOpponentCountry ?? 'Unknown') : (_botOpponentCountry ?? 'Unknown')})',
-  style: const TextStyle(
-    fontSize: 12,
-    color: Colors.grey,
-  ),
-),
-                    Text(
-                      _isPlayingWithBot ? 'Bot ilə oyun' : 'Real oyunçu ilə oyun',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _isPlayingWithBot ? Colors.orange : Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }

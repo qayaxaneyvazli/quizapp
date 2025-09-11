@@ -14,7 +14,7 @@ class UserStatsService {
   static void clearTokenCache() {
     _cachedSessionToken = null;
     _tokenExpiry = null;
-    print('User stats token cache cleared');
+   // print('User stats token cache cleared');
   }
   
   // Helper method to get authenticated headers (similar to DuelService)
@@ -30,15 +30,16 @@ class UserStatsService {
       // Get the ID token
       final String? idToken = await user.getIdToken();
       if (idToken == null) {
+        print(idToken);
         print('❌ Failed to get ID token');
         return null;
       }
 
-      print('🔑 Got Firebase ID token for user stats');
+      //print('🔑 Got Firebase ID token for user stats');
 
       // Check if we have a valid cached session token
       if (_cachedSessionToken != null && _tokenExpiry != null && DateTime.now().isBefore(_tokenExpiry!)) {
-        print('✅ Using cached session token for user stats');
+       // print('✅ Using cached session token for user stats');
         return {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_cachedSessionToken',
@@ -46,7 +47,7 @@ class UserStatsService {
         };
       }
 
-      print('⚠️ No valid cached token, need to authenticate with backend for user stats');
+      //print('⚠️ No valid cached token, need to authenticate with backend for user stats');
       
       // Try to get session token
       final backendResponse = await _authenticateWithBackend(idToken);
@@ -60,7 +61,7 @@ class UserStatsService {
           _cachedSessionToken = sessionToken.toString();
           _tokenExpiry = DateTime.now().add(Duration(minutes: 30));
           
-          print('✅ Got new session token for user stats, cached for 30 minutes');
+          //print('✅ Got new session token for user stats, cached for 30 minutes');
           return {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $sessionToken',
@@ -119,7 +120,7 @@ class UserStatsService {
   // Fetch user stats from the API
   static Future<Map<String, dynamic>> getUserStats() async {
     try {
-      print('📊 Fetching user stats...');
+      //print('📊 Fetching user stats...');
       
       // Get authenticated headers
       final headers = await getAuthenticatedHeaders();
@@ -142,12 +143,12 @@ class UserStatsService {
         },
       );
 
-      print('📊 User stats response status: ${response.statusCode}');
+      //print('📊 User stats response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('✅ API Response received: $data');
-        print('🔍 Hearts field in API response: ${data['hearts']} (type: ${data['hearts']?.runtimeType})');
+      //  print('✅ API Response received: $data');
+        //print('🔍 Hearts field in API response: ${data['hearts']} (type: ${data['hearts']?.runtimeType})');
         
         // Parse the response into UserStats model
         final userStats = UserStats.fromJson(data);

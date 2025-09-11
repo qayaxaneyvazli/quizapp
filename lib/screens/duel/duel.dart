@@ -185,12 +185,12 @@ Future<void> _initializeWebSocket() async {
     
     switch (eventType) {
   
-      case 'DuelMatched':
+      case 'duel.matched':
         print('🎯 Duel matched with opponent');
         print('🎯 Match data: $data');
         break;
         
-      case 'DuelStarted':
+      case 'duel.started':
        if (!_gameStarted) {
       _gameStarted = true;
       _waitingForOpponent = false;

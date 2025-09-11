@@ -21,7 +21,7 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
     _autoRefreshTimer = Timer.periodic(Duration(seconds: 30), (timer) {
       // Only refresh if we have data (not in loading or error state)
       if (state is AsyncData && state.value != null) {
-        print('🔄 Auto-refreshing user stats...');
+        //print('🔄 Auto-refreshing user stats...');
         fetchUserStats();
       }
     });
@@ -35,27 +35,27 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
 
   // Fetch user stats from API
   Future<void> fetchUserStats() async {
-    print('🔄 Starting to fetch user stats...');
+   // print('🔄 Starting to fetch user stats...');
     state = const AsyncValue.loading();
     
     try {
       final response = await UserStatsService.getUserStats();
-      print('📊 User stats service response: $response');
+     // print('📊 User stats service response: $response');
       
       if (response['success'] == true) {
         final userStats = response['data'] as UserStats;
-        print('✅ Successfully parsed user stats:');
-        print('   - Coins: ${userStats.coins}');
-        print('   - Total Score: ${userStats.totalScore}');
-        print('   - Quiz Score: ${userStats.quizScore}');
-        print('   - Duel Score: ${userStats.duelScore}');
-        print('   - Event Score: ${userStats.eventScore}');
-        print('   - Hearts Count: ${userStats.heartsCount}');
-        print('   - Hearts Infinite Until: ${userStats.heartsInfiniteUntil}');
-        print('   - Has Infinite Hearts: ${userStats.hasInfiniteHearts}');
-        print('   - Hearts Display Value: ${userStats.heartsDisplayValue}');
+        // print('✅ Successfully parsed user stats:');
+        // print('   - Coins: ${userStats.coins}');
+        // print('   - Total Score: ${userStats.totalScore}');
+        // print('   - Quiz Score: ${userStats.quizScore}');
+        // print('   - Duel Score: ${userStats.duelScore}');
+        // print('   - Event Score: ${userStats.eventScore}');
+        // print('   - Hearts Count: ${userStats.heartsCount}');
+        // print('   - Hearts Infinite Until: ${userStats.heartsInfiniteUntil}');
+        // print('   - Has Infinite Hearts: ${userStats.hasInfiniteHearts}');
+        // print('   - Hearts Display Value: ${userStats.heartsDisplayValue}');
         if (userStats.hasInfiniteHearts && userStats.infiniteHeartsTimeString.isNotEmpty) {
-          print('   - Infinite Hearts Countdown: ${userStats.infiniteHeartsTimeString}');
+         // print('   - Infinite Hearts Countdown: ${userStats.infiniteHeartsTimeString}');
         }
         state = AsyncValue.data(userStats);
       } else {
@@ -99,7 +99,7 @@ class UserStatsNotifier extends StateNotifier<AsyncValue<UserStats?>> {
         try {
           final fallbackUserStats = UserStats.fromJson(mockStats);
           state = AsyncValue.data(fallbackUserStats);
-          print('✅ Using fallback user stats for testing');
+          //print('✅ Using fallback user stats for testing');
           return;
         } catch (e) {
           print('❌ Failed to create fallback stats: $e');

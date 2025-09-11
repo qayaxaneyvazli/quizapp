@@ -18,15 +18,86 @@ class DuelService {
   }
   
 
-  static Future<bool> ready(int duelId) async {
-  final headers = await _getAuthenticatedHeaders();
-  if (headers == null) return false;
-  final res = await http.post(
-    Uri.parse('$_baseUrl/duels/$duelId/ready'),
-    headers: headers,
-  );
-  return res.statusCode == 200;
-}
+// Bu metodu DuelService class'ının içine, createDuel metodundan sonra ekleyin:
+
+  // Send ready signal for duel
+  static Future<Map<String, dynamic>> sendReady(int duelId) async {
+    try {
+      print('Sending ready signal for duel $duelId');
+
+      // Get authenticated headers
+      final headers = await _getAuthenticatedHeaders();
+      if (headers == null) {
+        return {
+          'success': false,
+          'error': 'Failed to get authentication headers',
+        };
+      }
+
+      // Force-close after request to prevent half-open issues on some servers
+      final requestHeaders = {
+        ...headers,
+        'Connection': 'close',
+      };
+
+      final uri = Uri.parse('$_baseUrl/duels/$duelId/ready');
+
+      Future<http.Response> doPost(http.Client client) {
+        return client
+            .post(
+              uri,
+              headers: requestHeaders,
+              body: jsonEncode({'ready': true}),
+            )
+            .timeout(const Duration(seconds: 8));
+      }
+
+      http.Client client = http.Client();
+      http.Response response;
+      try {
+        response = await doPost(client);
+      } on Exception catch (e) {
+        print('Ready API first attempt failed: $e');
+        client.close();
+        // Brief backoff then retry once with a fresh client
+        await Future.delayed(const Duration(milliseconds: 400));
+        client = http.Client();
+        response = await doPost(client);
+      } finally {
+        client.close();
+      }
+
+      print('Ready API response status: ${response.statusCode}');
+      print('Ready API response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'data': jsonDecode(response.body),
+        };
+      } else {
+        String errorMessage = 'Failed to send ready signal';
+        try {
+          final errorData = jsonDecode(response.body);
+          errorMessage = errorData['message'] ?? errorMessage;
+        } catch (e) {
+          // Use default error message if parsing fails
+        }
+        
+        return {
+          'success': false,
+          'error': errorMessage,
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      print('Exception in sendReady: $e');
+      return {
+        'success': false,
+        'error': 'Network error: $e',
+      };
+    }
+  }
 
   // Helper method to get authenticated headers
   static Future<Map<String, String>?> _getAuthenticatedHeaders() async {

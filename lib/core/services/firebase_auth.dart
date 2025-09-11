@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'user_stats_service.dart';
 import 'quiz_submission.dart';
 import 'questions_service.dart';
+import 'duel_service.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -15,6 +16,34 @@ class AuthService {
     // Firebase Console-dan Web client ID-ni götürün və buraya əlavə edin
     // serverClientId: 'your-web-client-id.googleusercontent.com',
   );
+
+  // On app start or whenever this service is constructed, print Laravel token if logged in
+  AuthService() {
+    authStateChanges.listen((user) async {
+      if (user != null) {
+        try {
+          final idToken = await user.getIdToken();
+          if (idToken != null) {
+            final result = await DuelService.authenticateWithBackend(idToken);
+            if (result['success'] == true) {
+              final data = result['data'] as Map<String, dynamic>?;
+              final token = data?['token'] ?? data?['access_token'] ?? data?['api_token'];
+              final userId = data?['user']?['id'] ?? data?['id'] ?? user.uid;
+              if (token != null) {
+                print('Laravel token: ${userId}|$token');
+              } else {
+                print('Laravel auth success but token not found in response');
+              }
+            } else {
+              print('Laravel auth failed on startup: ${result['error']}');
+            }
+          }
+        } catch (e) {
+          print('Error printing Laravel token on startup: $e');
+        }
+      }
+    });
+  }
 
   // Firebase istifadəçi məlumatlarını al
   User? get currentUser => _firebaseAuth.currentUser;
@@ -207,9 +236,17 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        try {
+          final token = data['token'] ?? data['access_token'] ?? data['api_token'];
+          final userId = data['user']?['id'] ?? data['id'] ?? FirebaseAuth.instance.currentUser?.uid;
+          if (token != null) {
+            print('Laravel token: ${userId}|$token');
+          }
+        } catch (_) {}
         return {
           'success': true,
-          'data': jsonDecode(response.body),
+          'data': data,
         };
       } else {
         return {
