@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:quiz_app/core/services/authoritative_duel.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,7 +24,19 @@ class WebSocketService {
   bool _shouldReconnect = true;
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
-  
+   final AuthoritativeDuelStore store = AuthoritativeDuelStore();
+
+  final _duelStateCtrl = StreamController<DuelWireState>.broadcast();
+  Stream<DuelWireState> duelStateStream(int duelId) =>
+      _duelStateCtrl.stream.where((s) => s.duelId == duelId);
+
+  // _handleMessage içinde duel.started / duel.update case’lerinde:
+  //  - store.applyWs(...)
+  //  - _duelStateCtrl.add(snapshot)
+  void _emitAuthoritativeUpdate(int duelId, Map<String, dynamic> payload) {
+    final snap = store.applyWs(duelId, payload);
+    _duelStateCtrl.add(snap);
+  }
   // Singleton pattern
   static final WebSocketService _instance = WebSocketService._internal();
   factory WebSocketService() => _instance;
@@ -341,16 +354,26 @@ case 'pusher:pong':
               _emitEvent('duel.ready', parsedEventData);
               break;
               
-            case 'DuelStarted':
+            case 'duel.started':
               print('🚀 DUEL STARTED EVENT!');
-              _emitEvent('DuelStarted', parsedEventData);
+                // parsedEventData: {duel_id, status, q_index, deadline_at, scores}
+  final int duelId = (parsedEventData['duel_id'] as int?) ?? 0;
+  if (duelId > 0) {
+    _emitAuthoritativeUpdate(duelId, Map<String,dynamic>.from(parsedEventData));
+  }
+  _emitEvent('duel.started', parsedEventData); // varsa UI log’u
+ 
+
+        
               break;
               
-            case 'DuelUpdate':
-              print('📊 Duel update event');
-              _emitEvent('DuelUpdate', parsedEventData);
-              break;
-              
+            case 'duel.update':
+       final int duelId = (parsedEventData['duel_id'] as int?) ?? 0;
+  if (duelId > 0) {
+    _emitAuthoritativeUpdate(duelId, Map<String,dynamic>.from(parsedEventData));
+  }
+  _emitEvent('duel.update', parsedEventData);
+  break;
             case 'duel.answer_result':
               print('📝 Duel answer result event');
               _emitEvent('duel.answer_result', parsedEventData);

@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:country_flags/country_flags.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,11 +10,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:quiz_app/core/constants/app_colors.dart';
+import 'package:quiz_app/core/services/authoritative_duel.dart';
 import 'package:quiz_app/models/game/game_state.dart';
 import 'package:quiz_app/models/player/player.dart';
 import 'package:quiz_app/models/duel/duel_response.dart';
 import 'package:quiz_app/core/utils/duel_converter.dart';
 import 'package:quiz_app/core/services/duel_service.dart';
+import 'package:quiz_app/providers/duel/duel_state_provider.dart';
 import 'package:quiz_app/providers/game/game_state.dart';
 import 'package:quiz_app/screens/duel/answer_button.dart';
 import 'package:quiz_app/screens/duel/defeat_modal.dart';
@@ -74,6 +77,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _waitingForOpponent = false;
   bool _opponentReady = false;
   Timer? _timerSyncTimer;
+  bool _currentAnswerSent = false;
 
   void _showDefeat() {
     setState(() {
@@ -196,15 +200,47 @@ Future<void> _initializeWebSocket() async {
       _waitingForOpponent = false;
        
     }
-        print('🚀 Duel started');
-        print('🚀 Start data: $data');
-        break;
+   final qIndex = data['question_index'];
+  final optionId = data['option_id'];
+  final isCorrect = data['is_correct'];
+  final answeredBy = data['answered_by'];
+  
+  final gameNotifier = ref.read(gameStateProvider.notifier);
+  gameNotifier.applyAuthoritativeAnswer(
+    qIndex: qIndex,
+    answeredBy: answeredBy,
+    optionId: optionId,
+    isCorrect: isCorrect,
+  );
+  break;
+      
         
       case 'duel.answer_submitted':
         print('📝 Opponent submitted answer: $data');
         // Handle opponent's answer submission
         _handleOpponentAnswer(data);
         break;
+   case 'duel.update':
+      print('📊 Duel update event received $data');
+      _handleDuelUpdate(data);
+      break;
+        case 'duel.answer_result':
+  print('📝 Duel answer result event');
+  print('📝 Answer result data: $data');
+  
+  // Parse the result
+  if (data != null && data is Map) {
+    final isCorrect = data['is_correct'] ?? false;
+    final scores = data['scores'] ?? {};
+    final answeredBy = data['answered_by'];
+    
+    print('📊 Player $answeredBy answered: ${isCorrect ? "CORRECT" : "WRONG"}');
+    print('📊 Current scores: $scores');
+    
+    // Update UI if needed
+    // You can show a quick animation or update score display
+  }
+  break;
         
       case 'duel.score_updated':
         print('📊 Score updated: $data');
@@ -308,7 +344,28 @@ Future<void> _initializeWebSocket() async {
         }
     }
   }
+void _handleDuelUpdate(dynamic data) {
+  if (!mounted) return;
+  final Map<String, dynamic> update =
+      data is String ? (jsonDecode(data) as Map<String,dynamic>) : Map<String,dynamic>.from(data);
 
+  // 1) Otorite state’i güncelle
+  final duelNotifier = ref.read(duelStateProvider.notifier);
+  duelNotifier.updateFromWebSocket(update);
+
+  // 2) UI indexine çevir ve GameState’i yalnızca farklıysa ilerlet
+  final newZeroBased = duelNotifier.getZeroBasedIndex();
+  if (newZeroBased != null && newZeroBased != ref.read(gameStateProvider).currentQuestionIndex) {
+    ref.read(gameStateProvider.notifier).goToQuestion(newZeroBased);
+    _currentAnswerSent = false;
+  }
+
+  // 3) status’e göre bitiş kontrolü
+  final status = ref.read(duelStateProvider).status;
+  if (status == 'finished') {
+    ref.read(gameStateProvider.notifier).endGame();
+  }
+}
   // Handle opponent's answer submission
   void _handleOpponentAnswer(dynamic data) {
     // This will be called when opponent submits an answer
@@ -317,36 +374,37 @@ Future<void> _initializeWebSocket() async {
   }
 
   // Collect answer for later submission
-  void _collectAnswerForAPI(int questionIndex, int selectedOptionIndex, double timeTaken) {
-    if (widget.duelResponse == null || _duelId == null) return;
-    
-    try {
-      final duelQuestionId = DuelConverter.getDuelQuestionId(widget.duelResponse!, questionIndex);
-      final optionId = DuelConverter.getOptionId(widget.duelResponse!, questionIndex, selectedOptionIndex);
-      
-      final answerData = {
-        'duel_question_id': duelQuestionId,
-        'selected_option_id': optionId,
-        'time_taken': timeTaken,
-      };
-      
-      // Add or update answer for this question
-      final existingIndex = _playerAnswers.indexWhere(
-        (answer) => answer['duel_question_id'] == duelQuestionId
-      );
-      
-      if (existingIndex >= 0) {
-        _playerAnswers[existingIndex] = answerData;
-      } else {
-        _playerAnswers.add(answerData);
-      }
-      
-      print('Collected answer for question $questionIndex: $answerData');
-    } catch (e) {
-      print('Exception in _collectAnswerForAPI: $e');
-    }
-  }
+ // Send answer immediately to API when selected
+Future<void> _sendAnswerToAPIImmediately(int questionIndex, int selectedOptionIndex) async {
 
+  
+  if (_duelId == null) return;
+  if (_currentAnswerSent) return;
+  print('1ci govde');
+  final optionId = _webSocketService.store.optionIdForUiIndex(_duelId!, selectedOptionIndex);
+  print('store snapshot: ${_webSocketService.store.snapshot(_duelId!)}');
+print('optionIdForUiIndex($selectedOptionIndex) => $optionId');
+  if (optionId == null || optionId <= 0) {
+    // Henüz question_id gelmemiş olabilir -> butonları geçici kapatmak daha iyi
+    print('❌ Option mapping not ready. Waiting for duel.update...');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Soru senkronize ediliyor, lütfen bekleyin.')),
+    );
+    return;
+  } print('2ci govde');
+  final result = await DuelService.sendAnswer(duelId: _duelId!, optionId: optionId);
+  if (result['success'] == true) {
+     print('2ci govde ici');
+    _currentAnswerSent = true;
+  } else {
+     print('2ci govde colu');
+    final msg = result['error'] ?? 'Unknown error';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Cevap gönderilemedi: $msg'), backgroundColor: Colors.red),
+    );
+  }
+  
+}
   // Submit all collected answers to API (called at game end)
   Future<void> _submitAllAnswersToAPI() async {
     if (widget.duelResponse == null || _duelId == null || _playerAnswers.isEmpty) return;
@@ -417,37 +475,46 @@ Future<void> _initializeWebSocket() async {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
+StreamSubscription<DuelWireState>? _duelStateSub;
+
+@override
+void initState() {
+  super.initState();
+  _isUsingAPI = !widget.isPlayingWithBot;
+  if (widget.duelResponse != null) {
+    _duelId = widget.duelResponse!.duel.id;
+    _webSocketService.store.preloadFromCreate(widget.duelResponse!);  // 🔴
     
-    // Initialize game with API data if available
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
     if (widget.duelResponse != null) {
-      _isUsingAPI = true;
-      _duelId = DuelConverter.getDuelId(widget.duelResponse!);
-      
-      // Initialize WebSocket connection for real-time updates
-      _initializeWebSocket();
-      
-      // Initialize game state with API questions
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final gameNotifier = ref.read(gameStateProvider.notifier);
-        final questions = DuelConverter.convertToGameQuestions(widget.duelResponse!);
-        gameNotifier.initializeWithQuestions(questions);
-        
-        // Start AI player simulation after a short delay
-        Future.delayed(const Duration(milliseconds: 500), () {
-          gameNotifier.simulatePlayer2Answer();
-        });
-      });
-    } else {
-      // Fallback to default behavior for local games
-      Future.delayed(const Duration(milliseconds: 500), () {
-        final gameNotifier = ref.read(gameStateProvider.notifier);
-        gameNotifier.simulatePlayer2Answer();
-      });
+        final duelResp = widget.duelResponse!;
+    _duelId = duelResp.duel.id;
+     _webSocketService.store.preloadFromCreate(duelResp);
+    ref.read(duelStateProvider.notifier).initializeFromDuelResponse(duelResp);
+      final qs = DuelConverter.convertToGameQuestions(widget.duelResponse!);
+      ref.read(gameStateProvider.notifier).initializeWithQuestions(qs);
     }
+  });
+
+    _initializeWebSocket();
+
+    // Otorite stream’i dinle
+    _duelStateSub = _webSocketService.duelStateStream(_duelId!).listen((snap) {
+      // 1) Soru indexini UI’ya uygula (1-based -> 0-based)
+      final uiIndex = snap.qIndex > 0 ? snap.qIndex - 1 : 0;
+      if (uiIndex != ref.read(gameStateProvider).currentQuestionIndex) {
+        ref.read(gameStateProvider.notifier).goToQuestion(uiIndex);
+        _currentAnswerSent = false;
+      }
+      // 2) Bitiş
+      if (snap.status == 'finished') {
+        ref.read(gameStateProvider.notifier).endGame();
+      }
+      // (İsteğe bağlı) deadline/scores UI update
+    });
   }
+}
 
   @override
   void dispose() {
@@ -483,17 +550,22 @@ Future<void> _initializeWebSocket() async {
     final player2 = ref.watch(player2Provider);
         
     // Listen for question changes to simulate player 2
-    ref.listen(gameStateProvider.select((state) => state.currentQuestionIndex), 
-      (previous, current) {
-        if (previous != current) {
-          // Delay added to ensure the UI has been updated before simulating
-          Future.delayed(const Duration(milliseconds: 500), () {
-            final gameNotifier = ref.read(gameStateProvider.notifier);
-            gameNotifier.simulatePlayer2Answer();
-          });
-        }
-      }
-    );
+   ref.listen(gameStateProvider.select((state) => state.currentQuestionIndex), 
+  (previous, current) {
+    if (previous != current) {
+      // Reset answer sent flag for new question
+      _currentAnswerSent = false;
+      
+      // Delay added to ensure the UI has been updated before simulating
+     if (widget.isPlayingWithBot) {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      ref.read(gameStateProvider.notifier).simulatePlayer2Answer();
+    });
+  }
+
+    }
+  }
+);
 
     // Calculate scores based on results
     int player1Score = 0;
@@ -937,19 +1009,27 @@ Future<void> _initializeWebSocket() async {
                         child: AnswerButton(
                           text: gameState.currentQuestion.options[index],
                           color: buttonColor,
-                          onPressed: () {
-                            if (gameState.timeUp || gameState.isAnswerRevealed) {
-                              return;
-                            }
-                            if (gameState.player1SelectedOption == null) {
-                              ref.read(gameStateProvider.notifier).selectAnswer(1, index);
-                              
-                              // Collect answer for API submission if using API integration
-                              if (_isUsingAPI && _duelId != null && widget.duelResponse != null) {
-                                _collectAnswerForAPI(gameState.currentQuestionIndex, index, 5.0); // TODO: Calculate actual time taken
-                              }
-                            }
-                          },
+                         onPressed: () {
+  if (gameState.timeUp || gameState.isAnswerRevealed) {
+    return;
+  }
+  if (gameState.player1SelectedOption == null) {
+    // Select answer locally
+    ref.read(gameStateProvider.notifier).selectAnswer(1, index);
+     print('--- AnswerButton pressed ---');
+        print('_isUsingAPI = $_isUsingAPI');
+        print('_duelId = $_duelId');
+        print('widget.duelResponse = ${widget.duelResponse}');
+        print('gameState.currentQuestionIndex = ${gameState.currentQuestionIndex}');
+        print('index (selectedOptionIndex) = $index');
+        print('----------------------------');
+    // Send answer to API immediately if using API integration
+    if (_isUsingAPI && _duelId != null && widget.duelResponse != null) {
+      print('is using api true');
+      _sendAnswerToAPIImmediately(gameState.currentQuestionIndex, index);
+    }
+  }
+},
                           player1Selected: gameState.player1SelectedOption == index,
                           player2Selected: gameState.player2SelectedOption == index,
                           player1: player1,

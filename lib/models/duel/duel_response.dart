@@ -3,8 +3,10 @@ class DuelResponse {
   final bool isBot;
   final DuelOpponent opponent;
   final DuelData duel;
+   
 
   DuelResponse({
+     
     required this.message,
     required this.isBot,
     required this.opponent,
@@ -17,6 +19,7 @@ class DuelResponse {
       isBot: json['is_bot'] ?? false,
       opponent: DuelOpponent.fromJson(json['opponent'] ?? {}),
       duel: DuelData.fromJson(json['duel'] ?? {}),
+      
     );
   }
 }
@@ -43,6 +46,8 @@ class DuelOpponent {
 
 class DuelData {
   final int id;
+  final String status;
+   final int? qIndex;
   final int player1Id;
   final int? player2Id;
   final String startedAt;
@@ -51,9 +56,12 @@ class DuelData {
   final List<DuelQuestionData> duelQuestions;
 
   DuelData({
+    required this.qIndex,
+    
     required this.id,
     required this.player1Id,
     this.player2Id,
+       required this.status,
     required this.startedAt,
     required this.updatedAt,
     required this.createdAt,
@@ -62,7 +70,9 @@ class DuelData {
 
   factory DuelData.fromJson(Map<String, dynamic> json) {
     return DuelData(
+         qIndex: json['q_index'],
       id: json['id'] ?? 0,
+         status: json['status'] ?? 'ready_wait',
       player1Id: json['player1_id'] ?? 0,
       player2Id: json['player2_id'],
       startedAt: json['started_at'] ?? '',
@@ -111,6 +121,7 @@ class DuelQuestionData {
 class QuestionData {
   final int id;
   final int categoryId;
+ 
   final String type;
   final String? image;
   final int level;
@@ -122,6 +133,7 @@ class QuestionData {
   final List<QuestionOption> options;
 
   QuestionData({
+   
     required this.id,
     required this.categoryId,
     required this.type,
@@ -137,6 +149,7 @@ class QuestionData {
 
   factory QuestionData.fromJson(Map<String, dynamic> json) {
     return QuestionData(
+ 
       id: json['id'] ?? 0,
       categoryId: json['category_id'] ?? 0,
       type: json['type'] ?? '',

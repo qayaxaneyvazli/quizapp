@@ -1,19 +1,29 @@
 import 'package:quiz_app/models/duel/duel_response.dart';
 import 'package:quiz_app/models/question/DuelQuestion.dart';
+import 'package:quiz_app/models/question/DuelQuestion.dart' as G;
 
 class DuelConverter {
   // Convert API DuelResponse to list of Questions for game state
-  static List<Question> convertToGameQuestions(DuelResponse duelResponse, [String language = 'en']) {
-    return duelResponse.duel.duelQuestions.map((duelQuestion) {
-      final questionData = duelQuestion.question;
-      
-      return Question(
-        questionText: questionData.getQuestionText(language),
-        options: questionData.getOptionTexts(language),
-        correctOptionIndex: questionData.getCorrectOptionIndex(),
-        points: _calculatePoints(questionData.level),
+static List<G.Question> convertToGameQuestions(
+    DuelResponse resp, {
+    String lang = 'en',
+  }) {
+    final duel = resp.duel;
+    final items = [...duel.duelQuestions]
+      ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
+
+    return items.map((dq) {
+      final q = dq.question;
+      final optionTexts = q.getOptionTexts(lang);      // translations -> option_text
+      final correctIdx = q.getCorrectOptionIndex();    // isCorrect == 1 olanın index’i
+
+      return G.Question(
+        questionText: q.getQuestionText(lang),         // translations -> question_text
+        options: optionTexts,
+        correctOptionIndex: correctIdx >= 0 ? correctIdx : 0,
+        points: 1,
       );
-    }).toList();
+    }).toList(growable: false);
   }
 
   // Calculate points based on question level

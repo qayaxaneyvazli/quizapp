@@ -18,8 +18,102 @@ class DuelService {
   }
   
 
-// Bu metodu DuelService class'ının içine, createDuel metodundan sonra ekleyin:
+  
 
+// Bu metodu DuelService class'ının içine, createDuel metodundan sonra ekleyin:
+// Send answer for current question
+static Future<Map<String, dynamic>> sendAnswer({
+  required int duelId,
+  required int optionId,
+  String? answerKey,
+}) async {
+  try {
+    print('📤 Sending answer for duel $duelId, optionId: $optionId, answerKey: $answerKey');
+
+    // Get authenticated headers
+    final headers = await _getAuthenticatedHeaders();
+    if (headers == null) {
+      return {
+        'success': false,
+        'error': 'Failed to get authentication headers',
+      };
+    }
+
+    // Prepare request body
+    final Map<String, dynamic> requestBody = {};
+    if (optionId != null && optionId > 0) {
+      requestBody['option_id'] = optionId;
+    }
+    if (answerKey != null && answerKey.isNotEmpty) {
+      requestBody['answer_key'] = answerKey;
+    }
+
+    // Force-close after request to prevent half-open issues
+    final requestHeaders = {
+      ...headers,
+      'Connection': 'close',
+    };
+
+    final uri = Uri.parse('$_baseUrl/duels/$duelId/answer');
+
+    Future<http.Response> doPost(http.Client client) {
+      return client
+          .post(
+            uri,
+            headers: requestHeaders,
+            body: jsonEncode(requestBody),
+          )
+          .timeout(const Duration(seconds: 8));
+    }
+
+    http.Client client = http.Client();
+    http.Response response;
+    try {
+      response = await doPost(client);
+    } on Exception catch (e) {
+      print('Answer API first attempt failed: $e');
+      client.close();
+      // Brief backoff then retry once with a fresh client
+      await Future.delayed(const Duration(milliseconds: 400));
+      client = http.Client();
+      response = await doPost(client);
+    } finally {
+      client.close();
+    }
+
+    print('Answer API response status: ${response.statusCode}');
+    print('Answer API response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      return {
+        'success': true,
+        'data': responseData,
+        'result': responseData['result'],
+      };
+    } else {
+      String errorMessage = 'Failed to send answer';
+      try {
+        final errorData = jsonDecode(response.body);
+        errorMessage = errorData['message'] ?? errorMessage;
+      } catch (e) {
+        // Use default error message if parsing fails
+      }
+      
+      return {
+        'success': false,
+        'error': errorMessage,
+        'statusCode': response.statusCode,
+      };
+    }
+  } catch (e) {
+    print('Exception in sendAnswer: $e');
+    return {
+      'success': false,
+      'error': 'Network error: $e',
+    };
+  }
+}
   // Send ready signal for duel
   static Future<Map<String, dynamic>> sendReady(int duelId) async {
     try {
