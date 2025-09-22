@@ -28,6 +28,8 @@ class AuthoritativeDuelStore {
   final Map<int, Map<int, int>> _orderToQid = {};           // duelId -> (order_number -> question_id)
   final Map<int, int> _versions = {};                       // duelId -> version
 
+ 
+
 void preloadFromCreate(DuelResponse resp) {
   final duelId = resp.duel.id;
 

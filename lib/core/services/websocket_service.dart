@@ -555,6 +555,7 @@ case 'pusher:pong':
                            authResult['data']?['access_token'] ??
                            authResult['data']?['api_token'];
         
+        
         if (sessionToken != null) {
           print('✅ Got session token for WebSocket auth');
           return sessionToken.toString();

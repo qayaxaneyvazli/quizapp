@@ -52,18 +52,20 @@ final player2Provider = StateProvider.autoDispose<Player>((ref) {
 
 // Game state provider - AutoDispose əlavə edildi
 final gameStateProvider = StateNotifierProvider.autoDispose<GameStateNotifier, GameState>((ref) {
-  return GameStateNotifier();
+  
+  return GameStateNotifier(authoritative: true);
 });
-
 class GameStateNotifier extends StateNotifier<GameState> {
   Timer? _timer;
   static const questionTimeInSeconds = 50;
   static const timerInterval = Duration(milliseconds: 100);
   static const decrementValue = 1.0 / (questionTimeInSeconds * 10); // For smooth progress bar
   static const revealAnswerDuration = Duration(seconds: 2);
-  
-  GameStateNotifier()
+    final bool authoritative; 
+
+  GameStateNotifier({this.authoritative = false})
       : super(GameState(
+        
           player1Results: List.filled(sampleQuestions.length, null),
           player2Results: List.filled(sampleQuestions.length, null),
           currentQuestionIndex: 0,
@@ -178,10 +180,13 @@ void endGame() {
     );
     
     // Wait for a moment before moving to next question
-    Timer(revealAnswerDuration, moveToNextQuestion);
+       if (!authoritative) {
+      Timer(revealAnswerDuration, moveToNextQuestion);  
+    }
   }
   
  void moveToNextQuestion() {
+  if (authoritative) return; 
   final nextQuestionIndex = state.currentQuestionIndex + 1;
   
   // Check if game is over

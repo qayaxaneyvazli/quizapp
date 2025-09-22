@@ -476,7 +476,7 @@ print('optionIdForUiIndex($selectedOptionIndex) => $optionId');
   }
 
 StreamSubscription<DuelWireState>? _duelStateSub;
-
+int? _lastAppliedQIndex;
 @override
 void initState() {
   super.initState();
@@ -502,11 +502,16 @@ void initState() {
     // Otorite stream’i dinle
     _duelStateSub = _webSocketService.duelStateStream(_duelId!).listen((snap) {
       // 1) Soru indexini UI’ya uygula (1-based -> 0-based)
-      final uiIndex = snap.qIndex > 0 ? snap.qIndex - 1 : 0;
-      if (uiIndex != ref.read(gameStateProvider).currentQuestionIndex) {
-        ref.read(gameStateProvider.notifier).goToQuestion(uiIndex);
-        _currentAnswerSent = false;
+        final newUiIndex = (snap.qIndex > 0) ? snap.qIndex - 1 : 0;
+  if (_lastAppliedQIndex != snap.qIndex) {
+        ref.read(gameStateProvider.notifier).goToQuestion(newUiIndex);
+        _currentAnswerSent = false; // yeni soruda tekrar cevap gönderebilelim
+        _lastAppliedQIndex = snap.qIndex;
+
+        // (opsiyonel) log
+        print('🎯 Authoritative jump -> qIndex=${snap.qIndex} (ui=$newUiIndex), qid=${snap.currentQuestionId}');
       }
+
       // 2) Bitiş
       if (snap.status == 'finished') {
         ref.read(gameStateProvider.notifier).endGame();
