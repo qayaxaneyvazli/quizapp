@@ -61,7 +61,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _showDrawModal = false;
   // Coins earned on victory
   final int _coinsEarned = 50;
-  
+  // Sunucudan en son GÖRÜLEN q_index (1-based)
   // API integration variables
   int? _duelId;
   bool _isUsingAPI = false;
@@ -78,7 +78,18 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _opponentReady = false;
   Timer? _timerSyncTimer;
   bool _currentAnswerSent = false;
+  int? _backendMyId;
+  int? _backendOpponentId;
 
+  void _initParticipants() {
+    final resp = widget.duelResponse!;
+    final duel = resp.duel;
+    final oppId = resp.opponent.id;
+    _backendOpponentId = oppId;
+    // Benim id’m, opponent olmayan id
+    _backendMyId = (duel.player1Id == oppId) ? duel.player2Id : duel.player1Id;
+    print('👤 ids -> me=$_backendMyId, opp=$_backendOpponentId');
+  }
   void _showDefeat() {
     setState(() {
       _showDefeatModal = true;
@@ -227,19 +238,44 @@ Future<void> _initializeWebSocket() async {
         case 'duel.answer_result':
   print('📝 Duel answer result event');
   print('📝 Answer result data: $data');
-  
-  // Parse the result
+
   if (data != null && data is Map) {
-    final isCorrect = data['is_correct'] ?? false;
-    final scores = data['scores'] ?? {};
-    final answeredBy = data['answered_by'];
-    
-    print('📊 Player $answeredBy answered: ${isCorrect ? "CORRECT" : "WRONG"}');
-    print('📊 Current scores: $scores');
-    
-    // Update UI if needed
-    // You can show a quick animation or update score display
+    final int duelId   = _duelId ?? 0;
+    final int? orderNo = (data['order_number'] as int?);
+    final int? optId   = (data['option_id'] as int?);
+    final int? byId    = (data['answered_by'] as int?);
+    final bool isCorrect = (data['is_correct'] as bool?) ?? false;
+
+    if (duelId > 0 && orderNo != null && optId != null && byId != null) {
+      // 1) order_number -> question_id
+      final qid = _webSocketService.store.questionIdForOrder(duelId, orderNo);
+      // 2) option_id -> UI index
+      int? uiIndex;
+      if (qid != null) {
+        uiIndex = _webSocketService.store.uiIndexForOptionId(duelId, qid, optId);
+      }
+
+      if (uiIndex != null) {
+        final game = ref.read(gameStateProvider);
+        final currentOrder = game.currentQuestionIndex + 1; // UI 0-based -> order_number 1-based
+
+        // Sadece o anda ekranda olan soru için uygula (order tutuyorsa)
+        if (orderNo == currentOrder) {
+          final isMe = (byId == _backendMyId);
+          final playerNo = isMe ? 1 : 2;
+          ref.read(gameStateProvider.notifier).selectAnswer(playerNo, uiIndex);
+          print('✅ Applied selection: order=$orderNo player=$playerNo uiIndex=$uiIndex correct=$isCorrect');
+        } else {
+          // Farklı order için gelmişse şimdilik sadece loglayalım
+          print('ℹ️ answer_result for another order ($orderNo), current=$currentOrder');
+        }
+      } else {
+        print('⚠️ Cannot map option_id=$optId to UI index (qid=$qid)');
+      }
+    }
   }
+ 
+
   break;
         
       case 'duel.score_updated':
@@ -349,18 +385,18 @@ void _handleDuelUpdate(dynamic data) {
   final Map<String, dynamic> update =
       data is String ? (jsonDecode(data) as Map<String,dynamic>) : Map<String,dynamic>.from(data);
 
-  // 1) Otorite state’i güncelle
+  // 1) otorite state'i provider'a yaz
   final duelNotifier = ref.read(duelStateProvider.notifier);
   duelNotifier.updateFromWebSocket(update);
 
-  // 2) UI indexine çevir ve GameState’i yalnızca farklıysa ilerlet
-  final newZeroBased = duelNotifier.getZeroBasedIndex();
-  if (newZeroBased != null && newZeroBased != ref.read(gameStateProvider).currentQuestionIndex) {
-    ref.read(gameStateProvider.notifier).goToQuestion(newZeroBased);
-    _currentAnswerSent = false;
-  }
+  // 2) ❌ BURAYI SİL / DEVRE DIŞI BIRAK ❌
+  // final newZeroBased = duelNotifier.getZeroBasedIndex();
+  // if (newZeroBased != null && newZeroBased != ref.read(gameStateProvider).currentQuestionIndex) {
+  //   ref.read(gameStateProvider.notifier).goToQuestion(newZeroBased);
+  //   _currentAnswerSent = false;
+  // }
 
-  // 3) status’e göre bitiş kontrolü
+  // 3) finish kontrolü
   final status = ref.read(duelStateProvider).status;
   if (status == 'finished') {
     ref.read(gameStateProvider.notifier).endGame();
@@ -477,6 +513,13 @@ print('optionIdForUiIndex($selectedOptionIndex) => $optionId');
 
 StreamSubscription<DuelWireState>? _duelStateSub;
 int? _lastAppliedQIndex;
+Timer? _revealHoldTimer;
+
+  int _appliedQIndex = 0;        // UI'nın şu an GÖSTERDİĞİ q_index (1-based)
+int _latestServerQIndex = 0; 
+static const Duration _revealHold = Duration(seconds: 4);
+bool get _holdActive => _revealHoldTimer?.isActive == true;
+
 @override
 void initState() {
   super.initState();
@@ -484,9 +527,16 @@ void initState() {
   if (widget.duelResponse != null) {
     _duelId = widget.duelResponse!.duel.id;
     _webSocketService.store.preloadFromCreate(widget.duelResponse!);  // 🔴
-    
 
+_initParticipants();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+              final snap0 = _webSocketService.store.snapshot(_duelId!);
+    _appliedQIndex = (snap0?.qIndex ?? 0);
+    _latestServerQIndex = _appliedQIndex;
+  final ui0 = (_appliedQIndex > 0) ? _appliedQIndex - 1 : 0;
+    print('[SYNC] init snapshot -> qIndex=$_appliedQIndex (ui=$ui0)');
+    ref.read(gameStateProvider.notifier).goToQuestion(ui0);
+      
     if (widget.duelResponse != null) {
         final duelResp = widget.duelResponse!;
     _duelId = duelResp.duel.id;
@@ -500,25 +550,79 @@ void initState() {
     _initializeWebSocket();
 
     // Otorite stream’i dinle
-    _duelStateSub = _webSocketService.duelStateStream(_duelId!).listen((snap) {
-      // 1) Soru indexini UI’ya uygula (1-based -> 0-based)
-        final newUiIndex = (snap.qIndex > 0) ? snap.qIndex - 1 : 0;
-  if (_lastAppliedQIndex != snap.qIndex) {
-        ref.read(gameStateProvider.notifier).goToQuestion(newUiIndex);
-        _currentAnswerSent = false; // yeni soruda tekrar cevap gönderebilelim
-        _lastAppliedQIndex = snap.qIndex;
+  _duelStateSub = _webSocketService.duelStateStream(_duelId!).listen(_onAuthoritativeSnap); 
 
-        // (opsiyonel) log
-        print('🎯 Authoritative jump -> qIndex=${snap.qIndex} (ui=$newUiIndex), qid=${snap.currentQuestionId}');
-      }
-
-      // 2) Bitiş
-      if (snap.status == 'finished') {
-        ref.read(gameStateProvider.notifier).endGame();
-      }
-      // (İsteğe bağlı) deadline/scores UI update
-    });
   }
+}
+void _onAuthoritativeSnap(DuelWireState snap) {
+  final incoming = snap.qIndex;       // 1-based
+  final prevApplied = _appliedQIndex; // 1-based
+  final prevSeen = _latestServerQIndex;
+
+  print('[SYNC] recv snap -> incoming=$incoming, prevApplied=$prevApplied, prevSeen=$prevSeen '
+        '(holdActive=${_holdActive}, pendingTimer=${_revealHoldTimer != null})');
+
+  // 1) “görülen” en büyük q_index’i güncelle
+  if (incoming > _latestServerQIndex) {
+    _latestServerQIndex = incoming;
+  }
+
+  // 2) İLERLEME yoksa sadece bitiş vb. işle
+  if (incoming <= prevApplied) {
+    if (snap.status == 'finished') {
+      print('[SYNC] finished received on same/older index -> endGame()');
+      ref.read(gameStateProvider.notifier).endGame();
+    }
+    return;
+  }
+
+  // 3) İlerleme VAR (incoming > applied) → önce cevabı göster
+  final gs = ref.read(gameStateProvider);
+  if (!gs.isAnswerRevealed) {
+    print('[SYNC] revealAnswer() because server advanced (applied=$prevApplied -> latest=$_latestServerQIndex)');
+    ref.read(gameStateProvider.notifier).revealAnswer();
+  }
+
+  // 4) Eğer bir hold zaten çalışıyorsa, yeni hedefi sadece not et
+  if (_holdActive) {
+    print('[SYNC] hold already active; will chain after current. '
+          'applied=$prevApplied latest=$_latestServerQIndex');
+    return;
+  }
+
+  // 5) İlk adımı planla (her adım için AYRI 4 sn)
+  _scheduleNextStep();
+}
+
+void _scheduleNextStep() {
+  if (!mounted) return;
+
+  if (_appliedQIndex >= _latestServerQIndex) {
+    print('[SYNC] nothing to schedule (applied=${_appliedQIndex}, latest=${_latestServerQIndex})');
+    return;
+  }
+
+  final nextTarget = _appliedQIndex + 1;   // sıradaki adım
+  final ui = (nextTarget > 0) ? nextTarget - 1 : 0;
+  print('[SYNC] scheduling hold $_revealHold for nextTarget=$nextTarget (ui=$ui) '
+        'from applied=${_appliedQIndex}, latest=${_latestServerQIndex}');
+
+  _revealHoldTimer?.cancel();
+  _revealHoldTimer = Timer(_revealHold, () {
+    if (!mounted) return;
+    print('[SYNC] HOLD DONE -> goToQuestion(ui=$ui) [moves to q_index=$nextTarget]');
+    ref.read(gameStateProvider.notifier).goToQuestion(ui);
+    _currentAnswerSent = false;
+    _appliedQIndex = nextTarget;
+
+    // Eğer server bu sırada daha da ilerlediyse, sıradaki adımı zincirle
+    if (_appliedQIndex < _latestServerQIndex) {
+      print('[SYNC] more steps pending -> applied=${_appliedQIndex}, latest=${_latestServerQIndex}');
+      _scheduleNextStep();
+    } else {
+      print('[SYNC] caught up to server. applied=${_appliedQIndex}');
+    }
+  });
 }
 
   @override

@@ -28,7 +28,22 @@ class AuthoritativeDuelStore {
   final Map<int, Map<int, int>> _orderToQid = {};           // duelId -> (order_number -> question_id)
   final Map<int, int> _versions = {};                       // duelId -> version
 
- 
+   // order_number -> question_id
+  int? questionIdForOrder(int duelId, int orderNumber) {
+    final ordMap = _orderToQid[duelId];
+    if (ordMap == null) return null;
+    return ordMap[orderNumber];
+  }
+
+  // verilen question_id için option_id'nin UI index'i
+  int? uiIndexForOptionId(int duelId, int questionId, int optionId) {
+    final qMap = _qidToOptionIds[duelId];
+    if (qMap == null) return null;
+    final list = qMap[questionId];
+    if (list == null) return null;
+    final idx = list.indexOf(optionId);
+    return idx >= 0 ? idx : null;
+  }
 
 void preloadFromCreate(DuelResponse resp) {
   final duelId = resp.duel.id;

@@ -133,6 +133,7 @@ void endGame() {
       // If both players have answered, reveal the answer
       if (state.player2SelectedOption != null) {
         _timer?.cancel();
+         print('[ANS] both answered -> revealAnswer()');
         revealAnswer();
       }
     } else if (playerNumber == 2 && state.player2SelectedOption == null) {
@@ -147,6 +148,9 @@ void endGame() {
   }
   
   void revealAnswer() {
+      print('[ANS] revealAnswer(): q=${state.currentQuestionIndex+1}, '
+        'p1Sel=${state.player1SelectedOption}, p2Sel=${state.player2SelectedOption}, '
+        'correct=${state.currentQuestion.correctOptionIndex}');
     // Update results based on selections
     final List<bool?> player1Results = List.from(state.player1Results);
     final List<bool?> player2Results = List.from(state.player2Results);
