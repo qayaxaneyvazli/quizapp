@@ -76,6 +76,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   
   void startTimer() {
     _timer?.cancel();
+    print('[GS] startTimer -> q=${state.currentQuestionIndex + 1}, reset selections, progress=1.0');
     
     // Important: Reset selections for the new question
     state = GameState(
@@ -94,6 +95,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _timer = Timer.periodic(timerInterval, (timer) {
       if (state.progressValue <= 0) {
         timer.cancel();
+        print('[GS] timer hit zero -> revealAnswer() on q=${state.currentQuestionIndex + 1}');
         revealAnswer();
       } else {
         state = state.copyWith(progressValue: state.progressValue - decrementValue);
@@ -104,6 +106,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   if (questionIndex >= state.questions.length || questionIndex < 0) return;
   
   _timer?.cancel();
+    print('[GS] goToQuestion -> from=${state.currentQuestionIndex + 1} to=${questionIndex + 1}');
   
   state = state.copyWith(
     currentQuestionIndex: questionIndex,
@@ -128,6 +131,7 @@ void endGame() {
     
     // Update player's selection
     if (playerNumber == 1 && state.player1SelectedOption == null) {
+      print('[GS] selectAnswer -> p1 selects $optionIndex on q=${state.currentQuestionIndex + 1}');
       state = state.copyWith(player1SelectedOption: optionIndex);
       
       // If both players have answered, reveal the answer
@@ -137,6 +141,7 @@ void endGame() {
         revealAnswer();
       }
     } else if (playerNumber == 2 && state.player2SelectedOption == null) {
+      print('[GS] selectAnswer -> p2 selects $optionIndex on q=${state.currentQuestionIndex + 1}');
       state = state.copyWith(player2SelectedOption: optionIndex);
       
       // If both players have answered, reveal the answer
@@ -192,6 +197,7 @@ void endGame() {
  void moveToNextQuestion() {
   if (authoritative) return; 
   final nextQuestionIndex = state.currentQuestionIndex + 1;
+  print('[GS] moveToNextQuestion -> from=${state.currentQuestionIndex + 1} to=${nextQuestionIndex + 1}');
   
   // Check if game is over
   if (nextQuestionIndex >= state.questions.length) {
@@ -220,6 +226,7 @@ void applyAuthoritativeAnswer({
 }) {
   // defensive check
   if (qIndex >= state.questions.length) return;
+  print('[GS] applyAuthoritativeAnswer -> qIndex=${qIndex + 1}, by=$answeredBy, optionId=$optionId, isCorrect=$isCorrect');
   
   final player1Results = List<bool?>.from(state.player1Results);
   final player2Results = List<bool?>.from(state.player2Results);

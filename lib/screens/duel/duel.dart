@@ -24,15 +24,12 @@ import 'package:quiz_app/screens/duel/draw_modal.dart';
 import 'package:quiz_app/screens/duel/victory_modal.dart';
 import 'package:quiz_app/core/services/websocket_service.dart';
 
-// Game state provider
-final gameStateProvider = StateNotifierProvider.autoDispose<GameStateNotifier, GameState>((ref) {
-  return GameStateNotifier();
-});
+// Use the authoritative provider from providers/game/game_state.dart
 
 class DuelScreen extends ConsumerStatefulWidget {
   final bool isPlayingWithBot;
   
-  // Opponent data
+   
   final String opponentName;
   final String opponentCountry;
   final String userCountryCode; 
@@ -86,7 +83,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
     final duel = resp.duel;
     final oppId = resp.opponent.id;
     _backendOpponentId = oppId;
-    // Benim id’m, opponent olmayan id
+     
     _backendMyId = (duel.player1Id == oppId) ? duel.player2Id : duel.player1Id;
     print('👤 ids -> me=$_backendMyId, opp=$_backendOpponentId');
   }
@@ -389,6 +386,27 @@ void _handleDuelUpdate(dynamic data) {
   final duelNotifier = ref.read(duelStateProvider.notifier);
   duelNotifier.updateFromWebSocket(update);
 
+  // 1.1) Log incoming q_index vs local indices to trace desyncs
+  final int? incomingQIndex = (update['q_index'] as int?) ?? (update['qIndex'] as int?);
+  final localUiIndex = ref.read(gameStateProvider).currentQuestionIndex; // 0-based UI index
+  final status = update['status'];
+  final deadlineAt = update['deadline_at'];
+  print('[WS] duel.update -> status=$status, deadline=$deadlineAt, incoming q_index=$incomingQIndex, local_ui_index=$localUiIndex, applied_q_index=$_appliedQIndex, latest_server_q_index=$_latestServerQIndex');
+  final qObj = update['question'];
+  if (qObj is Map) {
+    print('[WS] duel.update -> question payload: order_number=${qObj['order_number']}, question_id=${qObj['question_id']}');
+  }
+
+  // 1.2) Ensure both players see the result when an authoritative update arrives
+  final gs = ref.read(gameStateProvider);
+  print('[WS] duel.update -> current selections: p1Sel=${gs.player1SelectedOption}, p2Sel=${gs.player2SelectedOption}, revealed=${gs.isAnswerRevealed}, timeUp=${gs.timeUp}');
+  if (!gs.isAnswerRevealed) {
+    print('[WS] duel.update -> forcing revealAnswer for UI question ${gs.currentQuestionIndex + 1}');
+    ref.read(gameStateProvider.notifier).revealAnswer();
+  } else {
+    print('[WS] duel.update -> answer already revealed for UI question ${gs.currentQuestionIndex + 1}');
+  }
+
   // 2) ❌ BURAYI SİL / DEVRE DIŞI BIRAK ❌
   // final newZeroBased = duelNotifier.getZeroBasedIndex();
   // if (newZeroBased != null && newZeroBased != ref.read(gameStateProvider).currentQuestionIndex) {
@@ -397,8 +415,8 @@ void _handleDuelUpdate(dynamic data) {
   // }
 
   // 3) finish kontrolü
-  final status = ref.read(duelStateProvider).status;
-  if (status == 'finished') {
+  final wsStatus = ref.read(duelStateProvider).status;
+  if (wsStatus == 'finished') {
     ref.read(gameStateProvider.notifier).endGame();
   }
 }
@@ -562,13 +580,23 @@ void _onAuthoritativeSnap(DuelWireState snap) {
   print('[SYNC] recv snap -> incoming=$incoming, prevApplied=$prevApplied, prevSeen=$prevSeen '
         '(holdActive=${_holdActive}, pendingTimer=${_revealHoldTimer != null})');
 
+  // If this is the first authoritative sync and we're already showing question 1 in UI,
+  // align applied to 1 immediately to avoid an extra 4s delay before moving.
+  if (prevApplied == 0 && incoming >= 1) {
+    final uiIndex = ref.read(gameStateProvider).currentQuestionIndex; // 0-based
+    if (uiIndex == 0) {
+      _appliedQIndex = 1; // we are already on q_index=1 visually
+      print('[SYNC] first snap alignment -> set applied to 1 (ui=0)');
+    }
+  }
+
   // 1) “görülen” en büyük q_index’i güncelle
   if (incoming > _latestServerQIndex) {
     _latestServerQIndex = incoming;
   }
 
   // 2) İLERLEME yoksa sadece bitiş vb. işle
-  if (incoming <= prevApplied) {
+  if (incoming <= _appliedQIndex) {
     if (snap.status == 'finished') {
       print('[SYNC] finished received on same/older index -> endGame()');
       ref.read(gameStateProvider.notifier).endGame();
@@ -604,11 +632,18 @@ void _scheduleNextStep() {
 
   final nextTarget = _appliedQIndex + 1;   // sıradaki adım
   final ui = (nextTarget > 0) ? nextTarget - 1 : 0;
-  print('[SYNC] scheduling hold $_revealHold for nextTarget=$nextTarget (ui=$ui) '
+  // Adjust hold for first transition if reveal already happened to avoid feeling of lag on Q1 -> Q2
+  Duration hold = _revealHold;
+  final gs = ref.read(gameStateProvider);
+  if (_appliedQIndex == 1 && gs.isAnswerRevealed) {
+    hold = const Duration(milliseconds: 800);
+    print('[SYNC] first transition optimization: using shorter hold $hold for nextTarget=$nextTarget');
+  }
+  print('[SYNC] scheduling hold $hold for nextTarget=$nextTarget (ui=$ui) '
         'from applied=${_appliedQIndex}, latest=${_latestServerQIndex}');
 
   _revealHoldTimer?.cancel();
-  _revealHoldTimer = Timer(_revealHold, () {
+  _revealHoldTimer = Timer(hold, () {
     if (!mounted) return;
     print('[SYNC] HOLD DONE -> goToQuestion(ui=$ui) [moves to q_index=$nextTarget]');
     ref.read(gameStateProvider.notifier).goToQuestion(ui);
