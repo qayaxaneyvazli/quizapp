@@ -64,7 +64,7 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _isUsingAPI = false;
   List<Map<String, dynamic>> _playerAnswers = [];
   bool _answersSubmitted = false;
-  
+  bool _finalized = false;
   // WebSocket integration
   final WebSocketService _webSocketService = WebSocketService();
   StreamSubscription<Map<String, dynamic>>? _webSocketSubscription;
@@ -77,7 +77,19 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
   bool _currentAnswerSent = false;
   int? _backendMyId;
   int? _backendOpponentId;
+Timer? _endedFallbackTimer; 
 
+Map<int,int> _parseScores(dynamic raw) {
+  final out = <int,int>{};
+  if (raw is Map) {
+    raw.forEach((k, v) {
+      final key = int.tryParse(k.toString());
+      final val = (v is num) ? v.toInt() : int.tryParse(v.toString());
+      if (key != null && val != null) out[key] = val;
+    });
+  }
+  return out;
+}
   void _initParticipants() {
     final resp = widget.duelResponse!;
     final duel = resp.duel;
@@ -92,6 +104,66 @@ class _DuelScreenState extends ConsumerState<DuelScreen> {
       _showDefeatModal = true;
     });
   }
+
+  void _handleDuelEnded(dynamic raw) {
+  if (_finalized) return;
+
+  final data = raw is String
+      ? (jsonDecode(raw) as Map<String, dynamic>)
+      : Map<String, dynamic>.from(raw);
+
+  final scores = _parseScores(data['scores']);
+  final myId = _backendMyId;
+  final oppId = _backendOpponentId;
+  if (myId == null || oppId == null) {
+    print('⚠️ myId/oppId null; duel.ended finali uygulanamadı');
+    return;
+  }
+
+  final myScore  = scores[myId] ?? 0;
+  final oppScore = scores[oppId] ?? 0;
+  final reason   = data['reason']?.toString();
+
+  print('🏁 duel.ended reason=$reason scores=$scores (me=$myId:$myScore, opp=$oppId:$oppScore)');
+
+  // O anda bekleyen reveal/step geçişlerini durdur
+  _revealHoldTimer?.cancel();
+
+  // Oyunu kesin bitir (timer/flow dursun)
+  ref.read(gameStateProvider.notifier).endGame();
+
+  // Final skorları provider’lara yaz (UI header skorları anında güncellensin)
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final user = FirebaseAuth.instance.currentUser;
+    final currentUsername = user?.displayName ?? 'Player';
+
+    ref.read(player1Provider.notifier).update((_) => Player(
+      avatarUrl: widget.userPhotoUrl ?? '',
+      countryCode: widget.userCountryCode,
+      username: currentUsername,
+      score: myScore,
+    ));
+
+    ref.read(player2Provider.notifier).update((_) => Player(
+      avatarUrl: widget.opponentPhotoUrl ?? '',
+      countryCode: widget.opponentCountry,
+      username: widget.opponentName,
+      score: oppScore,
+    ));
+  });
+
+  // Kazananı göster (idempotent)
+  if (myScore > oppScore) {
+    if (!_showVictoryModal) _showVictoryCelebration();
+  } else if (oppScore > myScore) {
+    if (!_showDefeatModal) _showDefeat();
+  } else {
+    if (!_showDrawModal) _showDraw();
+  }
+
+  _finalized = true;
+}
+
 String _getInitials(String name) {
   if (name.isEmpty) return '?';
   
@@ -282,7 +354,7 @@ Future<void> _initializeWebSocket() async {
         
       case 'duel.ended':
         print('🏁 Duel ended: $data');
-        // Handle duel end
+         _handleDuelEnded(data);
         break;
         
       case 'member_added':
@@ -734,22 +806,22 @@ void _scheduleNextStep() {
         });
       }
       
-      if (player1Score > player2Score && !_showVictoryModal) {
-        // Show victory modal after a short delay
-        Future.delayed(Duration.zero, () {
-          _showVictoryCelebration();
-        });
-      } else if (player2Score > player1Score && !_showDefeatModal) {
-        // Show defeat modal after a short delay
-        Future.delayed(Duration.zero, () {
-          _showDefeat();
-        });
-      } else if (player1Score == player2Score && !_showDrawModal) {
-        // Show draw modal after a short delay
-        Future.delayed(Duration.zero, () {
-          _showDraw();
-        });
-      }
+      // if (player1Score > player2Score && !_showVictoryModal) {
+      //   // Show victory modal after a short delay
+      //   Future.delayed(Duration.zero, () {
+      //     _showVictoryCelebration();
+      //   });
+      // } else if (player2Score > player1Score && !_showDefeatModal) {
+      //   // Show defeat modal after a short delay
+      //   Future.delayed(Duration.zero, () {
+      //     _showDefeat();
+      //   });
+      // } else if (player1Score == player2Score && !_showDrawModal) {
+      //   // Show draw modal after a short delay
+      //   Future.delayed(Duration.zero, () {
+      //     _showDraw();
+      //   });
+      // }
     }
 
     // Update player scores in the providers
