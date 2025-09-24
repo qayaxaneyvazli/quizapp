@@ -1000,7 +1000,7 @@ void _scheduleNextStep() {
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
                                   children: List.generate(
-                                    gameState.currentQuestionIndex,
+                                    gameState.questions.length,
                                     (index) {
                                       final result = gameState.player1Results[index];
                                       if (result == null) {
@@ -1081,7 +1081,7 @@ void _scheduleNextStep() {
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
                                   children: List.generate(
-                                    gameState.currentQuestionIndex,
+                                    gameState.questions.length,
                                     (index) {
                                       final result = gameState.player2Results[index];
                                       if (result == null) {
