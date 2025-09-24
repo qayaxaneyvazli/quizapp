@@ -634,6 +634,15 @@ _initParticipants();
     ref.read(duelStateProvider.notifier).initializeFromDuelResponse(duelResp);
       final qs = DuelConverter.convertToGameQuestions(widget.duelResponse!);
       ref.read(gameStateProvider.notifier).initializeWithQuestions(qs);
+      // Bot modunda otoriteyi kapat ve ilk soruda bot cevabını simüle et
+      if (widget.isPlayingWithBot) {
+        ref.read(gameStateProvider.notifier).setAuthoritative(false);
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            ref.read(gameStateProvider.notifier).simulatePlayer2Answer();
+          }
+        });
+      }
     }
   });
 
@@ -806,22 +815,22 @@ void _scheduleNextStep() {
         });
       }
       
-      // if (player1Score > player2Score && !_showVictoryModal) {
-      //   // Show victory modal after a short delay
-      //   Future.delayed(Duration.zero, () {
-      //     _showVictoryCelebration();
-      //   });
-      // } else if (player2Score > player1Score && !_showDefeatModal) {
-      //   // Show defeat modal after a short delay
-      //   Future.delayed(Duration.zero, () {
-      //     _showDefeat();
-      //   });
-      // } else if (player1Score == player2Score && !_showDrawModal) {
-      //   // Show draw modal after a short delay
-      //   Future.delayed(Duration.zero, () {
-      //     _showDraw();
-      //   });
-      // }
+      // If playing with bot (no authoritative duel.ended), show modal locally
+      if (widget.isPlayingWithBot) {
+        if (player1Score > player2Score && !_showVictoryModal) {
+          Future.delayed(Duration.zero, () {
+            _showVictoryCelebration();
+          });
+        } else if (player2Score > player1Score && !_showDefeatModal) {
+          Future.delayed(Duration.zero, () {
+            _showDefeat();
+          });
+        } else if (player1Score == player2Score && !_showDrawModal) {
+          Future.delayed(Duration.zero, () {
+            _showDraw();
+          });
+        }
+      }
     }
 
     // Update player scores in the providers

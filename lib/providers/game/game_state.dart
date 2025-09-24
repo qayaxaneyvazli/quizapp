@@ -61,7 +61,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   static const timerInterval = Duration(milliseconds: 100);
   static const decrementValue = 1.0 / (questionTimeInSeconds * 10); // For smooth progress bar
   static const revealAnswerDuration = Duration(seconds: 2);
-    final bool authoritative; 
+    bool authoritative; 
 
   GameStateNotifier({this.authoritative = false})
       : super(GameState(
@@ -72,6 +72,10 @@ class GameStateNotifier extends StateNotifier<GameState> {
           questions: sampleQuestions,
         )) {
     startTimer();
+  }
+  
+  void setAuthoritative(bool value) {
+    authoritative = value;
   }
   
   void startTimer() {
