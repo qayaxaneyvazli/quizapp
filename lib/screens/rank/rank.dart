@@ -75,14 +75,21 @@ class RankScreen extends ConsumerWidget {
     final selectedTabIndex = ref.watch(selectedTabProvider);
     
     // Fetch data when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (leaderboardAsync is AsyncData && leaderboardAsync.value == null) {
+WidgetsBinding.instance.addPostFrameCallback((_) async {
+   
+      if (user != null && leaderboardAsync is AsyncData && leaderboardAsync.value == null) {
+        print('⏳ Waiting a bit for backend token...');
+       
+        await Future.delayed(Duration(seconds: 1));
+        
         print('🏆 Rank screen triggering leaderboard fetch...');
         final type = _getTypeForTab(selectedTabIndex);
         ref.read(leaderboardProvider.notifier).fetchLeaderboard(type: type);
       }
-      if (userStatsAsync is AsyncData && userStatsAsync.value == null) {
-        print('🏆 Rank screen triggering user stats fetch...');
+      
+  
+      final userStatsAsync = ref.watch(stats.userStatsProvider);
+      if (user != null && userStatsAsync is AsyncData && userStatsAsync.value == null) {
         ref.read(stats.userStatsProvider.notifier).fetchUserStats();
       }
     });

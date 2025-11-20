@@ -18,28 +18,29 @@ class AuthService {
   );
 
   // On app start or whenever this service is constructed, print Laravel token if logged in
-  AuthService() {
+AuthService() {
     authStateChanges.listen((user) async {
       if (user != null) {
         try {
           final idToken = await user.getIdToken();
           if (idToken != null) {
+            // DuelService authenticate edir, amma tokeni qlobal yaddaşda saxlayırmı?
+            // Əmin olmaq üçün nəticəni yoxlayıb UserStatsService-ə set edin
             final result = await DuelService.authenticateWithBackend(idToken);
+            
             if (result['success'] == true) {
               final data = result['data'] as Map<String, dynamic>?;
               final token = data?['token'] ?? data?['access_token'] ?? data?['api_token'];
-              final userId = data?['user']?['id'] ?? data?['id'] ?? user.uid;
+              
               if (token != null) {
-                print('Laravel token: ${userId}|$token');
-              } else {
-                print('Laravel auth success but token not found in response');
+                 // BURADA DA TOKENİ YADDA SAXLAYIN
+                 print('✅ Auto-login token cached');
+                 UserStatsService.setToken(token); 
               }
-            } else {
-              print('Laravel auth failed on startup: ${result['error']}');
             }
           }
         } catch (e) {
-          print('Error printing Laravel token on startup: $e');
+          print('Error on auto-login: $e');
         }
       }
     });
@@ -223,7 +224,7 @@ class AuthService {
   }
 
   // Backend'ə token göndər
-  Future<Map<String, dynamic>> _sendTokenToBackend(String idToken) async {
+ Future<Map<String, dynamic>> _sendTokenToBackend(String idToken) async {
     try {
       const String backendUrl = 'http://116.203.188.209/api/auth/firebase-login';
       
@@ -237,13 +238,30 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
+        // DÜZƏLİŞ BURADADIR:
+        // Tokeni aldıqdan sonra onu servislərə ötürmək lazımdır.
+        // Sizin kod məntiqinizə uyğun olaraq bu hissəni əlavə edin:
+        String? token;
         try {
-          final token = data['token'] ?? data['access_token'] ?? data['api_token'];
-          final userId = data['user']?['id'] ?? data['id'] ?? FirebaseAuth.instance.currentUser?.uid;
-          if (token != null) {
-            print('Laravel token: ${userId}|$token');
-          }
-        } catch (_) {}
+           token = data['token'] ?? data['access_token'] ?? data['api_token'];
+           
+           if (token != null) {
+             print('✅ Laravel token received and caching: $token');
+             
+             // Tokeni statik olaraq və ya SharedPreferences-ə yazın ki, 
+             // LeaderboardProvider onu istifadə edə bilsin.
+             // Ehtimal ki, UserStatsService-də belə bir metod var (signOut-da clear etdiyinizə görə):
+             
+             // Nümunə (Əgər metodunuz başqadırsa, adını dəyişin):
+             UserStatsService.setToken(token); 
+             // Və ya:
+             // await SharedPreferences.getInstance().then((prefs) => prefs.setString('auth_token', token!));
+           }
+        } catch (e) {
+          print('Token parse error: $e');
+        }
+
         return {
           'success': true,
           'data': data,

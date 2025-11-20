@@ -16,7 +16,12 @@ class UserStatsService {
     _tokenExpiry = null;
    // print('User stats token cache cleared');
   }
-  
+  static void setToken(String token) {
+    _cachedSessionToken = token;
+ 
+    _tokenExpiry = DateTime.now().add(const Duration(minutes: 30));
+    print('✅ Token manually cached inside UserStatsService');
+  }
   // Helper method to get authenticated headers (similar to DuelService)
   static Future<Map<String, String>?> getAuthenticatedHeaders() async {
     try {

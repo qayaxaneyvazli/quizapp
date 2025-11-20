@@ -59,22 +59,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "325381610850-47qmjq9fpj0torie39qfd566avtt7425.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.laftsoftware.quiztastic",
-            "certificate_hash": "a97b61132a348570d803d37b346565ff08df4bc4"
-          }
-        },
-        {
-          "client_id": "325381610850-a838eqm78845scgdvf3ngpl3jg6est1c.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.laftsoftware.quiztastic",
-            "certificate_hash": "587933367c4798c889ff317d1de3803612fb78d5"
-          }
-        },
-        {
           "client_id": "325381610850-3dfkdgtprcngfv04cjk2bkhs26gjutg5.apps.googleusercontent.com",
           "client_type": 3
         }
