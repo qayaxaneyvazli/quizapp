@@ -1,4 +1,3 @@
-// Import the existing QuizQuestion model
 import 'question.dart';
 
 class ApiQuestion {
@@ -38,21 +37,26 @@ class ApiQuestion {
     );
   }
 
-  // Convert to QuizQuestion for compatibility with existing quiz logic
+  // --- DÜZELTİLEN KISIM ---
   QuizQuestion toQuizQuestion() {
-    // Find the correct answer index
     int correctAnswerIndex = 0;
+    String correctAnswerText = ""; // Doğru cevabın metnini tutmak için
+
+     
     for (int i = 0; i < options.length; i++) {
       if (options[i].isCorrect == 1) {
         correctAnswerIndex = i;
+        correctAnswerText = options[i].optionText; // Cevap metnini al
         break;
       }
     }
 
     return QuizQuestion(
+      id: id, // ARTIK ZORUNLU: API'den gelen ID'yi buraya paslıyoruz
       question: questionText,
       options: options.map((option) => option.optionText).toList(),
       correctAnswerIndex: correctAnswerIndex,
+      answer: correctAnswerText,  
       isTrueFalse: type == 'true_false',
       imagePath: imageUrl.isNotEmpty ? imageUrl : null,
     );
@@ -77,4 +81,4 @@ class ApiQuestionOption {
       optionText: json['option_text'] ?? '',
     );
   }
-} 
+}

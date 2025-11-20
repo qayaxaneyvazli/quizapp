@@ -107,15 +107,20 @@ class QuizController extends StateNotifier<QuizState> {
   final int _timerDuration = 15; // seconds
   DateTime? _questionStartTime;
   
-  QuizController(List<QuizQuestion> questions, {int levelId = 0}) 
+QuizController(List<QuizQuestion> questions, {int levelId = 0})
       : super(QuizState(
           questions: questions,
-          answerResults: List.filled(questions.length, null),
+          // Use safety check for List.filled size
+          answerResults: questions.isEmpty ? [] : List.filled(questions.length, null),
           levelId: levelId,
           quizStartTime: DateTime.now(),
         )) {
-    _startTimer();
-    _questionStartTime = DateTime.now();
+    
+    // Only start timer and tracking if we actually have questions
+    if (questions.isNotEmpty) {
+      _startTimer();
+      _questionStartTime = DateTime.now();
+    }
   }
 
   void restartQuiz() {
@@ -141,24 +146,30 @@ class QuizController extends StateNotifier<QuizState> {
   _questionStartTime = DateTime.now();
 }
 
-  void _startTimer() {
+void _startTimer() {
+ 
+    if (state.questions.isEmpty) return;
+
     _timer?.cancel();
     _timer = Timer.periodic(Duration(milliseconds: 100), (timer) {
       if (!state.isTimerPaused) {
         final newValue = state.timerValue - 0.1 / _timerDuration;
         if (newValue <= 0) {
           timer.cancel();
-          _answerTimeout();  // Süre dolduğunda bu fonksiyonu çağır
+          _answerTimeout();
         } else {
           state = state.copyWith(timerValue: newValue);
         }
       }
     });
   }
-
-  // Süre dolduğunda çağrılacak fonksiyon
+ 
   void _answerTimeout() {
-    print("Süre doldu, bir sonraki soruya geçiliyor");
+    if (state.questions.isEmpty || state.currentQuestionIndex >= state.answerResults.length) {
+       _timer?.cancel();
+       return;
+    }
+   
     
     // Calculate time taken for this answer (full time)
     double timeTaken = _timerDuration.toDouble();
