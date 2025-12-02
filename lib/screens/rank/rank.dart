@@ -77,12 +77,12 @@ class RankScreen extends ConsumerWidget {
     // Fetch data when screen loads
 WidgetsBinding.instance.addPostFrameCallback((_) async {
    
-      if (user != null && leaderboardAsync is AsyncData && leaderboardAsync.value == null) {
+      if (  leaderboardAsync is AsyncData && leaderboardAsync.value == null) {
         print('⏳ Waiting a bit for backend token...');
        
         await Future.delayed(Duration(seconds: 1));
         
-        print('🏆 Rank screen triggering leaderboard fetch...');
+      
         final type = _getTypeForTab(selectedTabIndex);
         ref.read(leaderboardProvider.notifier).fetchLeaderboard(type: type);
       }
@@ -221,8 +221,17 @@ Widget buildRangTrophySection() {
         final leaderboard = leaderboardResponse.leaderboard;
         
         // Get current user info
-        User? user = FirebaseAuth.instance.currentUser;
-        String displayName = user?.displayName ?? 'Guest';
+       User? user = FirebaseAuth.instance.currentUser;
+      final userStatsValue = ref.watch(stats.userStatsProvider).asData?.value;
+String displayName;
+if (user != null && user.displayName != null && user.displayName!.isNotEmpty) {
+        // Firebase user varsa oradan al
+        displayName = user.displayName!;
+      } else {
+    
+        displayName = userStatsValue?.name ?? 'Guest';
+      }
+
         String userEmail = user?.email ?? '';
         String photoUrl = user?.photoURL ?? '';
         

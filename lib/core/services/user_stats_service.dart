@@ -25,7 +25,21 @@ class UserStatsService {
   // Helper method to get authenticated headers (similar to DuelService)
   static Future<Map<String, String>?> getAuthenticatedHeaders() async {
     try {
-      // Get current Firebase user and token
+   if (_cachedSessionToken != null) {
+       
+        if (_tokenExpiry != null && DateTime.now().isAfter(_tokenExpiry!)) {
+           print('⚠️ Cached token expired');
+           _cachedSessionToken = null; // Süresi bitmişse null yap, aşağıya (Firebase'e) düşsün
+        } else {
+           // Token geçerli, direkt bunu döndür. Firebase sormaya gerek yok.
+           // print('✅ Using cached session token');
+           return {
+             'Content-Type': 'application/json',
+             'Authorization': 'Bearer $_cachedSessionToken',
+             'Accept': 'application/json',
+           };
+        }
+      }
       final User? user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         print('❌ No authenticated user found');

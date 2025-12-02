@@ -68,7 +68,36 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+Future<void> _signInAsGuest() async {
+    setState(() {
+      _isLoading = true;
+    });
 
+    try {
+      final result = await _authService.signInAsGuest();
+
+      if (result['success']) {
+        _showSnackBar('Guest login successful!', Colors.green);
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      } else {
+        _showSnackBar('Guest login failed: ${result['error']}', Colors.red);
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
   // Email/Password ilə giriş
   Future<void> _signInWithEmailPassword() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -192,92 +221,92 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   
                   // Email/Password giriş toggle
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _showEmailLogin = !_showEmailLogin;
-                      });
-                    },
-                    child: Text(
-                      _showEmailLogin ? 'Hide Email Login' : 'Sign in with Email',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        decoration: TextDecoration.underline,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     setState(() {
+                  //       _showEmailLogin = !_showEmailLogin;
+                  //     });
+                  //   },
+                  //   child: Text(
+                  //     _showEmailLogin ? 'Hide Email Login' : 'Sign in with Email',
+                  //     style: const TextStyle(
+                  //       color: Colors.white,
+                  //       decoration: TextDecoration.underline,
+                  //       fontSize: 16,
+                  //     ),
+                  //   ),
+                  // ),
                   
                   // Email/Password giriş formu
-                  if (_showEmailLogin) ...[
-                    const SizedBox(height: 20),
-                    // Email TextField
-                    TextField(
-                      controller: _emailController,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        prefixIcon: const Icon(Icons.email, color: Colors.black54),
-                        hintText: "Email",
-                        hintStyle: const TextStyle(color: Colors.black54),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    // Password TextField
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        prefixIcon: const Icon(Icons.lock, color: Colors.black54),
-                        hintText: "Password",
-                        hintStyle: const TextStyle(color: Colors.black54),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Email Login Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _signInWithEmailPassword,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF4ED0D),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
+                  // if (_showEmailLogin) ...[
+                  //   const SizedBox(height: 20),
+                  //   // Email TextField
+                  //   TextField(
+                  //     controller: _emailController,
+                  //     style: const TextStyle(color: Colors.black87),
+                  //     decoration: InputDecoration(
+                  //       filled: true,
+                  //       fillColor: Colors.white,
+                  //       prefixIcon: const Icon(Icons.email, color: Colors.black54),
+                  //       hintText: "Email",
+                  //       hintStyle: const TextStyle(color: Colors.black54),
+                  //       border: OutlineInputBorder(
+                  //         borderRadius: BorderRadius.circular(14),
+                  //         borderSide: BorderSide.none,
+                  //       ),
+                  //       contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                  //     ),
+                  //     keyboardType: TextInputType.emailAddress,
+                  //   ),
+                  //   const SizedBox(height: 16),
+                  //   // Password TextField
+                  //   TextField(
+                  //     controller: _passwordController,
+                  //     obscureText: true,
+                  //     style: const TextStyle(color: Colors.black87),
+                  //     decoration: InputDecoration(
+                  //       filled: true,
+                  //       fillColor: Colors.white,
+                  //       prefixIcon: const Icon(Icons.lock, color: Colors.black54),
+                  //       hintText: "Password",
+                  //       hintStyle: const TextStyle(color: Colors.black54),
+                  //       border: OutlineInputBorder(
+                  //         borderRadius: BorderRadius.circular(14),
+                  //         borderSide: BorderSide.none,
+                  //       ),
+                  //       contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                  //     ),
+                  //   ),
+                  //   const SizedBox(height: 16),
+                  //   // Email Login Button
+                  //   SizedBox(
+                  //     width: double.infinity,
+                  //     height: 56,
+                  //     child: ElevatedButton(
+                  //       onPressed: _isLoading ? null : _signInWithEmailPassword,
+                  //       style: ElevatedButton.styleFrom(
+                  //         backgroundColor: const Color(0xFFF4ED0D),
+                  //         shape: RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.circular(14),
+                  //         ),
+                  //       ),
+                  //       child: _isLoading
+                  //           ? const SizedBox(
+                  //               height: 20,
+                  //               width: 20,
+                  //               child: CircularProgressIndicator(strokeWidth: 2),
+                  //             )
+                  //           : const Text(
+                  //               'Sign In',
+                  //               style: TextStyle(
+                  //                 color: AppColors.primary,
+                  //                 fontWeight: FontWeight.bold,
+                  //                 fontSize: 18,
+                  //               ),
+                  //             ),
+                  //     ),
+                  //   ),
+                  // ],
                   
                   const SizedBox(height: 28),
                   
@@ -286,14 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
-                        );
-                      },
+                     onTap: _isLoading ? null : _signInAsGuest,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),

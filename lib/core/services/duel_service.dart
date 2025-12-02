@@ -289,7 +289,7 @@ static Future<Map<String, dynamic>> sendAnswer({
         }),
       );
 
-      print('Backend auth response status: ${response.statusCode}');
+      print('Backend auth response status: ${response.body}');
 
       if (response.statusCode == 200) {
         print('Backend auth response body: ${response.body}');

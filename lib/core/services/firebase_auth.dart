@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -222,6 +225,69 @@ AuthService() {
       };
     }
   }
+
+  Future<Map<String, dynamic>> signInAsGuest() async {
+    try {
+      String? deviceId;
+      final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+
+       
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        deviceId = androidInfo.id;  
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        deviceId = iosInfo.identifierForVendor; // iOS Vendor ID
+      } else {
+        // Web veya diğer platformlar için basit bir fallback
+        deviceId = "unknown_device_${DateTime.now().millisecondsSinceEpoch}";
+      }
+
+      if (deviceId == null) {
+        return {'success': false, 'error': 'Cihaz ID alınamadı'};
+      }
+
+ 
+      final url = Uri.parse('http://116.203.188.209/api/auth/guest');
+      
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          "deviceId": deviceId,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+          print(data);
+          print(deviceId);
+        final String? token = data['token'];
+
+      if (token != null) {
+        print('✅ Guest Token alındı: $token');
+        
+        // 1. Token'ı UserStatsService'e manuel olarak set et (RAM'de tutar)
+        UserStatsService.setToken(token);
+        
+    
+      }
+
+        return {'success': true, 'data': data};
+      } else {
+        return {
+          'success': false, 
+          'error': 'Server Error: ${response.statusCode} - ${response.body}'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
 
   // Backend'ə token göndər
  Future<Map<String, dynamic>> _sendTokenToBackend(String idToken) async {

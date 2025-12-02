@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:quiz_app/core/services/authoritative_duel.dart';
+import 'package:quiz_app/core/services/user_stats_service.dart';
 import 'package:quiz_app/screens/messages/message_model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -86,13 +87,17 @@ Future<void> fetchRecent({int perPage = 30}) async {
   try {
     _currentPage = 1;
     final uri = Uri.parse('$_apiBase/global-messages?per_page=$perPage&page=$_currentPage');
-
-    final token = await _getAuthToken();
+ 
     final headers = {
       'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+    
     };
+final authHeaders = await UserStatsService.getAuthenticatedHeaders();
 
+if (authHeaders != null) {
+      
+      headers.addAll(authHeaders);
+    }
     final resp = await http.get(uri, headers: headers);
     print('[GlobalChat] status=${resp.statusCode}');
     print('[GlobalChat] body=${resp.body}');
@@ -141,12 +146,16 @@ Future<void> fetchRecent({int perPage = 30}) async {
 
 
   Future<bool> send(String text) async {
-    final token = await _getAuthToken();  
-    final headers = {
+     final headers = {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+    
     };
+final authHeaders = await UserStatsService.getAuthenticatedHeaders();
+
+if (authHeaders != null) {
+      
+      headers.addAll(authHeaders);
+    }
 
     
     final url = Uri.parse('$_apiBase/global-messages');
@@ -157,7 +166,7 @@ Future<void> fetchRecent({int perPage = 30}) async {
       _tryAppendFromResponse(resp1.body);
       return true;
     }
-    // fallback: {"message": "..."} (guide) :contentReference[oaicite:4]{index=4}
+  
     final bodyAttempt2 = jsonEncode({'message': text});
     final resp2 = await http.post(url, headers: headers, body: bodyAttempt2);
     if (resp2.statusCode == 200 || resp2.statusCode == 201) {
@@ -174,11 +183,16 @@ Future<void> loadMore({int perPage = 30}) async {
       final nextPage = _currentPage + 1;
       final uri = Uri.parse('$_apiBase/global-messages?per_page=$perPage&page=$nextPage');
 
-      final token = await _getAuthToken();
-      final headers = {
-        'Accept': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token', // ✅
-      };
+        final headers = {
+      'Accept': 'application/json',
+    
+    };
+final authHeaders = await UserStatsService.getAuthenticatedHeaders();
+
+if (authHeaders != null) {
+      
+      headers.addAll(authHeaders);
+    }
 
       print('[GlobalChat] GET $uri');
       final resp = await http.get(uri, headers: headers);

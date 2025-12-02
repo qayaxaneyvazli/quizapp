@@ -14,25 +14,24 @@ class EventScreen extends ConsumerWidget {
     // Controller'ı dinliyoruz (API verisi buraya akıyor)
     final eventState = ref.watch(eventControllerProvider);
     
-    // Provider'ın yüklenme durumunu kontrol etmek için async değeri de alalım
-    // Bu sayede ilk açılışta API isteği bitene kadar loading döner
+ 
     final questionsAsync = ref.watch(eventQuestionsProvider);
 
     return questionsAsync.when(
-      // 1. YÜKLENİYORSA
+  
       loading: () => Scaffold(
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       ),
       
-      // 2. HATA VARSA
+       
       error: (err, stack) => Scaffold(
         body: Center(child: Text("Hata: $err")),
       ),
 
-      // 3. VERİ GELDİYSE (DATA)
+     
       data: (_) {
-        // Eğer API'den boş liste geldiyse veya servisten veri dönmediyse
+         
         if (eventState.questions.isEmpty) {
            return Scaffold(
             appBar: AppBar(backgroundColor: AppColors.primary, title: Text("Event")),
@@ -102,14 +101,14 @@ class EventScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Soruya ait görsel (Sadece API'den gelirse göster)
+                
                 if (question.imagePath != null && question.imagePath!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        question.imagePath!, // API'den gelen URL
+                        question.imagePath!, 
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: 160,
@@ -131,10 +130,9 @@ class EventScreen extends ConsumerWidget {
                     ),
                   )
                 else 
-                  // Resim yoksa boşluk bırak veya placeholder ikon koy
+                 
                   SizedBox(height: 20),
-
-                // Soru kutusu
+ 
                 Container(
                    constraints: BoxConstraints(minHeight: 100),
                   margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -181,7 +179,7 @@ class EventScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Progress bar (kısa çizgi)
+            
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                   child: Stack(
@@ -207,8 +205,8 @@ class EventScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Şıklar
-                Expanded( // Şıkların sığması için expanded içine aldık
+            
+                Expanded(  
                   child: SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -288,7 +286,6 @@ class EventScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Next butonu
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: GestureDetector(
@@ -327,8 +324,6 @@ class EventScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Joker ve alt bar
-               // Joker ve alt bar
             Container(
               margin: EdgeInsets.zero, 
               padding: EdgeInsets.zero,
@@ -337,7 +332,7 @@ class EventScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // 1. YANLIŞ CEVABI ELEME (X JOKERİ)
+                  
                   _jokerButton(
                       svgPath: 'assets/icons/wrong_answer.svg',
                       // Düzeltme: Hem hak sayısına (>0) hem de şu an kullanılıp kullanılmadığına bakıyoruz
@@ -348,7 +343,6 @@ class EventScreen extends ConsumerWidget {
                         ref.read(eventControllerProvider.notifier).useHint();
                       }),
 
-                  // 2. YARI YARIYA (50/50)
                   _jokerButton(
                       svgPath:'assets/icons/fifty_fifty.svg',
                       // Düzeltme: Hak sayısı kontrolü eklendi
